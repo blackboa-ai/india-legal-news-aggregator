@@ -1,8 +1,17 @@
 """
-Schemas module alias re-exporting Pydantic models from app.schemas.
-Maintains compatibility with both app.schemas and app.schemas.judgment imports.
+Schemas module alias re-exporting Pydantic models from app.schemas package.
+Maintains compatibility with both app.schemas and sub-schema module imports.
+Satisfies Master Execution Plan v2.0 contracts.
 """
 
+from app.schemas.auth import (
+    GoogleAuthRequest,
+    RefreshTokenRequest,
+    TokenResponse,
+    UserLoginRequest,
+    UserRegisterRequest,
+    UserResponse,
+)
 from app.schemas.health import HealthResponse
 from app.schemas.judgment import (
     CourtItem,
@@ -15,9 +24,26 @@ from app.schemas.judgment import (
     SearchResponse,
     SearchResultItem,
 )
+from app.schemas.user_features import (
+    AddJudgmentToTopicRequest,
+    AlertCreateRequest,
+    AlertListResponse,
+    AlertMatchesResponse,
+    AlertMatchItem,
+    AlertResponse,
+    BookmarkCreate,
+    BookmarkCreateRequest,
+    BookmarkListResponse,
+    BookmarkResponse,
+    TopicCreateRequest,
+    TopicListResponse,
+    TopicResponse,
+)
 
 __all__ = [
+    # Health
     "HealthResponse",
+    # Judgments & Search
     "Party",
     "JudgmentBase",
     "JudgmentCreate",
@@ -27,4 +53,25 @@ __all__ = [
     "SearchResponse",
     "LegalCategoryItem",
     "CourtItem",
+    # Auth
+    "UserRegisterRequest",
+    "UserLoginRequest",
+    "GoogleAuthRequest",
+    "RefreshTokenRequest",
+    "TokenResponse",
+    "UserResponse",
+    # User features (Bookmarks, Alerts, Topics)
+    "BookmarkCreateRequest",
+    "BookmarkCreate",
+    "BookmarkResponse",
+    "BookmarkListResponse",
+    "AlertCreateRequest",
+    "AlertResponse",
+    "AlertListResponse",
+    "AlertMatchItem",
+    "AlertMatchesResponse",
+    "TopicCreateRequest",
+    "AddJudgmentToTopicRequest",
+    "TopicResponse",
+    "TopicListResponse",
 ]

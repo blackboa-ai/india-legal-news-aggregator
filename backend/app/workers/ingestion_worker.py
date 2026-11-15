@@ -322,3 +322,14 @@ class IngestionWorker:
         self.stop()
         if self._worker_task and not self._worker_task.done():
             await self._worker_task
+
+
+# Global default worker instance
+ingestion_worker = IngestionWorker()
+
+__all__ = [
+    "FeedIngestionStats",
+    "IngestionCycleReport",
+    "IngestionWorker",
+    "ingestion_worker",
+]

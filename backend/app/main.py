@@ -3,11 +3,31 @@ Main Application Entrypoint
 India Legal News Aggregator - Free-Tier MVP Architecture (< 250 MB RAM)
 """
 
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 
 from app.api.v1.api import api_router
 from app.core.config import settings
+from app.services.cache_service import cache_service
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """
+    Lifespan context manager for application startup and graceful shutdown.
+    Ensures Redis connections and background tasks are cleanly managed.
+    """
+    # Startup phase
+    yield
+    # Shutdown phase
+    try:
+        await cache_service.close()
+    except Exception:
+        pass
 
 
 def create_application() -> FastAPI:
@@ -19,9 +39,10 @@ def create_application() -> FastAPI:
         title=settings.PROJECT_NAME,
         version=settings.VERSION,
         description="India Legal News Aggregator API - $0/month free-tier architecture with hybrid search.",
-        openapi_url=f"{settings.API_V1_STR}/openapi.json",
-        docs_url=f"{settings.API_V1_STR}/docs",
-        redoc_url=f"{settings.API_V1_STR}/redoc",
+        openapi_url="/openapi.json",
+        docs_url="/docs",
+        redoc_url="/redoc",
+        lifespan=lifespan,
     )
 
     # CORS Middleware Configuration
@@ -34,7 +55,7 @@ def create_application() -> FastAPI:
             allow_headers=["*"],
         )
 
-    # Mount API v1 router (provides /api/v1/health and future v1 routes)
+    # Mount API v1 router (provides /api/v1/health, /api/v1/judgments, /api/v1/auth, /api/v1/bookmarks, etc.)
     application.include_router(api_router, prefix=settings.API_V1_STR)
 
     # Top-level health check endpoint for cloud platform probes (e.g., Render /health)
@@ -62,8 +83,17 @@ def create_application() -> FastAPI:
             "service": settings.PROJECT_NAME,
             "version": settings.VERSION,
             "status": "online",
-            "docs": f"{settings.API_V1_STR}/docs",
+            "docs": "/docs",
         }
+
+    # Aliases for API documentation
+    @application.get(f"{settings.API_V1_STR}/docs", include_in_schema=False)
+    async def v1_docs_redirect():
+        return RedirectResponse(url="/docs")
+
+    @application.get(f"{settings.API_V1_STR}/openapi.json", include_in_schema=False)
+    async def v1_openapi_redirect():
+        return RedirectResponse(url="/openapi.json")
 
     return application
 
