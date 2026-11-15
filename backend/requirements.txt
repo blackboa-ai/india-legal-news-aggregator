@@ -1,0 +1,41 @@
+# ==============================================================================
+# India Legal News Aggregator - Backend Dependencies
+# Free-Tier MVP Architecture ($0/month) | RAM Budget: < 250 MB
+# ==============================================================================
+
+# Core Web Framework & ASGI Server
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+
+# Database & Async ORM (PostgreSQL 15+ & pgvector)
+sqlalchemy[asyncio]==2.0.31
+asyncpg==0.29.0
+pgvector==0.3.1
+alembic==1.13.2
+
+# Settings & Environment Validation
+pydantic-settings==2.3.4
+
+# Legal News RSS Ingestion & Scraping
+feedparser==6.0.11
+beautifulsoup4==4.12.3
+httpx==0.27.0
+
+# Distributed Caching & Rate Limiting (Upstash / Local Redis)
+redis==5.0.7
+
+# Authentication, Password Hashing & JWT Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+
+# Async Background Scheduler (20-min legal feed polling)
+apscheduler==3.10.4
+
+# Lightweight Embeddings (< 90 MB RAM inference, no PyTorch)
+onnxruntime==1.18.0
+tokenizers==0.19.1
+
+# Automated Testing
+pytest==8.2.2
+pytest-asyncio==0.23.8
