@@ -5,6 +5,7 @@ Stores legal judgments, citations, metadata, embeddings, and full-text search ve
 
 import uuid
 from typing import Any
+
 from sqlalchemy import (
     Boolean,
     Column,

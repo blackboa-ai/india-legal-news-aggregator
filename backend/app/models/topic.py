@@ -4,6 +4,7 @@ Enables custom research folders/topics and linking judgments to topics.
 """
 
 import uuid
+
 from sqlalchemy import (
     Column,
     DateTime,

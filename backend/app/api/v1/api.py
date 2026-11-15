@@ -4,6 +4,7 @@ Mounts all v1 sub-routers.
 """
 
 from fastapi import APIRouter
+
 from app.api.v1 import health
 
 api_router = APIRouter()

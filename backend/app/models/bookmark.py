@@ -4,6 +4,7 @@ Stores user saved judgments.
 """
 
 import uuid
+
 from sqlalchemy import (
     Column,
     DateTime,

@@ -3,9 +3,6 @@ Unit Tests for Health Check Endpoints
 India Legal News Aggregator - Phase 0 Scaffolding
 """
 
-import sys
-from pathlib import Path
-import pytest
 
 from app.api.v1.health import check_health
 from app.main import app

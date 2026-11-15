@@ -5,7 +5,7 @@ Uses Pydantic BaseSettings for strict environment variable validation.
 """
 
 import json
-from typing import List, Optional, Union
+
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -71,7 +71,7 @@ class Settings(BaseSettings):
     )
 
     # Third-Party Auth & Integrations
-    GOOGLE_CLIENT_ID: Optional[str] = Field(
+    GOOGLE_CLIENT_ID: str | None = Field(
         default=None,
         description="Google OAuth Client ID for SSO token verification",
     )
@@ -85,13 +85,13 @@ class Settings(BaseSettings):
         default="onnx",
         description="Embedding generation strategy: 'onnx', 'hf', or 'deterministic'",
     )
-    HF_API_TOKEN: Optional[str] = Field(
+    HF_API_TOKEN: str | None = Field(
         default=None,
         description="Optional Hugging Face Inference API token for cloud embeddings",
     )
 
     # CORS Configuration
-    CORS_ORIGINS: List[str] = Field(
+    CORS_ORIGINS: list[str] = Field(
         default=[
             "http://localhost:5173",
             "http://localhost:3000",
@@ -103,7 +103,7 @@ class Settings(BaseSettings):
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
-    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
+    def assemble_cors_origins(cls, v: str | list[str]) -> list[str]:
         """
         Parses CORS origins from either a JSON array string or a comma-separated string.
         """

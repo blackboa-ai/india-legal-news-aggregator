@@ -3,7 +3,8 @@ Async Database Session & Engine Configuration
 India Legal News Aggregator - PostgreSQL 15 + pgvector
 """
 
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
+
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
