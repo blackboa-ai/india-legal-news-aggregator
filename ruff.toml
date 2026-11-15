@@ -1,0 +1,7 @@
+# Ruff configuration for India Legal News Aggregator
+line-length = 120
+target-version = "py311"
+
+[lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501", "B008", "E402"]
