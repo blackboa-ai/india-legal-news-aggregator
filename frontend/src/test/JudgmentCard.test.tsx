@@ -46,7 +46,7 @@ describe('JudgmentCard Component', () => {
     expect(screen.getByText('Article 21')).toBeInTheDocument();
   });
 
-  it('calls onSelectJudgment when the entire card is clicked', () => {
+  it('expands to show whole judgment text when the card is clicked and collapses when Show Less is clicked', () => {
     const handleSelect = vi.fn();
     render(
       <JudgmentCard
@@ -57,9 +57,20 @@ describe('JudgmentCard Component', () => {
       />
     );
 
+    // Initial state: preview is clamped
+    expect(screen.getByText('Read Judgment')).toBeInTheDocument();
+
+    // Click card to expand
     const titleEl = screen.getByText('Gurbaksh Singh Sibbia v. State of Punjab');
     fireEvent.click(titleEl);
-    expect(handleSelect).toHaveBeenCalledWith(mockJudgment);
+
+    // Whole judgment text is now displayed
+    expect(screen.getByText(/Full judgment text for anticipatory bail principles/i)).toBeInTheDocument();
+    expect(screen.getByText('Show Less')).toBeInTheDocument();
+
+    // Click Show Less to collapse back
+    fireEvent.click(screen.getByText('Show Less'));
+    expect(screen.queryByText('Show Less')).not.toBeInTheDocument();
   });
 
   it('calls onToggleBookmark and stops propagation when bookmark button is clicked', () => {
@@ -77,10 +88,11 @@ describe('JudgmentCard Component', () => {
     const bookmarkBtn = screen.getByTitle('Save to Bookmarks');
     fireEvent.click(bookmarkBtn);
     expect(handleBookmark).toHaveBeenCalledWith(mockJudgment);
-    expect(handleSelect).not.toHaveBeenCalled();
+    // Card should not have expanded
+    expect(screen.queryByText('Show Less')).not.toBeInTheDocument();
   });
 
-  it('calls onSelectJudgment when Read Judgment button is clicked', () => {
+  it('calls onSelectJudgment when Reader View button is clicked', () => {
     const handleSelect = vi.fn();
     render(
       <JudgmentCard
@@ -91,8 +103,8 @@ describe('JudgmentCard Component', () => {
       />
     );
 
-    const readBtn = screen.getByText('Read Judgment');
-    fireEvent.click(readBtn);
+    const readerBtn = screen.getByText('Reader View');
+    fireEvent.click(readerBtn);
     expect(handleSelect).toHaveBeenCalledWith(mockJudgment);
   });
 

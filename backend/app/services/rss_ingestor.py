@@ -120,32 +120,37 @@ class ParsedJudgmentItem:
         return asdict(self)
 
 
-def sanitize_html_text(raw_html: str | None) -> str:
+def sanitize_html_text(raw_html: str | None, preserve_newlines: bool = False) -> str:
     """
     Safely strips HTML tags, script/style blocks, and unescapes entities.
-    Normalizes excessive whitespace into single spaces.
+    Normalizes excessive whitespace into single spaces or double newlines.
     """
     if not raw_html:
         return ""
 
+    sep = "\n\n" if preserve_newlines else " "
     try:
         soup = BeautifulSoup(raw_html, "html.parser")
         # Remove active or formatting markup tags
         for element in soup(["script", "style", "noscript", "iframe", "header", "footer", "nav", "aside"]):
             element.decompose()
 
-        text = soup.get_text(separator=" ")
+        text = soup.get_text(separator=sep)
     except (ValueError, TypeError, AttributeError):
         # Fallback regex tag stripping in case of malformed markup
-        text = re.sub(r"<[^>]+>", " ", raw_html)
+        text = re.sub(r"<[^>]+>", sep, raw_html)
 
     # Unescape HTML entities (&nbsp;, &amp;, &#39;, etc.)
     text = html.unescape(text)
     # Normalize non-breaking spaces and whitespace
     text = text.replace("\xa0", " ").replace("\u200b", "")
     # Remove space before punctuation marks (. , : ; ? !)
-    text = re.sub(r"\s+([,.:;?!])", r"\1", text)
-    text = re.sub(r"\s+", " ", text).strip()
+    text = re.sub(r"[ \t]+([,.:;?!])", r"\1", text)
+    if preserve_newlines:
+        text = re.sub(r"[ \t]+", " ", text)
+        text = re.sub(r"\n\s*\n+", "\n\n", text).strip()
+    else:
+        text = re.sub(r"\s+", " ", text).strip()
     return text
 
 
@@ -286,21 +291,41 @@ class RSSIngestor:
             # Deterministic SHA-256 deduplication ID
             external_id = compute_external_id(canonical_url, title)
 
-            # Excerpt extraction & cleaning
+            # Content payload extraction & cleaning
+            content_values = [
+                c.get("value", "") for c in entry.get("content", []) if isinstance(c, dict) and c.get("value")
+            ]
+            content_html = "\n\n".join(content_values) if content_values else ""
+
             raw_summary = (
                 entry.get("summary")
                 or entry.get("description")
-                or (entry.get("content", [{}])[0].get("value") if entry.get("content") else "")
                 or ""
             )
-            excerpt = sanitize_html_text(raw_summary)
+            raw_excerpt = sanitize_html_text(raw_summary)
 
-            # Extract full text if provided in content payload
+            # Extract full text if provided in content payload or rich summary
             full_text = None
-            if entry.get("content"):
-                candidate_content = sanitize_html_text(entry.content[0].get("value", ""))
-                if len(candidate_content) > len(excerpt):
+            if content_html:
+                candidate_content = sanitize_html_text(content_html, preserve_newlines=True)
+                if candidate_content:
                     full_text = candidate_content
+            elif len(raw_summary) > 300:
+                candidate_content = sanitize_html_text(raw_summary, preserve_newlines=True)
+                if candidate_content:
+                    full_text = candidate_content
+
+            # Ensure clean summary excerpt (not identical to the title if full text is available)
+            if raw_excerpt and raw_excerpt.strip() != title.strip():
+                excerpt = raw_excerpt
+            elif full_text:
+                paragraphs = [p.strip() for p in full_text.split("\n\n") if p.strip() and len(p.strip()) > 30]
+                if paragraphs:
+                    excerpt = paragraphs[0]
+                else:
+                    excerpt = full_text[:400]
+            else:
+                excerpt = title
 
             # Parse judgment or publication date
             judgment_date = self._extract_date(entry)
