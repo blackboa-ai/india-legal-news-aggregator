@@ -27,6 +27,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal
 from app.models.judgment import Judgment
+from app.services.embedding_service import embedding_service
 from app.services.rss_ingestor import (
     DEFAULT_LEGAL_FEEDS,
     FeedSourceConfig,
@@ -110,6 +111,10 @@ class IngestionWorker:
         if await self.check_exists(session, item.external_id):
             return False
 
+        # Generate 384-dim dense vector embedding for hybrid and semantic search
+        embed_input = f"{item.title} {item.excerpt} {' '.join(item.tags or [])}".strip()
+        embedding = await embedding_service.get_embedding(embed_input)
+
         judgment = Judgment(
             external_id=item.external_id,
             title=item.title,
@@ -127,6 +132,7 @@ class IngestionWorker:
             source=item.source,
             is_archived=True,
             classification_confidence=item.classification_confidence,
+            embedding=embedding,
         )
         res = session.add(judgment)
         if asyncio.iscoroutine(res):

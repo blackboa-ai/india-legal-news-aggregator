@@ -71,9 +71,15 @@ class SearchResultItem(BaseModel):
     judgment_date: date
     subject_category: str
     excerpt: str
+    full_text: str | None = None
     url: str
+    parties: list[dict[str, Any]] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
     source: str = ""
+    is_archived: bool = True
+    classification_confidence: float = 0.0
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
     score: float = Field(..., description="Combined RRF score or similarity rank")
     keyword_rank: int | None = Field(default=None, description="1-based rank in tsvector full-text results")
     semantic_rank: int | None = Field(default=None, description="1-based rank in pgvector cosine results")

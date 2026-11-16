@@ -51,6 +51,29 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
   const [bookmarkNote, setBookmarkNote] = useState('');
   const [bookmarkTagsInput, setBookmarkTagsInput] = useState('');
 
+  // Fallback to fetch full judgment details if full_text or parties were omitted in list/search
+  const [fullJudgment, setFullJudgment] = useState<Judgment | null>(judgment);
+
+  useEffect(() => {
+    setFullJudgment(judgment);
+    if (!judgment?.id || !isOpen) return;
+
+    let isMounted = true;
+    if (!judgment.full_text) {
+      api.judgments
+        .getById(judgment.id)
+        .then((detail) => {
+          if (isMounted && detail) {
+            setFullJudgment(detail);
+          }
+        })
+        .catch(() => {});
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [judgment, isOpen]);
+
   // Fetch similar precedents whenever selected judgment changes
   useEffect(() => {
     if (!judgment?.id || !isOpen) return;
@@ -92,11 +115,12 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
 
   if (!isOpen || !judgment) return null;
 
-  const courtInfo = getCourtLevelBadge(judgment.court_level);
-  const categoryStyle = getCategoryColor(judgment.subject_category);
+  const activeJudgment = fullJudgment || judgment;
+  const courtInfo = getCourtLevelBadge(activeJudgment.court_level);
+  const categoryStyle = getCategoryColor(activeJudgment.subject_category);
 
   const handleCopyCitation = () => {
-    const citationText = `${judgment.short_title || judgment.title} (${judgment.court_name}, ${formatJudgmentDate(judgment.judgment_date)}). Available at: ${judgment.url}`;
+    const citationText = `${activeJudgment.short_title || activeJudgment.title} (${activeJudgment.court_name}, ${formatJudgmentDate(activeJudgment.judgment_date)}). Available at: ${activeJudgment.url}`;
     navigator.clipboard.writeText(citationText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -107,7 +131,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
       .split(',')
       .map((t) => t.trim())
       .filter(Boolean);
-    onToggleBookmark(judgment, bookmarkNote || undefined, tags.length ? tags : undefined);
+    onToggleBookmark(activeJudgment, bookmarkNote || undefined, tags.length ? tags : undefined);
     setShowNotesModal(false);
   };
 
@@ -115,7 +139,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
     if (!selectedTopicId || !onAddToTopic) return;
     setTopicAdding(true);
     try {
-      await onAddToTopic(selectedTopicId, judgment.id);
+      await onAddToTopic(selectedTopicId, activeJudgment.id);
       setTopicSuccess(true);
       setTimeout(() => setTopicSuccess(false), 2000);
     } finally {
@@ -143,11 +167,11 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
             <span
               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${categoryStyle}`}
             >
-              {judgment.subject_category}
+              {activeJudgment.subject_category}
             </span>
             <span className="text-xs text-slate-500 hidden sm:inline-flex items-center">
               <Calendar className="h-3 w-3 mr-1 text-slate-400" />
-              {formatJudgmentDate(judgment.judgment_date)}
+              {formatJudgmentDate(activeJudgment.judgment_date)}
             </span>
           </div>
 
@@ -164,7 +188,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
             </button>
 
             <a
-              href={judgment.url}
+              href={activeJudgment.url}
               target="_blank"
               rel="noopener noreferrer"
               title="Open canonical source page"
@@ -178,7 +202,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
               type="button"
               onClick={() => {
                 if (isBookmarked) {
-                  onToggleBookmark(judgment);
+                  onToggleBookmark(activeJudgment);
                 } else {
                   setShowNotesModal(true);
                 }
@@ -246,26 +270,26 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
                   id="judgment-title"
                   className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight mb-2"
                 >
-                  {judgment.title}
+                  {activeJudgment.title}
                 </h1>
-                {judgment.short_title && judgment.short_title !== judgment.title && (
+                {activeJudgment.short_title && activeJudgment.short_title !== activeJudgment.title && (
                   <p className="text-sm font-medium text-slate-600 italic">
-                    {judgment.short_title}
+                    {activeJudgment.short_title}
                   </p>
                 )}
                 <p className="text-xs text-slate-500 mt-1">
-                  {judgment.court_name} • Pronounced on {formatJudgmentDate(judgment.judgment_date)}
+                  {activeJudgment.court_name} • Pronounced on {formatJudgmentDate(activeJudgment.judgment_date)}
                 </p>
               </div>
 
               {/* Parties if available */}
-              {judgment.parties && judgment.parties.length > 0 && (
+              {activeJudgment.parties && activeJudgment.parties.length > 0 && (
                 <div className="bg-slate-50 rounded-xl p-3 border border-slate-200">
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
                     Parties to Proceeding
                   </span>
                   <div className="flex flex-wrap gap-2 text-xs text-slate-700">
-                    {judgment.parties.map((p, idx) => {
+                    {activeJudgment.parties.map((p, idx) => {
                       const pObj = p as { role?: string; name?: string };
                       return (
                         <span key={idx} className="bg-white px-2.5 py-1 rounded-md border border-slate-200">
@@ -279,13 +303,13 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
               )}
 
               {/* Statutory Citation Badges */}
-              {judgment.tags && judgment.tags.length > 0 && (
+              {activeJudgment.tags && activeJudgment.tags.length > 0 && (
                 <div>
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
                     Statutory Citations & Legal Tags
                   </span>
                   <div className="flex flex-wrap gap-1.5">
-                    {judgment.tags.map((tag, idx) => (
+                    {activeJudgment.tags.map((tag, idx) => (
                       <span
                         key={idx}
                         className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-50 text-amber-900 border border-amber-200/80"
@@ -331,7 +355,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
                   Legal Headnote & Clean Summary
                 </span>
                 <p className="text-sm text-slate-800 leading-relaxed font-sans">
-                  {judgment.excerpt}
+                  {activeJudgment.excerpt}
                 </p>
               </div>
 
@@ -369,7 +393,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
                     fontSize === 'large' ? 'text-base' : 'text-sm'
                   }`}
                 >
-                  {judgment.full_text || judgment.excerpt}
+                  {activeJudgment.full_text || activeJudgment.excerpt}
                 </div>
               </div>
             </>
@@ -435,7 +459,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
 
         {/* Modal Footer */}
         <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-500">
-          <span>Source: {judgment.source}</span>
+          <span>Source: {activeJudgment.source}</span>
           <button
             type="button"
             onClick={onClose}

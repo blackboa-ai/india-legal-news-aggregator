@@ -29,7 +29,7 @@ def upgrade() -> None:
     op.execute("ALTER TABLE IF EXISTS alembic_version ALTER COLUMN version_num TYPE varchar(128);")
     op.execute(
         """
-        CREATE OR REPLACE FUNCTION immutable_array_to_string(text[], text) 
+        CREATE OR REPLACE FUNCTION immutable_array_to_string(text[], text)
         RETURNS text AS $$
             SELECT array_to_string($1, $2);
         $$ LANGUAGE sql IMMUTABLE;

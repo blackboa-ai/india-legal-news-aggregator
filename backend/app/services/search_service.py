@@ -43,6 +43,12 @@ class SearchCandidate:
     url: str
     tags: list[str] = field(default_factory=list)
     source: str = ""
+    parties: list[dict[str, Any]] = field(default_factory=list)
+    full_text: str | None = None
+    is_archived: bool = True
+    classification_confidence: float = 0.0
+    created_at: datetime.datetime | None = None
+    updated_at: datetime.datetime | None = None
     score: float = 0.0
     keyword_rank: int | None = None
     semantic_rank: int | None = None
@@ -197,7 +203,8 @@ class SearchService:
         sql = f"""
         SELECT
             id, external_id, title, short_title, court_code, court_name, court_level,
-            judgment_date, subject_category, excerpt, url, tags, source,
+            judgment_date, subject_category, excerpt, full_text, url, parties, tags, source,
+            is_archived, classification_confidence, created_at, updated_at,
             ts_rank_cd(search_tsv, websearch_to_tsquery('english', :query)) as rank_score
         FROM judgments
         WHERE {where_sql}
@@ -217,7 +224,8 @@ class SearchService:
             fallback_sql = f"""
             SELECT
                 id, external_id, title, short_title, court_code, court_name, court_level,
-                judgment_date, subject_category, excerpt, url, tags, source,
+                judgment_date, subject_category, excerpt, full_text, url, parties, tags, source,
+                is_archived, classification_confidence, created_at, updated_at,
                 1.0 as rank_score
             FROM judgments
             WHERE {where_sql}
@@ -246,12 +254,13 @@ class SearchService:
         sql = f"""
         SELECT
             id, external_id, title, short_title, court_code, court_name, court_level,
-            judgment_date, subject_category, excerpt, url, tags, source,
-            1.0 - (embedding <=> :query_vec::vector) as sim_score
+            judgment_date, subject_category, excerpt, full_text, url, parties, tags, source,
+            is_archived, classification_confidence, created_at, updated_at,
+            1.0 - (embedding <=> CAST(:query_vec AS vector)) as sim_score
         FROM judgments
         WHERE {where_sql}
           AND embedding IS NOT NULL
-        ORDER BY embedding <=> :query_vec::vector ASC
+        ORDER BY embedding <=> CAST(:query_vec AS vector) ASC
         LIMIT :limit;
         """
         exec_params = {**params, "query_vec": vec_str, "limit": limit}
@@ -359,6 +368,12 @@ class SearchService:
                 url=str(r["url"]),
                 tags=list(r.get("tags") or []),
                 source=str(r.get("source", "")),
+                parties=list(r.get("parties") or []),
+                full_text=r.get("full_text"),
+                is_archived=bool(r.get("is_archived", True)),
+                classification_confidence=float(r.get("classification_confidence", 0.0)),
+                created_at=r.get("created_at"),
+                updated_at=r.get("updated_at"),
                 score=float(r.get("score", 0.0)),
                 keyword_rank=r.get("keyword_rank"),
                 semantic_rank=r.get("semantic_rank"),
@@ -408,7 +423,7 @@ class SearchService:
             WHERE id != :target_id
               AND is_archived = true
               AND embedding IS NOT NULL
-            ORDER BY embedding <=> :target_vec::vector ASC
+            ORDER BY embedding <=> CAST(:target_vec AS vector) ASC
             LIMIT :limit;
             """
             similar_res = await session.execute(

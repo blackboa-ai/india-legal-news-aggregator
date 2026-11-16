@@ -27,11 +27,39 @@ except ImportError:
     from sqlalchemy.types import UserDefinedType
 
     class Vector(UserDefinedType):  # type: ignore
+        """
+        Lightweight fallback for pgvector Vector type when pgvector package is not installed.
+        Serializes list of floats to PostgreSQL vector string format '[0.1, 0.2, ...]'
+        and parses vector string back to list of floats.
+        """
         def __init__(self, dim: int = 384):
             self.dim = dim
 
         def get_col_spec(self, **kw: Any) -> str:
             return f"vector({self.dim})"
+
+        def bind_processor(self, dialect: Any) -> Any:
+            def process(value: Any) -> str | None:
+                if value is None:
+                    return None
+                if isinstance(value, (list, tuple)):
+                    return f"[{','.join(f'{x:.6f}' for x in value)}]"
+                return str(value)
+
+            return process
+
+        def result_processor(self, dialect: Any, coltype: Any) -> Any:
+            def process(value: Any) -> list[float] | None:
+                if value is None:
+                    return None
+                if isinstance(value, str):
+                    val = value.strip("[]")
+                    return [float(x) for x in val.split(",") if x.strip()]
+                if isinstance(value, (list, tuple)):
+                    return [float(x) for x in value]
+                return value
+
+            return process
 
 from app.core.database import Base
 
