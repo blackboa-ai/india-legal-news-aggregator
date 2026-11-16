@@ -169,7 +169,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
             >
               {activeJudgment.subject_category}
             </span>
-            <span className="text-xs text-slate-500 hidden sm:inline-flex items-center">
+            <span className="text-xs text-slate-500 inline-flex items-center">
               <Calendar className="h-3 w-3 mr-1 text-slate-400" />
               {formatJudgmentDate(activeJudgment.judgment_date)}
             </span>
@@ -261,7 +261,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="overflow-y-auto p-6 flex-1 space-y-6">
+        <div className="overflow-y-auto scroll-smooth overscroll-contain p-4 sm:p-6 flex-1 space-y-6">
           {activeTab === 'judgment' ? (
             <>
               {/* Title & Case Name */}

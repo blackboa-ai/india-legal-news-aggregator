@@ -153,8 +153,8 @@ export const JudgmentCard: React.FC<JudgmentCardProps> = ({
           </div>
         </div>
 
-        {/* Title (Full title, no line-clamp truncation) */}
-        <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-amber-700 transition mb-2 leading-snug">
+        {/* Title */}
+        <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-amber-700 transition mb-2 leading-snug line-clamp-2">
           {judgment.title}
         </h3>
 
@@ -165,10 +165,10 @@ export const JudgmentCard: React.FC<JudgmentCardProps> = ({
           </p>
         )}
 
-        {/* Full Judgment Summary / Text (Complete text directly on card, no line-clamp) */}
-        <div className="text-xs sm:text-sm text-slate-700 whitespace-pre-line mb-4 leading-relaxed font-sans">
-          {judgment.full_text || judgment.excerpt}
-        </div>
+        {/* Preview Summary (Clamped to 2–3 lines for compact, scannable feed cards) */}
+        <p className="text-xs sm:text-sm text-slate-600 line-clamp-3 mb-4 leading-relaxed font-sans">
+          {judgment.excerpt || judgment.full_text}
+        </p>
 
         {/* Statutory Citation Badges / Tags */}
         {judgment.tags && judgment.tags.length > 0 && (

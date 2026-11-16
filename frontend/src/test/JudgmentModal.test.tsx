@@ -26,7 +26,7 @@ describe('JudgmentModal Component', () => {
     updated_at: '2024-04-15T10:00:00Z',
   };
 
-  it('renders modal with full judgment title, parties, tags and excerpt when open', () => {
+  it('renders modal with full judgment title, parties, tags, excerpt and full judgment text when open', () => {
     render(
       <JudgmentModal
         judgment={mockJudgment}
@@ -41,6 +41,7 @@ describe('JudgmentModal Component', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('Maneka Gandhi v. Union of India')).toBeInTheDocument();
     expect(screen.getByText(/Landmark decision expanding Article 21/i)).toBeInTheDocument();
+    expect(screen.getByText(/Complete landmark judgment on Article 21 and right to travel abroad/i)).toBeInTheDocument();
     expect(screen.getByText('Article 21')).toBeInTheDocument();
     expect(screen.getAllByText('Maneka Gandhi').length).toBeGreaterThanOrEqual(1);
   });

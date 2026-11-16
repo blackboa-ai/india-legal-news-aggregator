@@ -26,7 +26,7 @@ describe('JudgmentCard Component', () => {
     updated_at: '2024-04-15T10:00:00Z',
   };
 
-  it('renders court badge, title, full judgment text and statute tags', () => {
+  it('renders court badge, title, compact preview summary and statute tags', () => {
     render(
       <JudgmentCard
         judgment={mockJudgment}
@@ -39,7 +39,9 @@ describe('JudgmentCard Component', () => {
     expect(screen.getByText('Supreme Court of India')).toBeInTheDocument();
     expect(screen.getByText('Criminal')).toBeInTheDocument();
     expect(screen.getByText('Gurbaksh Singh Sibbia v. State of Punjab')).toBeInTheDocument();
-    expect(screen.getByText(/Full judgment text for anticipatory bail principles/i)).toBeInTheDocument();
+    const summaryEl = screen.getByText(/Constitution bench ruling on the scope and ambit/i);
+    expect(summaryEl).toBeInTheDocument();
+    expect(summaryEl).toHaveClass('line-clamp-3');
     expect(screen.getByText('Section 438 CrPC')).toBeInTheDocument();
     expect(screen.getByText('Article 21')).toBeInTheDocument();
   });
