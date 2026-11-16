@@ -19,6 +19,7 @@ export interface Judgment {
   judgment_date: string; // YYYY-MM-DD
   subject_category: string;
   excerpt: string;
+  summary?: string;
   full_text: string | null;
   url: string;
   parties: Party[] | Record<string, unknown>[];
@@ -45,6 +46,7 @@ export interface SearchResponse {
 
 export interface JudgmentListResponse {
   data: Judgment[];
+  items?: Judgment[];
   total: number;
   limit: number;
   offset: number;

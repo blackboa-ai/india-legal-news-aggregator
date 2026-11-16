@@ -38,8 +38,9 @@ function getInitialCachedFeed(): { data: Judgment[]; total: number } | null {
     const raw = localStorage.getItem(FEED_CACHE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed?.data) && parsed.data.length > 0) {
-        return { data: parsed.data, total: parsed.total || parsed.data.length };
+      const items = parsed?.data || parsed?.items;
+      if (Array.isArray(items) && items.length > 0) {
+        return { data: items, total: typeof parsed.total === 'number' ? parsed.total : items.length };
       }
     }
   } catch {
@@ -279,18 +280,20 @@ export const App: React.FC = () => {
         );
 
         if (!controller.signal.aborted) {
-          setJudgments(feedRes.data);
-          setTotalCount(feedRes.total);
+          const items = feedRes.data || feedRes.items || [];
+          const total = typeof feedRes.total === 'number' ? feedRes.total : items.length;
+          setJudgments(items);
+          setTotalCount(total);
           setSearchMeta(null);
 
           // Stale-while-revalidate: store fresh default feed for instantaneous 0ms hydration
-          if (isDefaultFeed && feedRes.data.length > 0) {
+          if (isDefaultFeed && items.length > 0) {
             try {
               localStorage.setItem(
                 FEED_CACHE_KEY,
                 JSON.stringify({
-                  data: feedRes.data,
-                  total: feedRes.total,
+                  data: items,
+                  total,
                   timestamp: Date.now(),
                 })
               );

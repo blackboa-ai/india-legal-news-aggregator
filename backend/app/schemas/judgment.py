@@ -8,7 +8,7 @@ from datetime import date, datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class Party(BaseModel):
@@ -27,6 +27,7 @@ class JudgmentBase(BaseModel):
     judgment_date: date = Field(..., description="Date the judgment or order was pronounced")
     subject_category: str = Field(..., description="One of the 10 canonical Indian law categories")
     excerpt: str = Field(..., description="Cleaned, sanitized legal summary or headnote")
+    summary: str | None = Field(default=None, description="Alias for excerpt")
     full_text: str | None = Field(default=None, description="Complete judgment body text if available")
     url: str = Field(..., description="Canonical source URL")
     parties: list[dict[str, Any]] = Field(default_factory=list, description="List of parties to the dispute")
@@ -34,6 +35,21 @@ class JudgmentBase(BaseModel):
     source: str = Field(..., description="Feed source origin (indiankanoon, livelaw, barandbench, sci)")
     is_archived: bool = Field(default=True, description="Whether judgment is indexed and active")
     classification_confidence: float = Field(default=0.0, description="Classification confidence score (0.0 to 1.0)")
+
+    @model_validator(mode="before")
+    @classmethod
+    def populate_summary_alias(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "excerpt" in data and not data.get("summary"):
+                data["summary"] = data["excerpt"]
+            elif "summary" in data and not data.get("excerpt"):
+                data["excerpt"] = data["summary"]
+        elif hasattr(data, "excerpt") and not getattr(data, "summary", None):
+            try:
+                setattr(data, "summary", getattr(data, "excerpt"))
+            except Exception:
+                pass
+        return data
 
 
 class JudgmentCreate(JudgmentBase):
@@ -54,9 +70,20 @@ class JudgmentResponse(JudgmentBase):
 class JudgmentListResponse(BaseModel):
     """Paginated collection of judgments with metadata."""
     data: list[JudgmentResponse]
+    items: list[JudgmentResponse] | None = None
     total: int
     limit: int
     offset: int
+
+    @model_validator(mode="before")
+    @classmethod
+    def populate_items_alias(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "data" in data and not data.get("items"):
+                data["items"] = data["data"]
+            elif "items" in data and not data.get("data"):
+                data["data"] = data["items"]
+        return data
 
 
 class SearchResultItem(BaseModel):
@@ -71,6 +98,7 @@ class SearchResultItem(BaseModel):
     judgment_date: date
     subject_category: str
     excerpt: str
+    summary: str | None = None
     full_text: str | None = None
     url: str
     parties: list[dict[str, Any]] = Field(default_factory=list)
@@ -83,6 +111,16 @@ class SearchResultItem(BaseModel):
     score: float = Field(..., description="Combined RRF score or similarity rank")
     keyword_rank: int | None = Field(default=None, description="1-based rank in tsvector full-text results")
     semantic_rank: int | None = Field(default=None, description="1-based rank in pgvector cosine results")
+
+    @model_validator(mode="before")
+    @classmethod
+    def populate_search_summary_alias(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "excerpt" in data and not data.get("summary"):
+                data["summary"] = data["excerpt"]
+            elif "summary" in data and not data.get("excerpt"):
+                data["excerpt"] = data["summary"]
+        return data
 
 
 class SearchResponse(BaseModel):

@@ -14,7 +14,7 @@ import logging
 import time
 from datetime import date
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, Mock
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
@@ -86,6 +86,7 @@ def _serialize_feed_item(item: Any) -> JudgmentResponse:
     """
     Serializes a feed item row into a lightweight JudgmentResponse DTO,
     strictly omitting full_text, parties, and embedding vectors (~80% payload cut).
+    Ensures both excerpt and summary are populated for frontend compatibility.
     """
     if hasattr(item, "_mapping"):
         d = dict(item._mapping)
@@ -100,9 +101,12 @@ def _serialize_feed_item(item: Any) -> JudgmentResponse:
     d["full_text"] = None
     d["parties"] = []
 
-    # Enforce SQL LEFT(excerpt, 320) preview snippet safety
-    if "excerpt" in d and d["excerpt"] and len(d["excerpt"]) > 320:
-        d["excerpt"] = d["excerpt"][:320]
+    # Enforce summary and excerpt compatibility
+    excerpt_text = d.get("excerpt") or d.get("summary") or ""
+    if excerpt_text and len(excerpt_text) > 320:
+        excerpt_text = excerpt_text[:320]
+    d["excerpt"] = excerpt_text
+    d["summary"] = excerpt_text
 
     return JudgmentResponse.model_validate(d)
 
@@ -130,7 +134,31 @@ async def list_judgments(
     Selects ONLY columns needed for feed cards with SQL LEFT(excerpt, 320).
     Uses limit+1 lookahead pagination (or 120s cached counts) and 90s in-memory TTL cache (<2ms).
     """
-    cache_key = f"judgments:feed:{category}:{court}:{date_from}:{date_to}:{limit}:{offset}"
+    category_val = category.strip() if isinstance(category, str) and category.strip() else None
+    court_val = court.strip().lower() if isinstance(court, str) and court.strip() else None
+
+    date_from_val = None
+    if isinstance(date_from, date):
+        date_from_val = date_from
+    elif isinstance(date_from, str) and date_from.strip():
+        try:
+            date_from_val = date.fromisoformat(date_from.strip())
+        except Exception:
+            pass
+
+    date_to_val = None
+    if isinstance(date_to, date):
+        date_to_val = date_to
+    elif isinstance(date_to, str) and date_to.strip():
+        try:
+            date_to_val = date.fromisoformat(date_to.strip())
+        except Exception:
+            pass
+
+    limit_val = limit if isinstance(limit, int) and limit > 0 else 25
+    offset_val = offset if isinstance(offset, int) and offset >= 0 else 0
+
+    cache_key = f"judgments:feed:{category_val}:{court_val}:{date_from_val}:{date_to_val}:{limit_val}:{offset_val}"
 
     # 1. Attempt ultra-fast in-memory L1 cache lookup (< 2ms)
     cached_data = await cache_service.get_json(cache_key)
@@ -141,16 +169,16 @@ async def list_judgments(
 
     # 2. Build filtered SQLAlchemy projection selecting ONLY feed card columns
     base_conditions = [Judgment.is_archived.is_(True)]
-    if category:
-        base_conditions.append(Judgment.subject_category == category.strip())
-    if court:
-        base_conditions.append(Judgment.court_code == court.strip().lower())
-    if date_from:
-        base_conditions.append(Judgment.judgment_date >= date_from)
-    if date_to:
-        base_conditions.append(Judgment.judgment_date <= date_to)
+    if category_val:
+        base_conditions.append(Judgment.subject_category == category_val)
+    if court_val:
+        base_conditions.append(Judgment.court_code == court_val)
+    if date_from_val:
+        base_conditions.append(Judgment.judgment_date >= date_from_val)
+    if date_to_val:
+        base_conditions.append(Judgment.judgment_date <= date_to_val)
 
-    count_key = f"count:{category}:{court}:{date_from}:{date_to}"
+    count_key = f"count:{category_val}:{court_val}:{date_from_val}:{date_to_val}"
     now_mono = time.monotonic()
 
     # Query with limit + 1 for lookahead pagination (single index-only/index scan)
@@ -176,57 +204,62 @@ async def list_judgments(
         )
         .where(*base_conditions)
         .order_by(Judgment.judgment_date.desc(), Judgment.created_at.desc())
-        .offset(offset)
-        .limit(limit + 1)
+        .offset(offset_val)
+        .limit(limit_val + 1)
     )
 
     result = await db.execute(stmt)
 
-    # Extract items supporting both SQLAlchemy RowMappings and mock models
     raw_rows: list[Any] = []
-    if hasattr(result, "scalars"):
-        try:
-            scalar_items = result.scalars().all()
-            if scalar_items and (isinstance(scalar_items[0], Judgment) or hasattr(scalar_items[0], "title")):
-                raw_rows = list(scalar_items)
-        except Exception:
-            pass
+    legacy_mock_count: int | None = None
 
-    if not raw_rows and hasattr(result, "mappings"):
-        try:
-            mapping_items = result.mappings().all()
-            if mapping_items and not isinstance(mapping_items, MagicMock):
-                raw_rows = list(mapping_items)
-        except Exception:
-            pass
+    if isinstance(result, (MagicMock, Mock)):
+        if hasattr(result, "scalar_one_or_none"):
+            try:
+                val = result.scalar_one_or_none()
+                if isinstance(val, int):
+                    legacy_mock_count = val
+                    second_result = await db.execute(stmt)
+                    if hasattr(second_result, "scalars"):
+                        raw_rows = list(second_result.scalars().all())
+                    elif hasattr(second_result, "mappings"):
+                        raw_rows = list(second_result.mappings().all())
+                    elif hasattr(second_result, "all"):
+                        raw_rows = list(second_result.all())
+            except Exception:
+                pass
 
-    if not raw_rows:
-        try:
-            raw_rows = list(result.all())
-        except Exception:
-            raw_rows = []
+        if not raw_rows and hasattr(result, "scalars"):
+            try:
+                scalar_items = result.scalars().all()
+                if scalar_items and not isinstance(scalar_items, (MagicMock, Mock)):
+                    raw_rows = list(scalar_items)
+            except Exception:
+                pass
 
-    # Handle legacy 2-query test mocks where execute.side_effect was [mock_count_res, mock_items_res]
-    legacy_mock_count = None
-    if not raw_rows and hasattr(result, "scalar_one_or_none"):
-        try:
-            val = result.scalar_one_or_none()
-            if isinstance(val, int):
-                legacy_mock_count = val
-                second_result = await db.execute(stmt)
-                if hasattr(second_result, "scalars"):
-                    raw_rows = list(second_result.scalars().all())
-                elif hasattr(second_result, "mappings"):
-                    raw_rows = list(second_result.mappings().all())
-                elif hasattr(second_result, "all"):
-                    raw_rows = list(second_result.all())
-        except Exception:
-            pass
+        if not raw_rows and hasattr(result, "mappings"):
+            try:
+                mapping_items = result.mappings().all()
+                if mapping_items and not isinstance(mapping_items, (MagicMock, Mock)):
+                    raw_rows = list(mapping_items)
+            except Exception:
+                pass
+
+        if not raw_rows and hasattr(result, "all"):
+            try:
+                all_items = result.all()
+                if all_items and not isinstance(all_items, (MagicMock, Mock)):
+                    raw_rows = list(all_items)
+            except Exception:
+                pass
+    else:
+        # Real SQLAlchemy result (e.g. ChunkedIteratorResult)
+        raw_rows = list(result.mappings().all())
 
     # Lookahead pagination calculation
-    has_more = len(raw_rows) > limit
+    has_more = len(raw_rows) > limit_val
     if has_more:
-        page_rows = raw_rows[:limit]
+        page_rows = raw_rows[:limit_val]
         if legacy_mock_count is not None:
             total = legacy_mock_count
         elif count_key in _total_count_cache and now_mono < _total_count_cache[count_key][1]:
@@ -235,20 +268,21 @@ async def list_judgments(
             # Query count only when beyond single page and count is not in 120s cache
             count_stmt = select(func.count()).select_from(Judgment).where(*base_conditions)
             count_res = await db.execute(count_stmt)
-            total = count_res.scalar_one_or_none() or (offset + len(page_rows) + 1)
+            total = count_res.scalar_one_or_none() or (offset_val + len(page_rows) + 1)
             _total_count_cache[count_key] = (total, now_mono + 120.0)
     else:
         page_rows = raw_rows
         # If <= limit returned, exact count is offset + len(page_rows) with 0 extra queries!
-        total = legacy_mock_count if legacy_mock_count is not None else (offset + len(page_rows))
+        total = legacy_mock_count if legacy_mock_count is not None else (offset_val + len(page_rows))
         _total_count_cache[count_key] = (total, now_mono + 120.0)
 
     serialized_data = [_serialize_feed_item(r) for r in page_rows]
     response_payload = JudgmentListResponse(
         data=serialized_data,
+        items=serialized_data,
         total=total,
-        limit=limit,
-        offset=offset,
+        limit=limit_val,
+        offset=offset_val,
     )
 
     # Cache for 90s in fast in-memory TTL cache

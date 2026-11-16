@@ -174,7 +174,7 @@ export const JudgmentCard = React.memo<JudgmentCardProps>(({
 
         {/* Preview Summary (Clamped strictly to 3 lines for compact, uniform feed cards) */}
         <p className="text-xs sm:text-sm text-slate-600 line-clamp-3 mb-4 leading-relaxed font-sans">
-          {judgment.excerpt || judgment.full_text}
+          {judgment.excerpt || judgment.summary || judgment.full_text}
         </p>
 
         {/* Statutory Citation Badges / Tags */}
