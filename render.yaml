@@ -1,0 +1,52 @@
+# ==============================================================================
+# Render.com Infrastructure Blueprint ($0/Month Free Tier)
+# India Legal News Aggregator - Production Backend Web Service
+# ==============================================================================
+# Specs:
+# - Target Container RAM: < 250 MB (Free tier 512 MB hard ceiling)
+# - Workers: 1 uvicorn worker to prevent out-of-memory crashes
+# - Health Check: /api/v1/health
+# ==============================================================================
+
+services:
+  - type: web
+    name: india-legal-aggregator-api
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    plan: free
+    region: oregon
+    branch: main
+    healthCheckPath: /api/v1/health
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
+    envVars:
+      - key: PORT
+        value: "8000"
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: PROJECT_NAME
+        value: "India Legal News Aggregator"
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "10080"
+      - key: ADMIN_API_KEY
+        generateValue: true
+      - key: EMBEDDING_PROVIDER
+        value: onnx
+      - key: HF_API_TOKEN
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: UVICORN_WORKERS
+        value: "1"

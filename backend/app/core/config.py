@@ -101,6 +101,22 @@ class Settings(BaseSettings):
         description="List of allowed CORS origins for frontend communication",
     )
 
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def assemble_database_url(cls, v: str) -> str:
+        """
+        Ensures postgresql+asyncpg:// driver prefix for PostgreSQL connections,
+        automatically converting standard Neon/Supabase postgres:// or postgresql:// schemes.
+        """
+        if isinstance(v, str):
+            v_stripped = v.strip()
+            if v_stripped.startswith("postgres://"):
+                return v_stripped.replace("postgres://", "postgresql+asyncpg://", 1)
+            elif v_stripped.startswith("postgresql://") and not v_stripped.startswith("postgresql+"):
+                return v_stripped.replace("postgresql://", "postgresql+asyncpg://", 1)
+            return v_stripped
+        return v
+
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: str | list[str]) -> list[str]:
