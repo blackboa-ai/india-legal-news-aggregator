@@ -49,6 +49,8 @@ class ClassificationResult:
     citations: list[str] = field(default_factory=list)
     parties: list[dict[str, str]] = field(default_factory=list)
     court: CourtInfo | None = None
+    content_type: str = "unknown"
+    content_type_confidence: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -62,6 +64,8 @@ class ClassificationResult:
                 "court_name": self.court.court_name,
                 "court_level": self.court.court_level,
             } if self.court else None,
+            "content_type": self.content_type,
+            "content_type_confidence": round(self.content_type_confidence, 4),
         }
 
 
@@ -656,12 +660,27 @@ class LegalClassifier:
         return best_category, round(confidence, 4)
 
     @classmethod
+    def classify_content_type(
+        cls,
+        title: str = "",
+        text: str = "",
+        source: str = "",
+        url: str = "",
+    ) -> tuple[str, float]:
+        """
+        Determines 3-state content classification ('judgment', 'news', 'unknown')
+        and confidence score (0.0 to 1.0).
+        """
+        return classify_content_type(title=title, text=text, source=source, url=url)
+
+    @classmethod
     def classify(
         cls,
         title: str,
         text: str = "",
         source: str | None = None,
         default_court: CourtInfo | None = None,
+        url: str | None = None,
     ) -> ClassificationResult:
         """
         Full classification pipeline executing all extractors in < 1 millisecond.
@@ -683,6 +702,14 @@ class LegalClassifier:
         # 5. Determine category & confidence
         subject_category, confidence = cls.categorize(combined_text, statute_tags)
 
+        # 6. Determine content type & confidence
+        content_type, content_type_confidence = classify_content_type(
+            title=title,
+            text=text,
+            source=source or "",
+            url=url or "",
+        )
+
         return ClassificationResult(
             subject_category=subject_category,
             confidence=confidence,
@@ -690,4 +717,181 @@ class LegalClassifier:
             citations=citations,
             parties=parties,
             court=court,
+            content_type=content_type,
+            content_type_confidence=content_type_confidence,
         )
+
+
+# --------------------------------------------------------------------------
+# Content Type Heuristic Classifier Patterns & Standalone Function
+# --------------------------------------------------------------------------
+
+# Rule A: URL Patterns
+RE_URL_NEWS = re.compile(
+    r"/(?:columns|interviews|news|law-firms)(?:/|$|\?|#)",
+    re.IGNORECASE,
+)
+RE_URL_JUDGMENT = re.compile(
+    r"/(?:orders|judgment-summary)(?:/|$|\?|#)",
+    re.IGNORECASE,
+)
+
+# Rule B: Syntactic Judicial Markers
+RE_JUDGMENT_PARTY = re.compile(
+    r"\b(?:vs\.?|v\.|versus)\b|\bin\s+re\s*:?",
+    re.IGNORECASE,
+)
+RE_JUDGMENT_CASE_NUMS = re.compile(
+    r"\b(?:s\.?l\.?p\.?|special\s+leave\s+petition|w\.?p\.?|writ\s+petition|crl\.?\s*a\.?|criminal\s+appeal|civil\s+appeal|c\.?a\.?|crl\.?\s*rev\.?|crl\.?\s*m\.?c\.?|l\.?p\.?a\.?|original\s+suit|o\.?s\.?)\b",
+    re.IGNORECASE,
+)
+RE_JUDGMENT_BENCH = re.compile(
+    r"\bcoram\s*:?|\bhon(?:'|\u2019)?ble\s+(?:mr\.|ms\.|mrs\.|dr\.)?\s*justice\b|\bhon(?:'|\u2019)?ble\s+(?:the\s+)?chief\s+justice\b|\b(?:division\s+bench|full\s+bench|constitution\s+bench)\b",
+    re.IGNORECASE,
+)
+RE_JUDGMENT_DISPOSITIVE = re.compile(
+    r"\[\s*read\s+(?:order|judgment)\s*\]|\bread\s+(?:order|judgment)\b"
+    r"|\b(?:bail\s+granted|grants?\s+bail|granted\s+bail|bail\s+allowed|anticipatory\s+bail|interim\s+bail)\b"
+    r"|\b(?:bail\s+rejected|bail\s+denied|denies?\s+bail|rejects?\s+bail)\b"
+    r"|\b(?:disposed\s+of|disposes?\s+of|disposal\s+of)\b"
+    r"|\b(?:quashed|quashes?|quashing)(?:\s+(?:the\s+)?(?:fir|proceedings|chargesheet|order|complaint))?\b"
+    r"|\b(?:fir|proceedings|chargesheet|order|complaint)\s+quashed\b"
+    r"|\b(?:conviction\s+upheld|upholds?\s+conviction|conviction\s+confirmed)\b"
+    r"|\b(?:acquitted|acquittal\s+upheld|acquits?)\b"
+    r"|\b(?:order\s+reserved|reserves?\s+order|judgment\s+reserved|reserves?\s+judgment)\b"
+    r"|\b(?:petition\s+allowed|petition\s+dismissed|appeal\s+allowed|appeal\s+dismissed)\b"
+    r"|\b(?:stay\s+granted|stays?\s+order|injunction\s+granted|restrains?\s+from)\b",
+    re.IGNORECASE,
+)
+
+# Rule C: Journalistic Markers
+RE_NEWS_JOURNALISTIC = re.compile(
+    r"\breported\s+on\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b"
+    r"|\b(?:told|speaking\s+to|briefed|informed)\s+reporters\b"
+    r"|\bpress\s+(?:release|conference|statement|briefing)\b"
+    r"|\bcollegium\s+(?:recommends?|recommended|recommendation)\b"
+    r"|\b(?:supreme\s+court\s+)?collegium\b"
+    r"|\bbar\s+council\s+election[s]?\b|\bbar\s+association\s+election[s]?\b"
+    r"|\bcabinet\s+(?:approves?|approved|decision|clears?)\b|\bunion\s+cabinet\b"
+    r"|\b(?:appointed|appointment\s+of)\s+(?:as\s+)?(?:judges?|chief\s+justice|cai|ag|attorney\s+general|solicitor\s+general|additional\s+solicitor)\b"
+    r"|\belevation\s+(?:to|of)\s+(?:high\s+court|supreme\s+court|bench)\b"
+    r"|\b(?:sworn\s+in|takes?\s+oath)\s+(?:as\s+)?(?:chief\s+justice|judge|union\s+minister)\b"
+    r"|\b(?:farewell\s+function|farewell\s+address|retirement\s+of|tenure\s+extended)\b"
+    r"|\b(?:law\s+minister|union\s+minister\s+for\s+law)\b"
+    r"|\b(?:parliament\s+passes?|lok\s+sabha\s+passes?|rajya\s+sabha\s+passes?|bill\s+(?:introduced|tabled|passed))\b"
+    r"|\b(?:inaugurated?|book\s+launch|annual\s+lecture|symposium|webinar|seminar|conference)\b",
+    re.IGNORECASE,
+)
+
+
+def classify_content_type(
+    title: str = "",
+    text: str = "",
+    source: str = "",
+    url: str = "",
+) -> tuple[str, float]:
+    """
+    Deterministic heuristic content classifier (3-state: 'judgment', 'news', 'unknown').
+    Operates in < 1ms with 0 MB memory allocation (pure compiled regex).
+    """
+    clean_source = (source or "").strip().lower()
+
+    # Rule A: Authoritative source override
+    if clean_source in ("sci", "indiankanoon"):
+        return ("judgment", 1.0)
+
+    clean_title = (title or "").strip()
+    clean_text = (text or "").strip()
+    clean_url = (url or "").strip().lower()
+
+    j_score = 0.0
+    n_score = 0.0
+    j_content_matches = 0
+    n_content_matches = 0
+
+    # Rule A: URL Route Bias
+    has_news_url = any(m in clean_url for m in ("/columns/", "/interviews/", "/news/", "/law-firms/")) or bool(
+        RE_URL_NEWS.search(clean_url)
+    )
+    has_judgment_url = any(m in clean_url for m in ("/orders/", "/judgment-summary/")) or bool(
+        RE_URL_JUDGMENT.search(clean_url)
+    )
+
+    if has_news_url:
+        n_score += 2.5
+    if has_judgment_url:
+        j_score += 2.5
+
+    # Rule B: Syntactic Judicial Markers
+    # 1. Party indicators (vs, v., versus, In re:)
+    if RE_JUDGMENT_PARTY.search(clean_title):
+        j_score += 2.5
+        j_content_matches += 1
+    elif RE_JUDGMENT_PARTY.search(clean_text):
+        j_score += 1.2
+        j_content_matches += 1
+
+    # 2. Case numbers (SLP, W.P., Crl.A., Civil Appeal)
+    if RE_JUDGMENT_CASE_NUMS.search(clean_title):
+        j_score += 2.5
+        j_content_matches += 1
+    elif RE_JUDGMENT_CASE_NUMS.search(clean_text):
+        j_score += 1.2
+        j_content_matches += 1
+
+    # 3. Bench markers (CORAM:, HON'BLE MR. JUSTICE)
+    if RE_JUDGMENT_BENCH.search(clean_title):
+        j_score += 2.5
+        j_content_matches += 1
+    elif RE_JUDGMENT_BENCH.search(clean_text):
+        j_score += 1.2
+        j_content_matches += 1
+
+    # 4. Dispositive verbs (BAIL GRANTED, DISPOSED OF, QUASHED, CONVICTION UPHELD, [Read Order])
+    disp_title_matches = len(RE_JUDGMENT_DISPOSITIVE.findall(clean_title))
+    if disp_title_matches > 0:
+        j_score += min(5.0, 2.5 * disp_title_matches)
+        j_content_matches += disp_title_matches
+
+    disp_text_matches = len(RE_JUDGMENT_DISPOSITIVE.findall(clean_text))
+    if disp_text_matches > 0:
+        j_score += min(3.0, 1.2 * disp_text_matches)
+        j_content_matches += disp_text_matches
+
+    # Rule C: Journalistic markers
+    news_title_matches = len(RE_NEWS_JOURNALISTIC.findall(clean_title))
+    if news_title_matches > 0:
+        n_score += min(5.0, 2.5 * news_title_matches)
+        n_content_matches += news_title_matches
+
+    news_text_matches = len(RE_NEWS_JOURNALISTIC.findall(clean_text))
+    if news_text_matches > 0:
+        n_score += min(3.0, 1.2 * news_text_matches)
+        n_content_matches += news_text_matches
+
+    # Rule D: Signal Conflict & Threshold Check
+    # Conflicting signals: both sides have strong textual content matches with close scores
+    if j_content_matches > 0 and n_content_matches > 0:
+        min_score = min(j_score, n_score)
+        max_score = max(j_score, n_score)
+        if max_score > 0 and (min_score / max_score >= 0.65 or abs(j_score - n_score) < 1.5):
+            return ("unknown", 0.5)
+
+    # Insufficient signals (< 2.0 total score)
+    if max(j_score, n_score) < 2.0:
+        return ("unknown", 0.5)
+
+    if j_score > n_score:
+        margin = j_score - n_score
+        confidence = min(0.98, 0.65 + 0.06 * margin)
+        if confidence < 0.65:
+            return ("unknown", round(confidence, 2))
+        return ("judgment", round(confidence, 2))
+    elif n_score > j_score:
+        margin = n_score - j_score
+        confidence = min(0.98, 0.65 + 0.06 * margin)
+        if confidence < 0.65:
+            return ("unknown", round(confidence, 2))
+        return ("news", round(confidence, 2))
+    else:
+        return ("unknown", 0.5)

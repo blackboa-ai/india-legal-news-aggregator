@@ -42,6 +42,8 @@ async def update_rss_articles():
                 existing.full_text = item.full_text
                 existing.subject_category = item.subject_category
                 existing.tags = list(set(existing.tags + item.tags))
+                existing.content_type = item.content_type
+                existing.content_type_confidence = item.content_type_confidence
                 if not existing.embedding:
                     text_for_embed = f"{item.title} {item.subject_category} {item.excerpt}"
                     existing.embedding = embedding_service.embed_query(text_for_embed)
@@ -67,6 +69,8 @@ async def update_rss_articles():
                     source=item.source,
                     is_archived=True,
                     classification_confidence=0.95,
+                    content_type=item.content_type,
+                    content_type_confidence=item.content_type_confidence,
                     embedding=emb,
                 )
                 session.add(new_j)

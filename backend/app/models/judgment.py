@@ -12,6 +12,7 @@ from sqlalchemy import (
     Date,
     DateTime,
     Float,
+    Index,
     Integer,
     String,
     Text,
@@ -88,10 +89,16 @@ class Judgment(Base):
     source = Column(String(50), nullable=False)  # indiankanoon, livelaw, barandbench, sci
     is_archived = Column(Boolean, default=True)
     classification_confidence = Column(Float, default=0.0)
+    content_type = Column(String(20), nullable=False, default="unknown", index=True)
+    content_type_confidence = Column(Float, nullable=False, default=0.0)
     embedding = Column(Vector(384), nullable=True)
     search_tsv = Column(TSVECTOR, server_default=FetchedValue(), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    __table_args__ = (
+        Index("idx_judgments_content_type", "content_type"),
+    )
 
     # Relationships
     bookmarks = relationship("Bookmark", back_populates="judgment", cascade="all, delete-orphan")

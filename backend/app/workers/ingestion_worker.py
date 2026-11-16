@@ -28,6 +28,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import AsyncSessionLocal
 from app.models.judgment import Judgment
 from app.services.embedding_service import embedding_service
+from app.services.legal_classifier import classify_content_type
 from app.services.rss_ingestor import (
     DEFAULT_LEGAL_FEEDS,
     FeedSourceConfig,
@@ -115,6 +116,19 @@ class IngestionWorker:
         embed_input = f"{item.title} {item.excerpt} {' '.join(item.tags or [])}".strip()
         embedding = await embedding_service.get_embedding(embed_input)
 
+        # Ensure content_type and content_type_confidence are populated
+        content_type = getattr(item, "content_type", None)
+        content_type_confidence = getattr(item, "content_type_confidence", None)
+        if not content_type or (content_type == "unknown" and content_type_confidence == 0.0):
+            c_type, c_conf = classify_content_type(
+                title=item.title,
+                text=item.full_text or item.excerpt,
+                source=item.source,
+                url=item.url,
+            )
+            content_type = c_type
+            content_type_confidence = c_conf
+
         judgment = Judgment(
             external_id=item.external_id,
             title=item.title,
@@ -132,6 +146,8 @@ class IngestionWorker:
             source=item.source,
             is_archived=True,
             classification_confidence=item.classification_confidence,
+            content_type=content_type or "unknown",
+            content_type_confidence=content_type_confidence if content_type_confidence is not None else 0.0,
             embedding=embedding,
         )
         res = session.add(judgment)

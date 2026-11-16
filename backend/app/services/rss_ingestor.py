@@ -21,7 +21,7 @@ import feedparser
 import httpx
 from bs4 import BeautifulSoup
 
-from app.services.legal_classifier import CourtInfo, LegalClassifier
+from app.services.legal_classifier import CourtInfo, LegalClassifier, classify_content_type
 
 logger = logging.getLogger(__name__)
 
@@ -115,6 +115,8 @@ class ParsedJudgmentItem:
     tags: list[str]
     source: str
     classification_confidence: float
+    content_type: str = "unknown"
+    content_type_confidence: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -336,6 +338,15 @@ class RSSIngestor:
                 text=excerpt,
                 source=source_config.source_id,
                 default_court=default_court,
+                url=canonical_url,
+            )
+
+            # 3-State content classification (judgment, news, unknown)
+            content_type, content_type_confidence = classify_content_type(
+                title=title,
+                text=full_text or excerpt,
+                source=source_config.source_id,
+                url=canonical_url,
             )
 
             # Court resolution: classification overrides if high confidence or fallback to source default
@@ -360,6 +371,8 @@ class RSSIngestor:
                 tags=classification.statute_tags,
                 source=source_config.source_id,
                 classification_confidence=classification.confidence,
+                content_type=content_type,
+                content_type_confidence=content_type_confidence,
             )
             items.append(item)
 

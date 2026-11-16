@@ -122,6 +122,7 @@ def _serialize_feed_item(item: Any) -> JudgmentResponse:
 async def list_judgments(
     category: str | None = Query(default=None, description="Filter by legal subject domain"),
     court: str | None = Query(default=None, description="Filter by court identifier code"),
+    content_type: str | None = Query(default=None, description="Filter by content type (judgment, news, unknown)"),
     date_from: date | None = Query(default=None, description="Filter judgments on or after this date"),
     date_to: date | None = Query(default=None, description="Filter judgments on or before this date"),
     limit: int = Query(default=25, ge=1, le=100, description="Page size limit"),
@@ -136,6 +137,7 @@ async def list_judgments(
     """
     category_val = category.strip() if isinstance(category, str) and category.strip() else None
     court_val = court.strip().lower() if isinstance(court, str) and court.strip() else None
+    content_type_val = content_type.strip().lower() if isinstance(content_type, str) and content_type.strip() else None
 
     date_from_val = None
     if isinstance(date_from, date):
@@ -158,7 +160,7 @@ async def list_judgments(
     limit_val = limit if isinstance(limit, int) and limit > 0 else 25
     offset_val = offset if isinstance(offset, int) and offset >= 0 else 0
 
-    cache_key = f"judgments:feed:{category_val}:{court_val}:{date_from_val}:{date_to_val}:{limit_val}:{offset_val}"
+    cache_key = f"judgments:feed:{category_val}:{court_val}:{content_type_val}:{date_from_val}:{date_to_val}:{limit_val}:{offset_val}"
 
     # 1. Attempt ultra-fast in-memory L1 cache lookup (< 2ms)
     cached_data = await cache_service.get_json(cache_key)
@@ -173,12 +175,14 @@ async def list_judgments(
         base_conditions.append(Judgment.subject_category == category_val)
     if court_val:
         base_conditions.append(Judgment.court_code == court_val)
+    if content_type_val:
+        base_conditions.append(Judgment.content_type == content_type_val)
     if date_from_val:
         base_conditions.append(Judgment.judgment_date >= date_from_val)
     if date_to_val:
         base_conditions.append(Judgment.judgment_date <= date_to_val)
 
-    count_key = f"count:{category_val}:{court_val}:{date_from_val}:{date_to_val}"
+    count_key = f"count:{category_val}:{court_val}:{content_type_val}:{date_from_val}:{date_to_val}"
     now_mono = time.monotonic()
 
     # Query with limit + 1 for lookahead pagination (single index-only/index scan)
@@ -199,6 +203,8 @@ async def list_judgments(
             Judgment.source,
             Judgment.is_archived,
             Judgment.classification_confidence,
+            Judgment.content_type,
+            Judgment.content_type_confidence,
             Judgment.created_at,
             Judgment.updated_at,
         )

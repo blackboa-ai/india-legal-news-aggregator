@@ -35,6 +35,8 @@ class JudgmentBase(BaseModel):
     source: str = Field(..., description="Feed source origin (indiankanoon, livelaw, barandbench, sci)")
     is_archived: bool = Field(default=True, description="Whether judgment is indexed and active")
     classification_confidence: float = Field(default=0.0, description="Classification confidence score (0.0 to 1.0)")
+    content_type: str = Field(default="unknown", description="3-state content classification: judgment, news, or unknown")
+    content_type_confidence: float = Field(default=0.0, description="Content type classification confidence score (0.0 to 1.0)")
 
     @model_validator(mode="before")
     @classmethod
@@ -44,17 +46,88 @@ class JudgmentBase(BaseModel):
                 data["summary"] = data["excerpt"]
             elif "summary" in data and not data.get("excerpt"):
                 data["excerpt"] = data["summary"]
-        elif hasattr(data, "excerpt") and not getattr(data, "summary", None):
-            try:
-                setattr(data, "summary", getattr(data, "excerpt"))
-            except Exception:
-                pass
+            if data.get("content_type") is None:
+                data["content_type"] = "unknown"
+            if data.get("content_type_confidence") is None:
+                data["content_type_confidence"] = 0.0
+        elif hasattr(data, "excerpt"):
+            if not getattr(data, "summary", None):
+                try:
+                    setattr(data, "summary", getattr(data, "excerpt"))
+                except Exception:
+                    pass
+            if getattr(data, "content_type", None) is None:
+                try:
+                    setattr(data, "content_type", "unknown")
+                except Exception:
+                    pass
+            if getattr(data, "content_type_confidence", None) is None:
+                try:
+                    setattr(data, "content_type_confidence", 0.0)
+                except Exception:
+                    pass
         return data
 
 
 class JudgmentCreate(JudgmentBase):
     """Schema for inserting a new judgment."""
     external_id: str = Field(..., description="SHA-256 hash for deduplication")
+
+
+class JudgmentListItem(BaseModel):
+    """Slim judgment projection for feed cards and list endpoints."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    external_id: str
+    title: str
+    short_title: str | None = None
+    court_code: str
+    court_name: str
+    court_level: int = 2
+    judgment_date: date
+    subject_category: str
+    excerpt: str
+    summary: str | None = None
+    url: str
+    tags: list[str] = Field(default_factory=list)
+    source: str = ""
+    is_archived: bool = True
+    classification_confidence: float = 0.0
+    content_type: str = Field(default="unknown", description="3-state content classification: judgment, news, or unknown")
+    content_type_confidence: float = Field(default=0.0, description="Content type classification confidence score (0.0 to 1.0)")
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def populate_summary_alias(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "excerpt" in data and not data.get("summary"):
+                data["summary"] = data["excerpt"]
+            elif "summary" in data and not data.get("excerpt"):
+                data["excerpt"] = data["summary"]
+            if data.get("content_type") is None:
+                data["content_type"] = "unknown"
+            if data.get("content_type_confidence") is None:
+                data["content_type_confidence"] = 0.0
+        elif hasattr(data, "excerpt"):
+            if not getattr(data, "summary", None):
+                try:
+                    setattr(data, "summary", getattr(data, "excerpt"))
+                except Exception:
+                    pass
+            if getattr(data, "content_type", None) is None:
+                try:
+                    setattr(data, "content_type", "unknown")
+                except Exception:
+                    pass
+            if getattr(data, "content_type_confidence", None) is None:
+                try:
+                    setattr(data, "content_type_confidence", 0.0)
+                except Exception:
+                    pass
+        return data
 
 
 class JudgmentResponse(JudgmentBase):
@@ -94,7 +167,7 @@ class SearchResultItem(BaseModel):
     short_title: str | None = None
     court_code: str
     court_name: str
-    court_level: int
+    court_level: int = 2
     judgment_date: date
     subject_category: str
     excerpt: str
@@ -106,6 +179,8 @@ class SearchResultItem(BaseModel):
     source: str = ""
     is_archived: bool = True
     classification_confidence: float = 0.0
+    content_type: str = Field(default="unknown", description="3-state content classification: judgment, news, or unknown")
+    content_type_confidence: float = Field(default=0.0, description="Content type classification confidence score (0.0 to 1.0)")
     created_at: datetime | None = None
     updated_at: datetime | None = None
     score: float = Field(..., description="Combined RRF score or similarity rank")
@@ -120,6 +195,26 @@ class SearchResultItem(BaseModel):
                 data["summary"] = data["excerpt"]
             elif "summary" in data and not data.get("excerpt"):
                 data["excerpt"] = data["summary"]
+            if data.get("content_type") is None:
+                data["content_type"] = "unknown"
+            if data.get("content_type_confidence") is None:
+                data["content_type_confidence"] = 0.0
+        elif hasattr(data, "excerpt"):
+            if not getattr(data, "summary", None):
+                try:
+                    setattr(data, "summary", getattr(data, "excerpt"))
+                except Exception:
+                    pass
+            if getattr(data, "content_type", None) is None:
+                try:
+                    setattr(data, "content_type", "unknown")
+                except Exception:
+                    pass
+            if getattr(data, "content_type_confidence", None) is None:
+                try:
+                    setattr(data, "content_type_confidence", 0.0)
+                except Exception:
+                    pass
         return data
 
 
