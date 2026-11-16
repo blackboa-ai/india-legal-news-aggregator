@@ -36,10 +36,26 @@ function getStorage(): Storage | null {
   return null;
 }
 
+// Normalizes API base URL, ensuring /api/v1 suffix and valid local dev host/port
+function normalizeApiBaseUrl(raw?: string): string {
+  let url = (raw || '').trim().replace(/\/+$/, '');
+  if (!url || url === 'http://127.0.0' || url === 'http://127.0.0.1') {
+    url = 'http://127.0.0.1:8000';
+  } else if (url.startsWith('http://127.0.0') && !url.includes(':')) {
+    url = 'http://127.0.0.1:8000';
+  }
+  if (!url.endsWith('/api/v1')) {
+    url = `${url}/api/v1`;
+  }
+  return url;
+}
+
 // Base API URL with environment fallback
-export const API_BASE_URL: string =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/+$/, '') ||
-  'http://localhost:8000/api/v1';
+export const API_BASE_URL: string = normalizeApiBaseUrl(
+  (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
+  (import.meta.env.VITE_API_URL as string | undefined) ||
+  (import.meta.env.VITE_BACKEND_URL as string | undefined)
+);
 
 /**
  * Extract ?token= or ?access_token= from URL search params (Integrated Mode SSO handoff).
@@ -253,12 +269,30 @@ export const api = {
       return request<Judgment[]>(`/similar/${id}?limit=${limit}`);
     },
 
-    categories: (): Promise<LegalCategoryItem[]> => {
-      return request<LegalCategoryItem[]>('/categories');
+    categories: async (): Promise<LegalCategoryItem[]> => {
+      try {
+        return await request<LegalCategoryItem[]>('/categories');
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404 && API_BASE_URL.includes('/api/v1')) {
+          const rootUrl = API_BASE_URL.replace(/\/api\/v1$/, '');
+          const res = await fetch(`${rootUrl}/categories`);
+          if (res.ok) return res.json();
+        }
+        throw err;
+      }
     },
 
-    courts: (): Promise<CourtItem[]> => {
-      return request<CourtItem[]>('/courts');
+    courts: async (): Promise<CourtItem[]> => {
+      try {
+        return await request<CourtItem[]>('/courts');
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404 && API_BASE_URL.includes('/api/v1')) {
+          const rootUrl = API_BASE_URL.replace(/\/api\/v1$/, '');
+          const res = await fetch(`${rootUrl}/courts`);
+          if (res.ok) return res.json();
+        }
+        throw err;
+      }
     },
   },
 

@@ -222,6 +222,27 @@ def create_application() -> FastAPI:
             "service": "india-legal-aggregator",
         }
 
+    # Top-level metadata aliases for direct /categories & /courts access
+    @application.get(
+        "/categories",
+        tags=["Metadata"],
+        summary="List legal categories (root alias)",
+        include_in_schema=False,
+    )
+    async def root_categories():
+        from app.api.v1.judgments import list_categories
+        return await list_categories()
+
+    @application.get(
+        "/courts",
+        tags=["Metadata"],
+        summary="List Indian courts (root alias)",
+        include_in_schema=False,
+    )
+    async def root_courts():
+        from app.api.v1.judgments import list_courts
+        return await list_courts()
+
     # Root index endpoint
     @application.get(
         "/",

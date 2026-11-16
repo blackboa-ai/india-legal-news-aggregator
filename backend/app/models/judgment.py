@@ -19,6 +19,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, TSVECTOR, UUID
 from sqlalchemy.orm import relationship
+from sqlalchemy.schema import FetchedValue
 
 try:
     from pgvector.sqlalchemy import Vector
@@ -60,7 +61,7 @@ class Judgment(Base):
     is_archived = Column(Boolean, default=True)
     classification_confidence = Column(Float, default=0.0)
     embedding = Column(Vector(384), nullable=True)
-    search_tsv = Column(TSVECTOR, nullable=True)
+    search_tsv = Column(TSVECTOR, server_default=FetchedValue(), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 

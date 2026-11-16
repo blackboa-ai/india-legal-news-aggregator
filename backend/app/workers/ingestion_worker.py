@@ -9,11 +9,18 @@ and outputs structured JSON logs. Supports graceful cancellation via asyncio.Eve
 
 import asyncio
 import logging
+import sys
 import time
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
+
+# Ensure backend root is on sys.path for direct script execution
+backend_root = Path(__file__).resolve().parent.parent.parent
+if str(backend_root) not in sys.path:
+    sys.path.insert(0, str(backend_root))
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -333,3 +340,13 @@ __all__ = [
     "IngestionWorker",
     "ingestion_worker",
 ]
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    print("Running one-off RSS ingestion cycle...")
+    report = asyncio.run(ingestion_worker.run_once())
+    print(
+        f"Ingestion cycle report: fetched={report.total_fetched}, "
+        f"inserted={report.total_inserted}, duplicates={report.total_duplicates}, "
+        f"failed_sources={report.failed_sources}, duration={report.duration_seconds}s"
+    )

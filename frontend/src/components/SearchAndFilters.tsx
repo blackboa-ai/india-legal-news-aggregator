@@ -32,6 +32,27 @@ export const CANONICAL_CATEGORIES = [
   'Education',
 ];
 
+export const DEFAULT_COURTS: CourtItem[] = [
+  { code: 'sc', name: 'Supreme Court of India', level: 1 },
+  { code: 'delhi-hc', name: 'High Court of Delhi', level: 2 },
+  { code: 'bombay-hc', name: 'High Court of Bombay', level: 2 },
+  { code: 'madras-hc', name: 'High Court of Madras', level: 2 },
+  { code: 'calcutta-hc', name: 'High Court of Calcutta', level: 2 },
+  { code: 'allahabad-hc', name: 'High Court of Allahabad', level: 2 },
+  { code: 'karnataka-hc', name: 'High Court of Karnataka', level: 2 },
+  { code: 'kerala-hc', name: 'High Court of Kerala', level: 2 },
+  { code: 'punjab-haryana-hc', name: 'High Court of Punjab and Haryana', level: 2 },
+  { code: 'gujarat-hc', name: 'High Court of Gujarat', level: 2 },
+  { code: 'nclat', name: 'National Company Law Appellate Tribunal', level: 3 },
+  { code: 'ngt', name: 'National Green Tribunal', level: 3 },
+];
+
+export const DEFAULT_CATEGORIES: LegalCategoryItem[] = CANONICAL_CATEGORIES.map((cat) => ({
+  id: cat.toLowerCase().replace(/\s+/g, '-'),
+  name: cat,
+  description: `Legal judgments in ${cat}`,
+}));
+
 export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
   filters,
   onFilterChange,

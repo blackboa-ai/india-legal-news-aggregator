@@ -18,7 +18,11 @@ import {
   Topic,
 } from './types';
 import { Header } from './components/Header';
-import { SearchAndFilters } from './components/SearchAndFilters';
+import {
+  SearchAndFilters,
+  DEFAULT_CATEGORIES,
+  DEFAULT_COURTS,
+} from './components/SearchAndFilters';
 import { JudgmentCard } from './components/JudgmentCard';
 import { JudgmentModal } from './components/JudgmentModal';
 import { AuthModal } from './components/AuthModal';
@@ -48,9 +52,9 @@ export const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Metadata
-  const [categories, setCategories] = useState<LegalCategoryItem[]>([]);
-  const [courts, setCourts] = useState<CourtItem[]>([]);
+  // Metadata (defaults gracefully to canonical categories and courts)
+  const [categories, setCategories] = useState<LegalCategoryItem[]>(DEFAULT_CATEGORIES);
+  const [courts, setCourts] = useState<CourtItem[]>(DEFAULT_COURTS);
   const [searchMeta, setSearchMeta] = useState<{
     query_type?: string;
     matched_terms?: string[];
@@ -84,21 +88,25 @@ export const App: React.FC = () => {
     }, 3500);
   }, []);
 
-  // Fetch initial metadata (Categories & Courts)
+  // Fetch initial metadata (Categories & Courts with graceful fallback)
   useEffect(() => {
     let isMounted = true;
     const fetchMetadata = async () => {
       try {
         const [cats, crts] = await Promise.all([
-          api.judgments.categories(),
-          api.judgments.courts(),
+          api.judgments.categories().catch(() => DEFAULT_CATEGORIES),
+          api.judgments.courts().catch(() => DEFAULT_COURTS),
         ]);
         if (isMounted) {
-          setCategories(cats);
-          setCourts(crts);
+          setCategories(cats && cats.length > 0 ? cats : DEFAULT_CATEGORIES);
+          setCourts(crts && crts.length > 0 ? crts : DEFAULT_COURTS);
         }
       } catch (err) {
         console.warn('Metadata fetch fallback:', err);
+        if (isMounted) {
+          setCategories(DEFAULT_CATEGORIES);
+          setCourts(DEFAULT_COURTS);
+        }
       }
     };
     fetchMetadata();
