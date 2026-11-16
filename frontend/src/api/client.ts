@@ -190,7 +190,10 @@ async function request<T>(
   }
 
   if (!response.ok) {
-    let errorDetail = `Request failed with status ${response.status}`;
+    let errorDetail =
+      response.status >= 500
+        ? 'Unable to load updates right now. Please try again.'
+        : `Request could not be completed (${response.status}).`;
     let errorData: unknown = null;
     try {
       errorData = await response.json();

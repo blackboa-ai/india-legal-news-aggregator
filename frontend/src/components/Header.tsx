@@ -32,33 +32,33 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & Brand */}
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <div className="h-10 w-10 rounded-lg bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-400">
-              <Scale className="h-6 w-6" />
+          <div className="flex items-center space-x-2 sm:space-x-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0">
+              <Scale className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-bold text-lg tracking-tight text-white">
+                <span className="font-bold text-base sm:text-lg tracking-tight text-white whitespace-nowrap">
                   India Legal Aggregator
                 </span>
                 <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/30">
-                  v2.0 RRF
+                  Live Feed
                 </span>
               </div>
               <p className="text-xs text-slate-400 hidden sm:block">
-                Hybrid AI Legal Research & Judgment Feed
+                Smart Legal Research & Daily Court Updates
               </p>
             </div>
           </div>
 
           {/* Quick Actions & Navigation */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="flex items-center space-x-1.5 sm:space-x-3">
             {/* Scroll to search button */}
             {onScrollToSearch && (
               <button
                 type="button"
                 onClick={onScrollToSearch}
-                className="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition"
+                className="hidden md:flex items-center space-x-1.5 px-3 py-2 min-h-[40px] rounded-lg text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition"
               >
                 <Search className="h-3.5 w-3.5" />
                 <span>Search</span>
@@ -70,7 +70,7 @@ export const Header: React.FC<HeaderProps> = ({
               type="button"
               onClick={() => onOpenDashboard('bookmarks')}
               aria-label="View saved bookmarks"
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:text-white bg-slate-800/80 hover:bg-slate-700 transition border border-slate-700 relative"
+              className="flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3 py-2 min-h-[40px] rounded-lg text-xs font-medium text-slate-200 hover:text-white bg-slate-800/80 hover:bg-slate-700 transition border border-slate-700 relative"
             >
               <BookmarkIcon className="h-4 w-4 text-amber-400" />
               <span className="hidden sm:inline">Bookmarks</span>
@@ -86,7 +86,7 @@ export const Header: React.FC<HeaderProps> = ({
               type="button"
               onClick={() => onOpenDashboard('matches')}
               aria-label="View personalized alerts and matches"
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:text-white bg-slate-800/80 hover:bg-slate-700 transition border border-slate-700 relative"
+              className="flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3 py-2 min-h-[40px] rounded-lg text-xs font-medium text-slate-200 hover:text-white bg-slate-800/80 hover:bg-slate-700 transition border border-slate-700 relative"
             >
               <Bell className="h-4 w-4 text-indigo-400" />
               <span className="hidden sm:inline">Alerts</span>
@@ -99,14 +99,14 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Auth State Button */}
             {isAuthenticated && user ? (
-              <div className="flex items-center space-x-2 pl-2 border-l border-slate-700">
+              <div className="flex items-center space-x-1 sm:space-x-2 pl-1 sm:pl-2 border-l border-slate-700">
                 <button
                   type="button"
                   onClick={() => onOpenDashboard('topics')}
-                  className="flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 transition border border-slate-700"
+                  className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-2 min-h-[40px] rounded-lg text-xs font-medium text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 transition border border-slate-700"
                 >
-                  <UserIcon className="h-3.5 w-3.5 text-emerald-400" />
-                  <span className="max-w-[120px] truncate">
+                  <UserIcon className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                  <span className="max-w-[80px] sm:max-w-[120px] truncate">
                     {user.full_name || user.email.split('@')[0]}
                   </span>
                 </button>
@@ -114,7 +114,7 @@ export const Header: React.FC<HeaderProps> = ({
                   type="button"
                   onClick={logout}
                   title="Sign out"
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800 transition"
+                  className="p-2 min-h-[40px] min-w-[36px] flex items-center justify-center rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800 transition"
                   aria-label="Log out"
                 >
                   <LogOut className="h-4 w-4" />
@@ -124,7 +124,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 onClick={onOpenAuth}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-900 bg-amber-400 hover:bg-amber-300 transition shadow-sm"
+                className="flex items-center space-x-1 sm:space-x-1.5 px-3 py-2 min-h-[40px] rounded-lg text-xs font-semibold text-slate-900 bg-amber-400 hover:bg-amber-300 transition shadow-sm"
               >
                 <LogIn className="h-3.5 w-3.5" />
                 <span>Sign In</span>

@@ -82,7 +82,7 @@ async def list_judgments(
     court: str | None = Query(default=None, description="Filter by court identifier code"),
     date_from: date | None = Query(default=None, description="Filter judgments on or after this date"),
     date_to: date | None = Query(default=None, description="Filter judgments on or before this date"),
-    limit: int = Query(default=20, ge=1, le=100, description="Page size limit"),
+    limit: int = Query(default=25, ge=1, le=100, description="Page size limit"),
     offset: int = Query(default=0, ge=0, description="Offset cursor for pagination"),
     db: AsyncSession = Depends(get_db),
 ):
@@ -158,7 +158,7 @@ async def search_judgments(
     mode: str = Query(default="hybrid", description="Search mode: hybrid, keyword, or semantic"),
     category: str | None = Query(default=None, description="Filter by legal subject domain"),
     court: str | None = Query(default=None, description="Filter by court identifier code"),
-    limit: int = Query(default=10, ge=1, le=50, description="Max results to return"),
+    limit: int = Query(default=25, ge=1, le=100, description="Max results to return"),
     offset: int = Query(default=0, ge=0, description="Offset for pagination"),
     db: AsyncSession = Depends(get_db),
 ):

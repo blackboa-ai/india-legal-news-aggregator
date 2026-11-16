@@ -94,14 +94,14 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
             type="text"
             value={filters.q}
             onChange={(e) => onFilterChange({ q: e.target.value })}
-            placeholder="Search judgments, statutory citations (e.g., Section 438 CrPC, Article 21, IBC Sec 9)..."
-            className="block w-full pl-11 pr-24 py-3 sm:py-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm sm:text-base text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition shadow-inner"
+            placeholder="Search judgments, laws & sections (e.g., Section 438 CrPC, Article 21, IBC Section 9)..."
+            className="block w-full min-h-[44px] pl-11 pr-24 py-3 sm:py-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm sm:text-base text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition shadow-inner"
           />
           {filters.q && (
             <button
               type="button"
               onClick={() => onFilterChange({ q: '', page: 1 })}
-              className="absolute right-24 sm:right-28 text-slate-400 hover:text-slate-600 p-1"
+              className="absolute right-24 sm:right-28 text-slate-400 hover:text-slate-600 p-2 min-h-[44px] min-w-[36px] flex items-center justify-center"
               aria-label="Clear search input"
             >
               <X className="h-4 w-4" />
@@ -111,7 +111,7 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
             type="submit"
             data-testid="search-submit-btn"
             disabled={isLoading}
-            className="absolute right-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs sm:text-sm font-semibold transition flex items-center space-x-1.5 shadow"
+            className="absolute right-1.5 min-h-[40px] px-3.5 sm:px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs sm:text-sm font-semibold transition flex items-center space-x-1.5 shadow"
           >
             {isLoading ? (
               <span className="inline-block animate-spin">⏳</span>
@@ -125,58 +125,58 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
         </div>
       </form>
 
-      {/* Mode Selection & Quick Filters Row */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
-        {/* Search Mode Toggle (Hybrid / Keyword / Semantic) */}
-        <div className="flex items-center space-x-1.5 bg-slate-100 p-1 rounded-xl">
-          <span className="text-[11px] font-semibold text-slate-500 px-2 uppercase tracking-wider hidden md:inline">
-            Mode:
+      {/* Search Mode & Quick Filters Row (Stacked & Mobile-Friendly) */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pt-3 border-t border-slate-100">
+        {/* Search Mode Toggle (Smart Search / Exact Words / By Meaning) */}
+        <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl overflow-x-auto">
+          <span className="text-[11px] font-semibold text-slate-500 px-2 uppercase tracking-wider hidden lg:inline">
+            Search by:
           </span>
           <button
             type="button"
             onClick={() => handleModeChange('hybrid')}
-            className={`px-3 py-1 rounded-lg text-xs font-semibold transition flex items-center space-x-1 ${
+            className={`min-h-[40px] px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 shrink-0 ${
               filters.mode === 'hybrid'
                 ? 'bg-white text-amber-700 shadow-sm'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Sparkles className="h-3 w-3 text-amber-500" />
-            <span>Hybrid (RRF)</span>
+            <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+            <span>Smart Search</span>
           </button>
           <button
             type="button"
             onClick={() => handleModeChange('keyword')}
-            className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
+            className={`min-h-[40px] px-3.5 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 ${
               filters.mode === 'keyword'
                 ? 'bg-white text-slate-900 shadow-sm'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Keyword (BM25)
+            Exact Words
           </button>
           <button
             type="button"
             onClick={() => handleModeChange('semantic')}
-            className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
+            className={`min-h-[40px] px-3.5 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 ${
               filters.mode === 'semantic'
                 ? 'bg-white text-indigo-700 shadow-sm'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Semantic (Vector)
+            By Meaning
           </button>
         </div>
 
         {/* Court Dropdown & Date Range Filters */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Court Selector */}
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-initial">
             <select
               aria-label="Filter by Court"
               value={filters.court}
               onChange={(e) => onFilterChange({ court: e.target.value, page: 1 })}
-              className="text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-700 font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none"
+              className="w-full sm:w-auto min-h-[44px] text-xs bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-700 font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none"
             >
               <option value="">All Indian Courts</option>
               {courts.map((court) => (
@@ -188,8 +188,8 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
           </div>
 
           {/* Date Range Inputs */}
-          <div className="flex items-center space-x-1.5 bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-xs">
-            <Calendar className="h-3.5 w-3.5 text-slate-400" />
+          <div className="flex items-center space-x-1.5 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 min-h-[44px] text-xs">
+            <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
             <input
               type="date"
               value={filters.date_from}
@@ -214,7 +214,7 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
             <button
               type="button"
               onClick={onResetFilters}
-              className="flex items-center space-x-1 text-xs text-rose-600 hover:text-rose-700 font-medium px-2 py-1.5 rounded-lg hover:bg-rose-50 transition"
+              className="flex items-center space-x-1 text-xs text-rose-600 hover:text-rose-700 font-medium px-3 py-2 min-h-[44px] rounded-lg hover:bg-rose-50 transition"
               title="Reset all filters"
             >
               <RotateCcw className="h-3 w-3" />
@@ -224,20 +224,20 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
         </div>
       </div>
 
-      {/* 10 Legal Subject Domain Category Pills */}
+      {/* 10 Legal Topic Pills */}
       <div className="mt-4 pt-3 border-t border-slate-100">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center space-x-1">
             <BookOpen className="h-3 w-3" />
-            <span>Legal Domain Categories</span>
+            <span>Legal Topics</span>
           </span>
           {filters.category && (
             <button
               type="button"
               onClick={() => onFilterChange({ category: '', page: 1 })}
-              className="text-[11px] text-amber-600 hover:underline"
+              className="text-[11px] text-amber-600 hover:underline min-h-[32px] px-1"
             >
-              Clear category
+              Clear topic
             </button>
           )}
         </div>
@@ -249,7 +249,7 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
                 key={cat}
                 type="button"
                 onClick={() => handleCategoryToggle(cat)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition ${
+                className={`min-h-[34px] px-3.5 py-1.5 rounded-full text-xs font-medium transition ${
                   isSelected
                     ? 'bg-amber-600 text-white shadow-sm ring-1 ring-amber-600'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'

@@ -148,15 +148,15 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 animate-fadeIn">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-0 sm:p-4 md:p-6 animate-fadeIn">
       <div
-        className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden relative"
+        className="bg-white rounded-none sm:rounded-2xl shadow-2xl border border-slate-200 w-full sm:max-w-5xl h-[100dvh] sm:h-auto sm:max-h-[92vh] flex flex-col overflow-hidden relative"
         role="dialog"
         aria-modal="true"
         aria-labelledby="judgment-title"
       >
         {/* Modal Top Bar */}
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/80 sticky top-0 z-20">
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/90 sticky top-0 z-20">
           <div className="flex items-center space-x-2">
             <span
               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${courtInfo.badgeClass}`}
@@ -176,12 +176,12 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
           </div>
 
           {/* Action buttons & Close */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2">
             <button
               type="button"
               onClick={handleCopyCitation}
               title="Copy Citation"
-              className="p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition text-xs flex items-center space-x-1"
+              className="p-2 min-h-[40px] rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition text-xs flex items-center space-x-1"
             >
               {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
               <span className="hidden md:inline">{copied ? 'Copied' : 'Cite'}</span>
@@ -192,7 +192,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
               target="_blank"
               rel="noopener noreferrer"
               title="Open canonical source page"
-              className="p-2 rounded-lg text-slate-500 hover:text-amber-700 hover:bg-slate-200 transition text-xs flex items-center space-x-1"
+              className="p-2 min-h-[40px] rounded-lg text-slate-500 hover:text-amber-700 hover:bg-slate-200 transition text-xs flex items-center space-x-1"
             >
               <ExternalLink className="h-4 w-4" />
               <span className="hidden md:inline">Source</span>
@@ -207,7 +207,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
                   setShowNotesModal(true);
                 }
               }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1 transition ${
+              className={`px-3 py-2 min-h-[40px] rounded-lg text-xs font-semibold flex items-center space-x-1 transition ${
                 isBookmarked
                   ? 'bg-amber-100 text-amber-900 border border-amber-300'
                   : 'bg-slate-900 text-white hover:bg-slate-800'
@@ -223,7 +223,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition"
+              className="p-2 min-h-[40px] min-w-[40px] rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition flex items-center justify-center"
               aria-label="Close modal"
             >
               <X className="h-5 w-5" />
@@ -349,10 +349,10 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
                 </div>
               )}
 
-              {/* Headnote / Excerpt Summary */}
+              {/* Summary & Key Points */}
               <div className="bg-amber-50/50 rounded-xl border border-amber-200/60 p-4">
                 <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider block mb-2">
-                  Legal Headnote & Clean Summary
+                  Summary & Key Points
                 </span>
                 <p className="text-sm text-slate-800 leading-relaxed font-sans">
                   {activeJudgment.excerpt}
@@ -406,7 +406,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
                     Related Legal Precedents
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Retrieved via pgvector cosine distance across 384-dimensional MiniLM embeddings
+                    Related Indian court judgments on similar legal issues and topics
                   </p>
                 </div>
               </div>
@@ -414,11 +414,11 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
               {isLoadingSimilar ? (
                 <div className="py-12 text-center text-slate-400 text-sm">
                   <span className="inline-block animate-spin mr-2">⏳</span>
-                  Finding semantically similar Indian judgments...
+                  Finding related court judgments...
                 </div>
               ) : similarJudgments.length === 0 ? (
                 <div className="py-8 text-center text-slate-500 text-sm bg-slate-50 rounded-xl">
-                  No similar legal precedents indexed yet.
+                  No related judgments found for this case yet.
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -463,9 +463,9 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg font-medium transition"
+            className="px-4 py-2 min-h-[40px] bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg font-medium transition"
           >
-            Close Reader
+            Close
           </button>
         </div>
 

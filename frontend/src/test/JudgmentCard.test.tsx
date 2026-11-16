@@ -26,7 +26,7 @@ describe('JudgmentCard Component', () => {
     updated_at: '2024-04-15T10:00:00Z',
   };
 
-  it('renders court badge, title, excerpt and statute tags', () => {
+  it('renders court badge, title, full judgment text and statute tags', () => {
     render(
       <JudgmentCard
         judgment={mockJudgment}
@@ -39,25 +39,43 @@ describe('JudgmentCard Component', () => {
     expect(screen.getByText('Supreme Court of India')).toBeInTheDocument();
     expect(screen.getByText('Criminal')).toBeInTheDocument();
     expect(screen.getByText('Gurbaksh Singh Sibbia v. State of Punjab')).toBeInTheDocument();
-    expect(screen.getByText(/Constitution bench ruling/i)).toBeInTheDocument();
+    expect(screen.getByText(/Full judgment text for anticipatory bail principles/i)).toBeInTheDocument();
     expect(screen.getByText('Section 438 CrPC')).toBeInTheDocument();
     expect(screen.getByText('Article 21')).toBeInTheDocument();
   });
 
-  it('calls onToggleBookmark when bookmark button is clicked', () => {
+  it('calls onSelectJudgment when the entire card is clicked', () => {
+    const handleSelect = vi.fn();
+    render(
+      <JudgmentCard
+        judgment={mockJudgment}
+        isBookmarked={false}
+        onToggleBookmark={vi.fn()}
+        onSelectJudgment={handleSelect}
+      />
+    );
+
+    const titleEl = screen.getByText('Gurbaksh Singh Sibbia v. State of Punjab');
+    fireEvent.click(titleEl);
+    expect(handleSelect).toHaveBeenCalledWith(mockJudgment);
+  });
+
+  it('calls onToggleBookmark and stops propagation when bookmark button is clicked', () => {
     const handleBookmark = vi.fn();
+    const handleSelect = vi.fn();
     render(
       <JudgmentCard
         judgment={mockJudgment}
         isBookmarked={false}
         onToggleBookmark={handleBookmark}
-        onSelectJudgment={vi.fn()}
+        onSelectJudgment={handleSelect}
       />
     );
 
     const bookmarkBtn = screen.getByTitle('Save to Bookmarks');
     fireEvent.click(bookmarkBtn);
     expect(handleBookmark).toHaveBeenCalledWith(mockJudgment);
+    expect(handleSelect).not.toHaveBeenCalled();
   });
 
   it('calls onSelectJudgment when Read Judgment button is clicked', () => {
@@ -74,5 +92,26 @@ describe('JudgmentCard Component', () => {
     const readBtn = screen.getByText('Read Judgment');
     fireEvent.click(readBtn);
     expect(handleSelect).toHaveBeenCalledWith(mockJudgment);
+  });
+
+  it('renders Best Match badge instead of raw float scores when judgment has a search rank score', () => {
+    const searchRankedJudgment = {
+      ...mockJudgment,
+      score: 0.03251,
+      keyword_rank: 1,
+      semantic_rank: 2,
+    };
+
+    render(
+      <JudgmentCard
+        judgment={searchRankedJudgment}
+        isBookmarked={false}
+        onToggleBookmark={vi.fn()}
+        onSelectJudgment={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('Best Match')).toBeInTheDocument();
+    expect(screen.queryByText(/0\.032/)).not.toBeInTheDocument();
   });
 });

@@ -89,7 +89,7 @@ DEFAULT_LEGAL_FEEDS: list[FeedSourceConfig] = [
     FeedSourceConfig(
         source_id="barandbench",
         name="Bar & Bench Legal News",
-        url="https://www.barandbench.com/feed",
+        url="https://www.barandbench.com/stories.rss",
         default_court_code="sc",
         default_court_name="Supreme Court of India",
         default_court_level=1,

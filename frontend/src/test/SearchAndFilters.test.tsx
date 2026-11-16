@@ -12,7 +12,7 @@ describe('SearchAndFilters Component', () => {
     date_from: '',
     date_to: '',
     page: 1,
-    limit: 12,
+    limit: 25,
   };
 
   const mockCourts = [
@@ -38,11 +38,11 @@ describe('SearchAndFilters Component', () => {
     );
 
     expect(
-      screen.getByPlaceholderText(/Search judgments, statutory citations/i)
+      screen.getByPlaceholderText(/Search judgments, laws & sections/i)
     ).toBeInTheDocument();
-    expect(screen.getByText('Hybrid (RRF)')).toBeInTheDocument();
-    expect(screen.getByText('Keyword (BM25)')).toBeInTheDocument();
-    expect(screen.getByText('Semantic (Vector)')).toBeInTheDocument();
+    expect(screen.getByText('Smart Search')).toBeInTheDocument();
+    expect(screen.getByText('Exact Words')).toBeInTheDocument();
+    expect(screen.getByText('By Meaning')).toBeInTheDocument();
     expect(screen.getByText('Criminal')).toBeInTheDocument();
     expect(screen.getByText('Constitutional')).toBeInTheDocument();
   });
@@ -60,10 +60,10 @@ describe('SearchAndFilters Component', () => {
       />
     );
 
-    fireEvent.click(screen.getByText('Keyword (BM25)'));
+    fireEvent.click(screen.getByText('Exact Words'));
     expect(handleFilterChange).toHaveBeenCalledWith({ mode: 'keyword', page: 1 });
 
-    fireEvent.click(screen.getByText('Semantic (Vector)'));
+    fireEvent.click(screen.getByText('By Meaning'));
     expect(handleFilterChange).toHaveBeenCalledWith({ mode: 'semantic', page: 1 });
   });
 

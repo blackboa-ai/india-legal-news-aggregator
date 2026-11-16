@@ -54,7 +54,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       }
       onClose();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Authentication failed';
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Unable to sign in. Please verify your credentials and try again.';
       setLocalError(msg);
     } finally {
       setIsSubmitting(false);
@@ -69,7 +72,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       await loginWithGoogle(mockToken);
       onClose();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Google OAuth failed';
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Unable to sign in with Google. Please try again.';
       setLocalError(msg);
     } finally {
       setIsSubmitting(false);
@@ -200,16 +206,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow transition disabled:opacity-50"
+            className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow transition disabled:opacity-50 min-h-[44px]"
           >
             {isSubmitting
-              ? 'Authenticating...'
+              ? 'Signing in...'
               : tab === 'login'
               ? 'Sign In with Email'
               : 'Create Account & Continue'}
           </button>
 
-          {/* Social / OAuth Divider */}
+          {/* Social / Google Divider */}
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-slate-200"></div>
@@ -221,12 +227,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           </div>
 
-          {/* Google OAuth Button */}
+          {/* Google Button */}
           <button
             type="button"
             onClick={handleGoogleMockSSO}
             disabled={isSubmitting}
-            className="w-full py-2.5 px-4 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold shadow-sm transition flex items-center justify-center space-x-2 disabled:opacity-50"
+            className="w-full py-2.5 px-4 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold shadow-sm transition flex items-center justify-center space-x-2 disabled:opacity-50 min-h-[44px]"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24">
               <path
@@ -252,8 +258,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Footer info */}
         <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 text-center text-[11px] text-slate-500">
-          Single Sign-On (SSO) query handoff supported via{' '}
-          <code className="bg-slate-200 px-1 py-0.5 rounded font-mono text-[10px]">?token=xxx</code>
+          Your saved bookmarks and custom alerts stay private and secure across devices.
         </div>
       </div>
     </div>

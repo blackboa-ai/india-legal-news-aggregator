@@ -239,10 +239,10 @@ export const BookmarksAndAlertsModal: React.FC<BookmarksAndAlertsModalProps> = (
         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
           <div>
             <h2 id="dashboard-title" className="text-lg font-bold text-slate-900">
-              Personal Legal Workspace
+              My Saved Cases & Alerts
             </h2>
             <p className="text-xs text-slate-500">
-              Manage saved precedents, automated statute alerts, and research topic folders
+              Manage saved judgments, custom topic alerts, and research folders
             </p>
           </div>
           <button
@@ -256,57 +256,57 @@ export const BookmarksAndAlertsModal: React.FC<BookmarksAndAlertsModalProps> = (
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-200 bg-white px-6 text-xs font-semibold">
+        <div className="flex border-b border-slate-200 bg-white px-6 text-xs font-semibold overflow-x-auto">
           <button
             type="button"
             onClick={() => setActiveTab('bookmarks')}
-            className={`py-3 flex items-center space-x-1.5 border-b-2 transition mr-4 ${
+            className={`py-3 flex items-center space-x-1.5 border-b-2 transition mr-4 whitespace-nowrap shrink-0 ${
               activeTab === 'bookmarks'
                 ? 'border-amber-600 text-amber-700'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             <BookmarkIcon className="h-4 w-4 text-amber-500" />
-            <span>Saved Bookmarks ({bookmarks.length})</span>
+            <span>Bookmarks ({bookmarks.length})</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('matches')}
-            className={`py-3 flex items-center space-x-1.5 border-b-2 transition mr-4 ${
+            className={`py-3 flex items-center space-x-1.5 border-b-2 transition mr-4 whitespace-nowrap shrink-0 ${
               activeTab === 'matches'
                 ? 'border-indigo-600 text-indigo-700'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             <Sparkles className="h-4 w-4 text-indigo-500" />
-            <span>Matched Feed ({matches.length})</span>
+            <span>Alert Updates ({matches.length})</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('alerts')}
-            className={`py-3 flex items-center space-x-1.5 border-b-2 transition mr-4 ${
+            className={`py-3 flex items-center space-x-1.5 border-b-2 transition mr-4 whitespace-nowrap shrink-0 ${
               activeTab === 'alerts'
                 ? 'border-indigo-600 text-indigo-700'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             <Bell className="h-4 w-4 text-indigo-500" />
-            <span>Statute Alerts ({alerts.length})</span>
+            <span>Custom Alerts ({alerts.length})</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('topics')}
-            className={`py-3 flex items-center space-x-1.5 border-b-2 transition ${
+            className={`py-3 flex items-center space-x-1.5 border-b-2 transition whitespace-nowrap shrink-0 ${
               activeTab === 'topics'
                 ? 'border-emerald-600 text-emerald-700'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             <Layers className="h-4 w-4 text-emerald-500" />
-            <span>Research Topics ({topics.length})</span>
+            <span>Research Folders ({topics.length})</span>
           </button>
         </div>
 
@@ -463,7 +463,7 @@ export const BookmarksAndAlertsModal: React.FC<BookmarksAndAlertsModalProps> = (
                       className="bg-indigo-50/50 border border-indigo-200 rounded-xl p-4 space-y-3"
                     >
                       <h4 className="text-xs font-bold text-indigo-900 uppercase tracking-wider">
-                        Configure New Statute / Domain Alert
+                        Create New Alert
                       </h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
@@ -476,20 +476,20 @@ export const BookmarksAndAlertsModal: React.FC<BookmarksAndAlertsModalProps> = (
                             value={newAlertTitle}
                             onChange={(e) => setNewAlertTitle(e.target.value)}
                             placeholder="e.g., Anticipatory Bail Tracker"
-                            className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white"
+                            className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white min-h-[40px]"
                           />
                         </div>
 
                         <div>
                           <label className="block text-xs font-medium text-slate-700 mb-1">
-                            Legal Domain Category
+                            Legal Category
                           </label>
                           <select
                             value={newAlertCategory}
                             onChange={(e) => setNewAlertCategory(e.target.value)}
-                            className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white"
+                            className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white min-h-[40px]"
                           >
-                            <option value="">Any Legal Domain</option>
+                            <option value="">Any Legal Category</option>
                             {CANONICAL_CATEGORIES.map((cat) => (
                               <option key={cat} value={cat}>
                                 {cat}
@@ -500,12 +500,12 @@ export const BookmarksAndAlertsModal: React.FC<BookmarksAndAlertsModalProps> = (
 
                         <div>
                           <label className="block text-xs font-medium text-slate-700 mb-1">
-                            Court Code
+                            Court
                           </label>
                           <select
                             value={newAlertCourt}
                             onChange={(e) => setNewAlertCourt(e.target.value)}
-                            className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white"
+                            className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white min-h-[40px]"
                           >
                             <option value="">All Indian Courts</option>
                             {courts.map((court) => (
@@ -518,14 +518,14 @@ export const BookmarksAndAlertsModal: React.FC<BookmarksAndAlertsModalProps> = (
 
                         <div>
                           <label className="block text-xs font-medium text-slate-700 mb-1">
-                            Statutes / Keywords (Comma separated)
+                            Key Terms or Sections (Comma separated)
                           </label>
                           <input
                             type="text"
                             value={newAlertKeywords}
                             onChange={(e) => setNewAlertKeywords(e.target.value)}
-                            placeholder="e.g., Section 438 CrPC, Article 21, IBC Sec 9"
-                            className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white"
+                            placeholder="e.g., Section 438 CrPC, Article 21, IBC Section 9"
+                            className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white min-h-[40px]"
                           />
                         </div>
                       </div>
@@ -534,9 +534,9 @@ export const BookmarksAndAlertsModal: React.FC<BookmarksAndAlertsModalProps> = (
                         <button
                           type="submit"
                           disabled={isSubmittingAlert}
-                          className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition"
+                          className="px-4 py-2 min-h-[40px] bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition"
                         >
-                          {isSubmittingAlert ? 'Saving...' : 'Subscribe to Alert'}
+                          {isSubmittingAlert ? 'Saving...' : 'Save Alert'}
                         </button>
                       </div>
                     </form>
@@ -547,7 +547,7 @@ export const BookmarksAndAlertsModal: React.FC<BookmarksAndAlertsModalProps> = (
                     <div className="text-center py-8 text-xs text-slate-400">Loading alerts...</div>
                   ) : alerts.length === 0 ? (
                     <div className="text-center py-8 text-slate-500 text-xs bg-slate-50 rounded-xl">
-                      No active statute alerts. Create an alert above to track statutory updates.
+                      No active alerts. Create an alert above to receive notifications when new judgments match your interests.
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -660,7 +660,7 @@ export const BookmarksAndAlertsModal: React.FC<BookmarksAndAlertsModalProps> = (
                               className="text-xs font-semibold text-indigo-700 hover:underline flex items-center space-x-1"
                             >
                               <BookOpen className="h-3.5 w-3.5" />
-                              <span>Read Matching Judgment</span>
+                              <span>Read Judgment</span>
                             </button>
                           </div>
                         </div>
@@ -670,17 +670,17 @@ export const BookmarksAndAlertsModal: React.FC<BookmarksAndAlertsModalProps> = (
                 </div>
               )}
 
-              {/* TAB 4: RESEARCH TOPICS */}
+              {/* TAB 4: RESEARCH FOLDERS */}
               {activeTab === 'topics' && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs text-slate-500">
-                      Organize judgments into dedicated case folders and legal dossiers.
+                      Organize judgments into dedicated case folders and legal research lists.
                     </p>
                     <button
                       type="button"
                       onClick={() => setShowNewTopicForm(!showNewTopicForm)}
-                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition flex items-center space-x-1"
+                      className="px-3 py-2 min-h-[40px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition flex items-center space-x-1"
                     >
                       <Plus className="h-3.5 w-3.5" />
                       <span>{showNewTopicForm ? 'Cancel' : 'New Folder'}</span>
@@ -693,7 +693,7 @@ export const BookmarksAndAlertsModal: React.FC<BookmarksAndAlertsModalProps> = (
                       className="bg-emerald-50/50 border border-emerald-200 rounded-xl p-4 space-y-3"
                     >
                       <h4 className="text-xs font-bold text-emerald-900 uppercase tracking-wider">
-                        Create Research Folder / Topic
+                        Create New Research Folder
                       </h4>
                       <div>
                         <label className="block text-xs font-medium text-slate-700 mb-1">
@@ -705,12 +705,12 @@ export const BookmarksAndAlertsModal: React.FC<BookmarksAndAlertsModalProps> = (
                           value={newTopicName}
                           onChange={(e) => setNewTopicName(e.target.value)}
                           placeholder="e.g., Anticipatory Bail Precedents"
-                          className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white"
+                          className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white min-h-[40px]"
                         />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-700 mb-1">
-                          Description / Scope (Optional)
+                          Description (Optional)
                         </label>
                         <textarea
                           rows={2}
@@ -724,19 +724,19 @@ export const BookmarksAndAlertsModal: React.FC<BookmarksAndAlertsModalProps> = (
                         <button
                           type="submit"
                           disabled={isSubmittingTopic}
-                          className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition"
+                          className="px-4 py-2 min-h-[40px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition"
                         >
-                          {isSubmittingTopic ? 'Creating...' : 'Create Folder'}
+                          {isSubmittingTopic ? 'Saving...' : 'Save Folder'}
                         </button>
                       </div>
                     </form>
                   )}
 
                   {isLoadingTopics ? (
-                    <div className="text-center py-8 text-xs text-slate-400">Loading topic folders...</div>
+                    <div className="text-center py-8 text-xs text-slate-400">Loading folders...</div>
                   ) : topics.length === 0 ? (
                     <div className="text-center py-8 text-slate-500 text-xs bg-slate-50 rounded-xl">
-                      No research topic folders yet. Create one to group related judgments.
+                      No research folders yet. Create one to organize related judgments.
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

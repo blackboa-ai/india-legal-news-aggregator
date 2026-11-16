@@ -29,7 +29,25 @@ import { AuthModal } from './components/AuthModal';
 import { BookmarksAndAlertsModal } from './components/BookmarksAndAlertsModal';
 import { Footer } from './components/Footer';
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 25;
+
+const formatFriendlyErrorMessage = (err: unknown): string => {
+  if (err instanceof Error) {
+    const lower = err.message.toLowerCase();
+    if (
+      lower.includes('fetch') ||
+      lower.includes('500') ||
+      lower.includes('api') ||
+      lower.includes('failed') ||
+      lower.includes('network') ||
+      lower.includes('connect')
+    ) {
+      return 'Unable to load updates right now. Please try again.';
+    }
+    return err.message;
+  }
+  return 'Unable to load updates right now. Please try again.';
+};
 
 export const App: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
@@ -190,11 +208,7 @@ export const App: React.FC = () => {
         setSearchMeta(null);
       }
     } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Failed to fetch judgments from the server. Ensure the backend API is running.';
-      setError(message);
+      setError(formatFriendlyErrorMessage(err));
       setJudgments([]);
       setTotalCount(0);
     } finally {
@@ -341,14 +355,14 @@ export const App: React.FC = () => {
         <div className="max-w-7xl mx-auto text-center space-y-3">
           <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-400/10 text-amber-300 border border-amber-400/20 text-xs font-semibold">
             <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-            <span>Hybrid BM25 + pgvector RRF Ranking • $0 Cloud Footprint</span>
+            <span>Smart Legal Search • Verified Indian Court Decisions</span>
           </div>
           <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
             Indian Legal Intelligence & Precedent Aggregator
           </h1>
           <p className="text-xs sm:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Real-time automated ingestion from Indian Kanoon, Supreme Court of India, LiveLaw, and
-            Bar & Bench with instant semantic similarity and statutory section search.
+            Real-time legal updates from the Supreme Court of India, High Courts, Indian Kanoon, LiveLaw, and
+            Bar & Bench with instant precedent and statute search.
           </p>
         </div>
       </section>
@@ -356,7 +370,7 @@ export const App: React.FC = () => {
       {/* Main Application Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 -mt-6 sm:-mt-8">
         <div ref={searchContainerRef}>
-          {/* Hybrid Search & Filter Controls */}
+          {/* Search & Filter Controls */}
           <SearchAndFilters
             filters={filters}
             onFilterChange={handleFilterChange}
@@ -381,12 +395,12 @@ export const App: React.FC = () => {
 
           {searchMeta && (
             <div className="flex items-center space-x-2 text-xs text-slate-500">
-              <span className="font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded uppercase text-[10px]">
-                Mode: {searchMeta.query_type}
+              <span className="font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded text-[11px]">
+                Search: {searchMeta.query_type === 'hybrid' ? 'Smart Search' : searchMeta.query_type === 'keyword' ? 'Exact Words' : searchMeta.query_type === 'semantic' ? 'By Meaning' : searchMeta.query_type}
               </span>
               {searchMeta.matched_terms && searchMeta.matched_terms.length > 0 && (
                 <span className="text-[11px] text-slate-600">
-                  Extracted statutes: {searchMeta.matched_terms.join(', ')}
+                  Matching key terms: {searchMeta.matched_terms.join(', ')}
                 </span>
               )}
             </div>
@@ -398,7 +412,7 @@ export const App: React.FC = () => {
           <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs sm:text-sm flex items-start space-x-3 shadow-sm">
             <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="font-bold">Notice / Offline Notice</p>
+              <p className="font-bold">Unable to load updates</p>
               <p className="mt-0.5">{error}</p>
               <button
                 type="button"
@@ -406,7 +420,7 @@ export const App: React.FC = () => {
                 className="mt-2 text-xs font-semibold text-amber-900 underline hover:text-amber-700 flex items-center space-x-1"
               >
                 <RefreshCw className="h-3 w-3" />
-                <span>Retry Query</span>
+                <span>Try Again</span>
               </button>
             </div>
           </div>
@@ -445,14 +459,14 @@ export const App: React.FC = () => {
             </h3>
             <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
               No legal cases matched your current search query or applied domain/court filters. Try
-              adjusting the search mode or clearing filters.
+              adjusting your search words or clearing filters.
             </p>
             <button
               type="button"
               onClick={handleResetFilters}
               className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition"
             >
-              Reset All Filters
+              Clear All Filters
             </button>
           </div>
         ) : (

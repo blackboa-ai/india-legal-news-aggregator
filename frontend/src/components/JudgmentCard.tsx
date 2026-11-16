@@ -78,7 +78,18 @@ export const JudgmentCard: React.FC<JudgmentCardProps> = ({
   const isSearchRanked = typeof searchItem.score === 'number';
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all duration-200 p-5 flex flex-col justify-between group">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelectJudgment(judgment)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelectJudgment(judgment);
+        }
+      }}
+      className="bg-white rounded-2xl border border-slate-200 hover:border-amber-400 hover:shadow-lg transition-all duration-200 p-5 sm:p-6 flex flex-col justify-between group cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500"
+    >
       <div>
         {/* Header Metadata Row */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
@@ -110,9 +121,12 @@ export const JudgmentCard: React.FC<JudgmentCardProps> = ({
             {onAddToTopic && (
               <button
                 type="button"
-                onClick={() => onAddToTopic(judgment)}
-                title="Add to Research Topic Folder"
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddToTopic(judgment);
+                }}
+                title="Add to Research Folder"
+                className="p-2 min-h-[40px] min-w-[40px] flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
               >
                 <FolderPlus className="h-4 w-4" />
               </button>
@@ -120,9 +134,12 @@ export const JudgmentCard: React.FC<JudgmentCardProps> = ({
 
             <button
               type="button"
-              onClick={() => onToggleBookmark(judgment)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleBookmark(judgment);
+              }}
               title={isBookmarked ? 'Remove Bookmark' : 'Save to Bookmarks'}
-              className={`p-1.5 rounded-lg transition ${
+              className={`p-2 min-h-[40px] min-w-[40px] flex items-center justify-center rounded-lg transition ${
                 isBookmarked
                   ? 'text-amber-500 bg-amber-50 hover:bg-amber-100'
                   : 'text-slate-400 hover:text-amber-500 hover:bg-slate-100'
@@ -136,25 +153,22 @@ export const JudgmentCard: React.FC<JudgmentCardProps> = ({
           </div>
         </div>
 
-        {/* Title */}
-        <h3
-          onClick={() => onSelectJudgment(judgment)}
-          className="text-base sm:text-lg font-semibold text-slate-900 group-hover:text-amber-700 transition cursor-pointer line-clamp-2 mb-1.5 leading-snug"
-        >
+        {/* Title (Full title, no line-clamp truncation) */}
+        <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-amber-700 transition mb-2 leading-snug">
           {judgment.title}
         </h3>
 
         {/* Short Title if distinct */}
         {judgment.short_title && judgment.short_title !== judgment.title && (
           <p className="text-xs font-medium text-slate-500 mb-2 italic">
-            Citation / Case: {judgment.short_title}
+            Case: {judgment.short_title}
           </p>
         )}
 
-        {/* Excerpt Summary */}
-        <p className="text-xs sm:text-sm text-slate-600 line-clamp-3 mb-3 leading-relaxed">
-          {judgment.excerpt}
-        </p>
+        {/* Full Judgment Summary / Text (Complete text directly on card, no line-clamp) */}
+        <div className="text-xs sm:text-sm text-slate-700 whitespace-pre-line mb-4 leading-relaxed font-sans">
+          {judgment.full_text || judgment.excerpt}
+        </div>
 
         {/* Statutory Citation Badges / Tags */}
         {judgment.tags && judgment.tags.length > 0 && (
@@ -184,19 +198,22 @@ export const JudgmentCard: React.FC<JudgmentCardProps> = ({
           </span>
           {isSearchRanked && (
             <span
-              className="inline-flex items-center text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded font-mono"
-              title={`RRF Score: ${searchItem.score.toFixed(4)}`}
+              className="inline-flex items-center text-[11px] text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full font-semibold"
+              title="Most relevant match"
             >
-              <Sparkles className="h-2.5 w-2.5 mr-1" />
-              Score: {searchItem.score.toFixed(3)}
+              <Sparkles className="h-3 w-3 mr-1 text-amber-600" />
+              Best Match
             </span>
           )}
         </div>
 
         <button
           type="button"
-          onClick={() => onSelectJudgment(judgment)}
-          className="inline-flex items-center space-x-1 font-semibold text-amber-700 hover:text-amber-800 transition"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelectJudgment(judgment);
+          }}
+          className="inline-flex items-center space-x-1 font-semibold text-amber-700 hover:text-amber-800 transition min-h-[44px] py-2"
         >
           <BookOpen className="h-3.5 w-3.5" />
           <span>Read Judgment</span>

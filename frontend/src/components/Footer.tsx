@@ -15,18 +15,15 @@ export const Footer: React.FC = () => {
               <span>India Legal News Aggregator</span>
             </div>
             <p className="text-slate-400 text-xs leading-relaxed max-w-md">
-              High-speed, memory-safe legal intelligence platform combining BM25 full-text
-              retrieval with 384-dimensional pgvector semantic cosine similarity via
-              Reciprocal Rank Fusion (RRF, k=60).
+              Comprehensive Indian legal news and court judgment aggregator. Providing daily updates,
+              headnotes, and smart search across the Supreme Court of India, High Courts, and Tribunals.
             </p>
-            <div className="flex items-center space-x-2 pt-1 text-[11px] text-slate-500 font-mono">
-              <span>Stack: FastAPI</span>
+            <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-slate-400">
+              <span>Supreme Court & High Courts</span>
               <span>•</span>
-              <span>PostgreSQL 15 + pgvector</span>
+              <span>Daily Precedents</span>
               <span>•</span>
-              <span>Upstash Redis</span>
-              <span>•</span>
-              <span>React 18 + Vite</span>
+              <span>Verified Sources</span>
             </div>
           </div>
 
@@ -95,7 +92,7 @@ export const Footer: React.FC = () => {
             </p>
             <div className="pt-2 flex items-center space-x-1 text-[11px] text-amber-400/80">
               <ShieldCheck className="h-3.5 w-3.5" />
-              <span>Free-Tier Architecture ($0.00/mo)</span>
+              <span>Updated Daily • Free & Open Access</span>
             </div>
           </div>
         </div>

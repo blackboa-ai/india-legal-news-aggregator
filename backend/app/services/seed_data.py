@@ -1,14 +1,18 @@
 """
 Landmark Indian Legal Judgments Seeder
-Populates 12 foundational Supreme Court of India precedents with full metadata,
-statutory citations, rich summaries, and 384-dimensional vector embeddings.
+Populates 24 foundational Indian legal precedents and news with full metadata,
+statutory citations, rich multi-paragraph summaries, and 384-dimensional vector embeddings.
 Covers:
 - Section 438 CrPC / Section 482 BNSS Anticipatory Bail
-- Article 21 Privacy & Personal Liberty
-- Section 138 Negotiable Instruments Act
-- Insolvency and Bankruptcy Code (IBC)
-- Goods and Services Tax (GST)
-- Arbitration and Conciliation Act
+- Article 21 Privacy & Personal Liberty (Puttaswamy, Maneka Gandhi, D.K. Basu)
+- Section 138 Negotiable Instruments Act (Bir Singh, Dalmia Cement)
+- Insolvency and Bankruptcy Code (IBC: Swiss Ribbons, Essar Steel, Innoventive Industries)
+- Goods and Services Tax (GST: Mohit Minerals, Ecom Gill, Safari Retreats)
+- Arbitration and Conciliation Act (Vidya Drolia, In Re Stamp Act, Perkins Eastman)
+- Family Law & Succession (Rajnesh v. Neha, Vineeta Sharma, Shilpa Sailesh)
+- Intellectual Property & Trademarks (Novartis Section 3(d), Cadila, Christian Louboutin)
+- Criminal Procedure & Arrest Guidelines (Arnesh Kumar, D.K. Basu)
+- Internet Freedom & Constitutional Rights (Anuradha Bhasin)
 """
 
 import asyncio
@@ -643,6 +647,595 @@ LANDMARK_JUDGMENTS: list[dict[str, Any]] = [
             "Arbitral Tribunal",
             "NN Global Overruled",
             "Stamp Duty",
+        ],
+        "source": "sci",
+    },
+    {
+        "external_id": "landmark-sc-rajnesh-neha-family-2020",
+        "title": "Rajnesh v. Neha and Another",
+        "short_title": "Rajnesh v. Neha",
+        "court_code": "sc",
+        "court_name": "Supreme Court of India",
+        "court_level": 1,
+        "judgment_date": datetime.date(2020, 11, 4),
+        "subject_category": "Family",
+        "excerpt": (
+            "A division bench of the Supreme Court framed comprehensive, uniform pan-India guidelines to regulate "
+            "maintenance proceedings under Section 125 CrPC, the Protection of Women from Domestic Violence Act 2005, "
+            "and the Hindu Marriage Act 1955. The Court mandated the compulsory filing of an Affidavit of Disclosure of "
+            "Assets and Liabilities by both parties to ensure fair and realistic maintenance calculations, preventing "
+            "delay and conflicting overlapping orders."
+        ),
+        "full_text": (
+            "IN THE SUPREME COURT OF INDIA\n"
+            "CRIMINAL APPELLATE JURISDICTION\n\n"
+            "CRIMINAL APPEAL NO. 730 OF 2020\n"
+            "Rajnesh ... Appellant\n"
+            "versus\n"
+            "Neha and Another ... Respondents\n\n"
+            "CORAM: Hon'ble Ms. Justice Indu Malhotra and Hon'ble Mr. Justice R. Subhash Reddy.\n\n"
+            "JUDGMENT:\n"
+            "1. The issue of overlapping maintenance jurisdictions under Section 125 CrPC, Section 24 of Hindu Marriage Act, "
+            "and Section 12 of Domestic Violence Act has created confusion and multiplicity of proceedings.\n\n"
+            "2. We formulate uniform guidelines to be followed across the country. It is mandatory for both parties in all maintenance "
+            "applications to submit a detailed Affidavit of Disclosure of Assets and Liabilities covering income, properties, "
+            "investments, loans, and standard of living.\n\n"
+            "3. Maintenance shall be awarded from the date of the filing of the application. Enforcement of maintenance orders "
+            "must be swift, treating maintenance arrears with highest priority under civil detention or attachment of assets.\n\n"
+            "ORDER: Directions issued to all High Courts and Family Courts across India for strict uniform compliance."
+        ),
+        "url": "https://indiankanoon.org/doc/134448574/",
+        "parties": [
+            {"role": "Appellant", "name": "Rajnesh"},
+            {"role": "Respondent", "name": "Neha and Another"},
+        ],
+        "tags": [
+            "Section 125 CrPC",
+            "Domestic Violence Act",
+            "Maintenance Guidelines",
+            "Hindu Marriage Act",
+            "Affidavit of Assets",
+            "Family Law",
+            "Interim Maintenance",
+        ],
+        "source": "sci",
+    },
+    {
+        "external_id": "landmark-sc-vineeta-sharma-coparcenary-2020",
+        "title": "Vineeta Sharma v. Rakesh Sharma and Others",
+        "short_title": "Vineeta Sharma v. Rakesh Sharma",
+        "court_code": "sc",
+        "court_name": "Supreme Court of India",
+        "court_level": 1,
+        "judgment_date": datetime.date(2020, 8, 11),
+        "subject_category": "Family",
+        "excerpt": (
+            "A 3-Judge Bench of the Supreme Court held that daughters possess coparcenary rights by birth in ancestral "
+            "Hindu Undivided Family (HUF) property under amended Section 6 of the Hindu Succession Act, 1956. The Court "
+            "clarified that coparcenary rights accrue retroactively by virtue of birth, irrespective of whether the father "
+            "was alive on September 9, 2005 when the amendment came into force, advancing constitutional gender equality."
+        ),
+        "full_text": (
+            "IN THE SUPREME COURT OF INDIA\n"
+            "CIVIL APPELLATE JURISDICTION\n\n"
+            "CIVIL APPEAL NO. 32601 OF 2018\n"
+            "Vineeta Sharma ... Appellant\n"
+            "versus\n"
+            "Rakesh Sharma and Others ... Respondents\n\n"
+            "CORAM: Hon'ble Mr. Justice Arun Mishra, Hon'ble Mr. Justice S. Abdul Nazeer, and Hon'ble Mr. Justice M.R. Shah.\n\n"
+            "JUDGMENT:\n"
+            "1. The reference concerns the true interpretation of Section 6 of the Hindu Succession Act, 1956 as substituted "
+            "by the Hindu Succession (Amendment) Act, 2005.\n\n"
+            "2. We hold that the daughter's right to be a coparcener is by birth in the same manner as the son with the same rights "
+            "and liabilities. It is not necessary that the coparcener father should have been living when the 2005 Act came into force.\n\n"
+            "3. The provisions of substituted Section 6 confer unobstructed heritage (apratibandha daya) by birth. Daughters cannot "
+            "be deprived of their rightful ancestral share in joint family coparcenary.\n\n"
+            "ORDER: Conflicting judgments in Prakash v. Phulavati and Danamma resolved; daughter's birthright coparcenary affirmed."
+        ),
+        "url": "https://indiankanoon.org/doc/171221845/",
+        "parties": [
+            {"role": "Appellant", "name": "Vineeta Sharma"},
+            {"role": "Respondent", "name": "Rakesh Sharma and Others"},
+        ],
+        "tags": [
+            "Hindu Succession Act",
+            "Section 6 Coparcenary",
+            "Daughters Rights",
+            "Ancestral Property",
+            "HUF Coparcenary",
+            "Gender Equality",
+            "Family Law",
+        ],
+        "source": "sci",
+    },
+    {
+        "external_id": "landmark-sc-shilpa-sailesh-divorce-2023",
+        "title": "Shilpa Sailesh v. Varun Sreenivasan",
+        "short_title": "Shilpa Sailesh v. Varun Sreenivasan",
+        "court_code": "sc",
+        "court_name": "Supreme Court of India",
+        "court_level": 1,
+        "judgment_date": datetime.date(2023, 5, 1),
+        "subject_category": "Family",
+        "excerpt": (
+            "A 5-Judge Constitution Bench ruled that the Supreme Court has the discretion and power under Article 142(1) "
+            "of the Constitution of India to dissolve a marriage on the ground of irretrievable breakdown without waiting "
+            "for the statutory 6-month cooling-off period under Section 13-B of the Hindu Marriage Act. The Court held "
+            "that continuing a completely dead and broken marriage perpetuates emotional cruelty."
+        ),
+        "full_text": (
+            "IN THE SUPREME COURT OF INDIA\n"
+            "CIVIL ORIGINAL JURISDICTION\n\n"
+            "TRANSFER PETITION (CIVIL) NO. 1118 OF 2014\n"
+            "Shilpa Sailesh ... Petitioner\n"
+            "versus\n"
+            "Varun Sreenivasan ... Respondent\n\n"
+            "CORAM: Hon'ble Mr. Justice Sanjay Kishan Kaul, Hon'ble Mr. Justice Sanjiv Khanna, "
+            "Hon'ble Mr. Justice A.S. Oka, Hon'ble Mr. Justice Vikram Nath, and Hon'ble Mr. Justice J.K. Maheshwari.\n\n"
+            "JUDGMENT:\n"
+            "1. This Constitution Bench resolves the question of whether this Court can invoke its plenary powers under Article 142 "
+            "to grant a decree of divorce on the ground of irretrievable breakdown of marriage when the relationship is beyond repair.\n\n"
+            "2. We answer in the affirmative. Where a marriage has irretrievably broken down, forcing the parties to remain wedlocked "
+            "results in severe psychological harm. The six-month waiting period in Section 13-B(2) of the Hindu Marriage Act can be waived "
+            "when efforts at conciliation have failed completely.\n\n"
+            "3. Factors such as duration of cohabitation, length of separation, attempts at reconciliation, and financial arrangements "
+            "must be evaluated to ensure complete justice between the parties.\n\n"
+            "ORDER: Article 142 power affirmed for dissolution of dead marriages; guidelines formulated."
+        ),
+        "url": "https://indiankanoon.org/doc/157291032/",
+        "parties": [
+            {"role": "Petitioner", "name": "Shilpa Sailesh"},
+            {"role": "Respondent", "name": "Varun Sreenivasan"},
+        ],
+        "tags": [
+            "Article 142",
+            "Irretrievable Breakdown",
+            "Section 13B Hindu Marriage Act",
+            "Mutual Consent Divorce",
+            "Cooling-Off Period",
+            "Constitution Bench",
+            "Family Law",
+        ],
+        "source": "sci",
+    },
+    {
+        "external_id": "landmark-sc-novartis-patent-2013",
+        "title": "Novartis AG v. Union of India and Others",
+        "short_title": "Novartis AG v. Union of India",
+        "court_code": "sc",
+        "court_name": "Supreme Court of India",
+        "court_level": 1,
+        "judgment_date": datetime.date(2013, 4, 1),
+        "subject_category": "Civil",
+        "excerpt": (
+            "The Supreme Court dismissed Novartis's patent claim over the beta-crystalline form of Imatinib Mesylate (Glivec), "
+            "delivering India's seminal jurisprudence on Section 3(d) of the Patents Act, 1970. The Court held that a new form of "
+            "a known chemical substance cannot be patented unless it demonstrates significantly enhanced therapeutic efficacy, "
+            "prohibiting the abusive evergreening of pharmaceutical monopolies."
+        ),
+        "full_text": (
+            "IN THE SUPREME COURT OF INDIA\n"
+            "CIVIL APPELLATE JURISDICTION\n\n"
+            "CIVIL APPEAL NOS. 2706-2716 OF 2013\n"
+            "Novartis AG ... Appellant\n"
+            "versus\n"
+            "Union of India and Others ... Respondents\n\n"
+            "CORAM: Hon'ble Mr. Justice Aftab Alam and Hon'ble Ms. Justice Ranjana Prakash Desai.\n\n"
+            "JUDGMENT:\n"
+            "1. The central controversy is whether the appellant's product, the beta-crystalline form of Imatinib Mesylate, "
+            "satisfies the test of invention and patentability under Section 3(d) of the Patents Act, 1970.\n\n"
+            "2. Section 3(d) was enacted by Parliament specifically to prevent evergreening and to safeguard public health and access "
+            "to affordable lifesaving generic medicines. A mere polymorph or salt form cannot be granted a patent unless it shows "
+            "substantially enhanced efficacy in curing or mitigating disease.\n\n"
+            "3. Increased bioavailability or physical stability alone does not constitute enhancement of therapeutic efficacy. "
+            "The product failed the strict scrutiny mandated by Section 3(d).\n\n"
+            "ORDER: Appeals dismissed; patent revocation upheld; generic manufacturing of cancer drug Imatinib preserved."
+        ),
+        "url": "https://indiankanoon.org/doc/165776436/",
+        "parties": [
+            {"role": "Appellant", "name": "Novartis AG"},
+            {"role": "Respondent", "name": "Union of India and Cancer Patients Aid Association"},
+        ],
+        "tags": [
+            "Patents Act 1970",
+            "Section 3(d)",
+            "Evergreening",
+            "Therapeutic Efficacy",
+            "Glivec",
+            "Intellectual Property",
+            "Generic Medicine",
+        ],
+        "source": "sci",
+    },
+    {
+        "external_id": "landmark-sc-cadila-healthcare-trademark-2001",
+        "title": "Cadila Health Care Ltd. v. Cadila Pharmaceuticals Ltd.",
+        "short_title": "Cadila Health Care v. Cadila Pharmaceuticals",
+        "court_code": "sc",
+        "court_name": "Supreme Court of India",
+        "court_level": 1,
+        "judgment_date": datetime.date(2001, 3, 26),
+        "subject_category": "Civil",
+        "excerpt": (
+            "The Supreme Court formulated authoritative guidelines for determining deceptive similarity and passing off in "
+            "medicinal and pharmaceutical trademarks. The Court underscored that confusion in medical products involves life "
+            "and health risks, requiring courts to apply a far stricter standard of vigilance than for non-medicinal goods, "
+            "even if the drugs are sold under medical prescription."
+        ),
+        "full_text": (
+            "IN THE SUPREME COURT OF INDIA\n"
+            "CIVIL APPELLATE JURISDICTION\n\n"
+            "CIVIL APPEAL NO. 2372 OF 2001\n"
+            "Cadila Health Care Ltd. ... Appellant\n"
+            "versus\n"
+            "Cadila Pharmaceuticals Ltd. ... Respondent\n\n"
+            "CORAM: Hon'ble Mr. Justice B.N. Kirpal, Hon'ble Mrs. Justice Ruma Pal, and Hon'ble Mr. Justice Brijesh Kumar.\n\n"
+            "JUDGMENT:\n"
+            "1. This appeal raises the question of deceptive similarity between two pharmaceutical brand names, 'Falcigo' and "
+            "'Falcitab', both formulated for the treatment of cerebral malaria.\n\n"
+            "2. In the case of medicinal products, physicians and chemists are not infallible. Phonetic and visual resemblance between "
+            "drugs can result in disastrous consequence for patients. Public interest dictates that a higher degree of caution and "
+            "exacting scrutiny must be maintained to prevent confusion in pharmaceutical trademarks.\n\n"
+            "3. We lay down tests for passing off: the nature of marks, degree of resemblance, nature of goods, class of purchasers, "
+            "and mode of purchase. Doctors and dispensing chemists cannot be assumed to possess superhuman accuracy.\n\n"
+            "ORDER: Matter remitted to trial court with binding guidelines on pharmaceutical trademark protection."
+        ),
+        "url": "https://indiankanoon.org/doc/1114158/",
+        "parties": [
+            {"role": "Appellant", "name": "Cadila Health Care Ltd."},
+            {"role": "Respondent", "name": "Cadila Pharmaceuticals Ltd."},
+        ],
+        "tags": [
+            "Trade Marks Act",
+            "Passing Off",
+            "Deceptive Similarity",
+            "Phonetic Resemblance",
+            "Pharmaceutical Trademarks",
+            "Intellectual Property",
+            "Public Health",
+        ],
+        "source": "sci",
+    },
+    {
+        "external_id": "landmark-delhi-hc-christian-louboutin-2018",
+        "title": "Christian Louboutin SAS v. Abubaker and Others",
+        "short_title": "Christian Louboutin SAS v. Abubaker",
+        "court_code": "delhi-hc",
+        "court_name": "High Court of Delhi",
+        "court_level": 2,
+        "judgment_date": datetime.date(2018, 5, 25),
+        "subject_category": "Civil",
+        "excerpt": (
+            "The High Court of Delhi examined the protectability of unconventional single-colour trademarks under the Trade "
+            "Marks Act, 1999. The Court evaluated Christian Louboutin's iconic red sole trademark (Pantone 18-1663TP) on high-fashion "
+            "women's shoes, laying down pivotal Indian legal standards for acquired distinctiveness, secondary meaning, and "
+            "colour combination versus single colour protection under Section 2(1)(m)."
+        ),
+        "full_text": (
+            "IN THE HIGH COURT OF DELHI AT NEW DELHI\n"
+            "COMMERCIAL DIVISION\n\n"
+            "CS (COMM) 890 OF 2018\n"
+            "Christian Louboutin SAS ... Plaintiff\n"
+            "versus\n"
+            "Abubaker and Others ... Defendants\n\n"
+            "CORAM: Hon'ble Mr. Justice Valmiki J. Mehta.\n\n"
+            "JUDGMENT:\n"
+            "1. The plaintiff seeks permanent injunction restraining the defendants from infringing its trademark consisting of the "
+            "application of red colour to the outsole of women's luxury footwear.\n\n"
+            "2. Under Section 2(1)(m) of the Trade Marks Act 1999, 'mark' includes a combination of colours. A single colour per se "
+            "must demonstrate exceptional, secondary meaning and unmistakable association with the source in the minds of the consuming "
+            "public before being monopolized.\n\n"
+            "3. Colour depletion doctrine ensures that merchants are not unnecessarily restricted from using standard aesthetic colours "
+            "in the marketplace unless a single hue has acquired worldwide renown and undeniable trademark status.\n\n"
+            "ORDER: Judgment delivered settling principles governing single colour trademark claims in India."
+        ),
+        "url": "https://indiankanoon.org/doc/174928231/",
+        "parties": [
+            {"role": "Plaintiff", "name": "Christian Louboutin SAS"},
+            {"role": "Defendant", "name": "Abubaker and Others"},
+        ],
+        "tags": [
+            "Trade Marks Act 1999",
+            "Single Colour Trademark",
+            "Red Sole",
+            "Secondary Meaning",
+            "Intellectual Property",
+            "Delhi High Court",
+            "Unconventional Marks",
+        ],
+        "source": "delhi-hc",
+    },
+    {
+        "external_id": "landmark-sc-perkins-eastman-arbitration-2019",
+        "title": "Perkins Eastman Architects DPC and Another v. HSCC (India) Ltd.",
+        "short_title": "Perkins Eastman Architects v. HSCC",
+        "court_code": "sc",
+        "court_name": "Supreme Court of India",
+        "court_level": 1,
+        "judgment_date": datetime.date(2019, 11, 26),
+        "subject_category": "Civil",
+        "excerpt": (
+            "The Supreme Court held under Section 11(6) read with Section 12(5) and the Seventh Schedule of the Arbitration "
+            "and Conciliation Act, 1996 that an individual who has become ineligible to act as an arbitrator cannot nominate "
+            "or appoint a sole arbitrator. Unilateral arbitrator appointment clauses in commercial contracts violate independence, "
+            "impartiality, and the fundamental tenets of natural justice."
+        ),
+        "full_text": (
+            "IN THE SUPREME COURT OF INDIA\n"
+            "CIVIL ORIGINAL JURISDICTION\n\n"
+            "ARBITRATION APPLICATION NO. 32 OF 2019\n"
+            "Perkins Eastman Architects DPC and Another ... Applicants\n"
+            "versus\n"
+            "HSCC (India) Ltd. ... Respondent\n\n"
+            "CORAM: Hon'ble Mr. Justice U.U. Lalit and Hon'ble Ms. Justice Indu Malhotra.\n\n"
+            "JUDGMENT:\n"
+            "1. The primary question is whether an officer of one of the contracting parties who is statutorily disqualified from "
+            "acting as an arbitrator can nevertheless nominate a third party to act as the sole arbitrator.\n\n"
+            "2. We hold that a party having an interest in the outcome or dispute cannot have the unilateral right to appoint an "
+            "arbitrator. What cannot be done directly by reason of Section 12(5) read with the Seventh Schedule cannot be permitted "
+            "to be done indirectly through unilateral nomination.\n\n"
+            "3. Natural justice and party equality require that the arbitral tribunal be independent and free from suspicion of bias. "
+            "The Section 11 court must step in to appoint an impartial independent arbitrator.\n\n"
+            "ORDER: Independent sole arbitrator appointed; unilateral nomination clause held invalid."
+        ),
+        "url": "https://indiankanoon.org/doc/171549214/",
+        "parties": [
+            {"role": "Applicant", "name": "Perkins Eastman Architects DPC and Another"},
+            {"role": "Respondent", "name": "HSCC (India) Ltd."},
+        ],
+        "tags": [
+            "Arbitration and Conciliation Act",
+            "Section 11(6)",
+            "Section 12(5)",
+            "Unilateral Appointment",
+            "Arbitrator Neutrality",
+            "Seventh Schedule",
+            "Commercial Arbitration",
+        ],
+        "source": "sci",
+    },
+    {
+        "external_id": "landmark-sc-innoventive-industries-ibc-2017",
+        "title": "Innoventive Industries Ltd. v. ICICI Bank and Another",
+        "short_title": "Innoventive Industries v. ICICI Bank",
+        "court_code": "sc",
+        "court_name": "Supreme Court of India",
+        "court_level": 1,
+        "judgment_date": datetime.date(2017, 8, 31),
+        "subject_category": "Corporate",
+        "excerpt": (
+            "In its first comprehensive judgment on the Insolvency and Bankruptcy Code 2016 (IBC), the Supreme Court interpreted "
+            "the trigger mechanism of Section 7 for financial creditors. The Court held that once a financial debt and a default of "
+            "more than the threshold amount are proven, the Adjudicating Authority (NCLT) is bound to admit the Section 7 petition, "
+            "as IBC overrides all state relief undertaking laws under Section 238."
+        ),
+        "full_text": (
+            "IN THE SUPREME COURT OF INDIA\n"
+            "CIVIL APPELLATE JURISDICTION\n\n"
+            "CIVIL APPEAL NOS. 8337-8338 OF 2017\n"
+            "Innoventive Industries Ltd. ... Appellant\n"
+            "versus\n"
+            "ICICI Bank and Another ... Respondents\n\n"
+            "CORAM: Hon'ble Mr. Justice R.F. Nariman and Hon'ble Mr. Justice Sanjay Kishan Kaul.\n\n"
+            "JUDGMENT:\n"
+            "1. This is the first judgment of this Court expounding the fundamental architectural principles of the Insolvency "
+            "and Bankruptcy Code, 2016 (IBC).\n\n"
+            "2. Under Section 7, the moment the Adjudicating Authority is satisfied that a default has occurred, the application "
+            "must be admitted. The corporate debtor cannot escape insolvency proceedings by relying upon a debt moratorium granted "
+            "under the Maharashtra Relief Undertakings Act, because Section 238 of the IBC has an overriding non-obstante clause.\n\n"
+            "3. The scheme of the Code is to facilitate prompt time-bound resolution of stressed corporate entities and maximize "
+            "the value of assets for creditors.\n\n"
+            "ORDER: Section 7 admission confirmed; supremacy of IBC non-obstante clause under Section 238 affirmed."
+        ),
+        "url": "https://indiankanoon.org/doc/178553648/",
+        "parties": [
+            {"role": "Appellant", "name": "Innoventive Industries Ltd."},
+            {"role": "Respondent", "name": "ICICI Bank and Another"},
+        ],
+        "tags": [
+            "Insolvency and Bankruptcy Code",
+            "Section 7 IBC",
+            "Financial Creditor",
+            "Section 238 Non-Obstante",
+            "NCLT CIRP",
+            "Corporate Insolvency",
+            "Commercial Wisdom",
+        ],
+        "source": "sci",
+    },
+    {
+        "external_id": "landmark-sc-safari-retreats-gst-2024",
+        "title": "Chief Commissioner of Central Goods and Services Tax and Others v. M/s Safari Retreats Pvt. Ltd.",
+        "short_title": "Safari Retreats v. Chief Commissioner of CGST",
+        "court_code": "sc",
+        "court_name": "Supreme Court of India",
+        "court_level": 1,
+        "judgment_date": datetime.date(2024, 10, 3),
+        "subject_category": "Corporate",
+        "excerpt": (
+            "The Supreme Court interpreted Section 17(5)(d) of the Central Goods and Services Tax (CGST) Act, 2017 regarding the "
+            "admissibility of Input Tax Credit (ITC) for construction of commercial immovable property intended for commercial leasing. "
+            "The Court held that the phrase 'plant or machinery' must be interpreted functionally, affirming that denying ITC to "
+            "commercial mall owners would lead to an impermissible cascading of taxes."
+        ),
+        "full_text": (
+            "IN THE SUPREME COURT OF INDIA\n"
+            "CIVIL APPELLATE JURISDICTION\n\n"
+            "CIVIL APPEAL NO. 2948 OF 2023\n"
+            "Chief Commissioner of Central Goods and Services Tax and Others ... Appellants\n"
+            "versus\n"
+            "M/s Safari Retreats Pvt. Ltd. and Another ... Respondents\n\n"
+            "CORAM: Hon'ble Mr. Justice Abhay S. Oka and Hon'ble Mr. Justice Sanjay Karol.\n\n"
+            "JUDGMENT:\n"
+            "1. The question relates to the constitutional validity and interpretation of Section 17(5)(d) of the CGST Act 2017, "
+            "which blocks input tax credit on goods or services received by a taxable person for construction of an immovable property.\n\n"
+            "2. When a shopping mall or commercial building is constructed specifically for the purpose of letting out on lease and "
+            "paying GST on rental income, denying credit on construction inputs defeats the fundamental object of GST, which is to "
+            "eliminate the cascading effect of taxation.\n\n"
+            "3. A functionality test must be applied case-by-case to determine whether the building constitutes an integral plant "
+            "necessary for the commercial activity of leasing.\n\n"
+            "ORDER: Judgment delivered setting out functionality test for Input Tax Credit under Section 17(5)(d)."
+        ),
+        "url": "https://indiankanoon.org/doc/182749102/",
+        "parties": [
+            {"role": "Appellant", "name": "Chief Commissioner of CGST and Others"},
+            {"role": "Respondent", "name": "M/s Safari Retreats Pvt. Ltd. and Another"},
+        ],
+        "tags": [
+            "CGST Act",
+            "Section 17(5)(d)",
+            "Input Tax Credit",
+            "Cascading Taxes",
+            "Commercial Leasing",
+            "GST",
+            "Taxation Law",
+        ],
+        "source": "sci",
+    },
+    {
+        "external_id": "landmark-sc-dk-basu-arrest-guidelines-1997",
+        "title": "D.K. Basu v. State of West Bengal",
+        "short_title": "D.K. Basu v. State of West Bengal",
+        "court_code": "sc",
+        "court_name": "Supreme Court of India",
+        "court_level": 1,
+        "judgment_date": datetime.date(1997, 12, 18),
+        "subject_category": "Human Rights",
+        "excerpt": (
+            "The Supreme Court formulated 11 mandatory guidelines to govern all police arrests and detentions across India, "
+            "aimed at stamping out custodial torture and death. The Court held that custodial violence strikes a severe blow to "
+            "the rule of law and violates fundamental rights to life and personal dignity under Articles 21 and 22(1) of the "
+            "Constitution, mandating written arrest memos and prompt medical examinations."
+        ),
+        "full_text": (
+            "IN THE SUPREME COURT OF INDIA\n"
+            "CRIMINAL ORIGINAL JURISDICTION\n\n"
+            "WRIT PETITION (CRIMINAL) NO. 592 OF 1987\n"
+            "D.K. Basu ... Petitioner\n"
+            "versus\n"
+            "State of West Bengal ... Respondent\n\n"
+            "CORAM: Hon'ble Mr. Justice Kuldip Singh and Hon'ble Dr. Justice A.S. Anand.\n\n"
+            "JUDGMENT:\n"
+            "1. Custodial torture and deaths in police lock-ups represent gross violations of basic human dignity. The question "
+            "before this Court is how to enforce the constitutional guarantees under Articles 21 and 22 against executive lawlessness.\n\n"
+            "2. We mandate 11 specific requirements for every arrest: identification badges on arresting officers, preparation of a "
+            "signed Memo of Arrest witnessed by family or respectable community member, notification of arrest to relatives within "
+            "8 to 12 hours, inspection memo recording existing injuries, and mandatory medical checkup every 48 hours.\n\n"
+            "3. Failure to comply with these requirements shall render the concerned police officer liable for departmental action "
+            "as well as punishment for contempt of court.\n\n"
+            "ORDER: Mandatory arrest and detention safeguards issued to all State Police Chiefs and Union Territories."
+        ),
+        "url": "https://indiankanoon.org/doc/501107/",
+        "parties": [
+            {"role": "Petitioner", "name": "D.K. Basu (Executive Chairman, Legal Aid Services West Bengal)"},
+            {"role": "Respondent", "name": "State of West Bengal and Others"},
+        ],
+        "tags": [
+            "Article 21",
+            "Article 22",
+            "Custodial Torture",
+            "Arrest Guidelines",
+            "Memo of Arrest",
+            "Human Rights",
+            "Police Reforms",
+        ],
+        "source": "sci",
+    },
+    {
+        "external_id": "landmark-sc-arnesh-kumar-arrest-2014",
+        "title": "Arnesh Kumar v. State of Bihar and Another",
+        "short_title": "Arnesh Kumar v. State of Bihar",
+        "court_code": "sc",
+        "court_name": "Supreme Court of India",
+        "court_level": 1,
+        "judgment_date": datetime.date(2014, 7, 2),
+        "subject_category": "Criminal",
+        "excerpt": (
+            "The Supreme Court curbed the mechanical and automatic arrest of accused persons in matrimonial offences under Section "
+            "498-A IPC (Section 85 BNS) and other offences punishable with imprisonment up to 7 years. The Court mandated strict "
+            "compliance with Section 41 and 41-A CrPC (Section 35 BNSS), obligating police to serve a Notice of Appearance before "
+            "arrest and magistrates to verify recorded reasons before authorizing custodial remand."
+        ),
+        "full_text": (
+            "IN THE SUPREME COURT OF INDIA\n"
+            "CRIMINAL APPELLATE JURISDICTION\n\n"
+            "SPECIAL LEAVE PETITION (CRIMINAL) NO. 9127 OF 2013\n"
+            "Arnesh Kumar ... Appellant\n"
+            "versus\n"
+            "State of Bihar and Another ... Respondents\n\n"
+            "CORAM: Hon'ble Mr. Justice Chandramauli Kumar Prasad and Hon'ble Mr. Justice Pinaki Chandra Ghose.\n\n"
+            "JUDGMENT:\n"
+            "1. Arrest brings humiliation, curtails freedom, and casts scars forever. No arrest should be made simply because the "
+            "offence is non-bailable and cognizable or because the police officer possesses the power to do so.\n\n"
+            "2. For offences punishable with imprisonment up to 7 years, police officers shall not mechanically arrest the accused. "
+            "They must be served a notice of appearance under Section 41-A CrPC (Section 35(3) BNSS) within two weeks from the "
+            "date of institution of the case.\n\n"
+            "3. If an arrest is necessary, the police officer must record the specific statutory reasons in writing. Magistrates who "
+            "authorize remand without scrutinizing police compliance will be subjected to departmental disciplinary proceedings.\n\n"
+            "ORDER: Directions issued to all State Police and Magistrates to prevent arbitrary arrests in 7-year offences."
+        ),
+        "url": "https://indiankanoon.org/doc/29826274/",
+        "parties": [
+            {"role": "Appellant", "name": "Arnesh Kumar"},
+            {"role": "Respondent", "name": "State of Bihar and Smt. Sweta Kiran"},
+        ],
+        "tags": [
+            "Section 41 CrPC",
+            "Section 41A CrPC",
+            "Section 35 BNSS",
+            "Section 498A IPC",
+            "Notice of Appearance",
+            "Arbitrary Arrest",
+            "Criminal Procedure",
+        ],
+        "source": "sci",
+    },
+    {
+        "external_id": "landmark-sc-anuradha-bhasin-internet-2020",
+        "title": "Anuradha Bhasin v. Union of India and Others",
+        "short_title": "Anuradha Bhasin v. Union of India",
+        "court_code": "sc",
+        "court_name": "Supreme Court of India",
+        "court_level": 1,
+        "judgment_date": datetime.date(2020, 1, 10),
+        "subject_category": "Constitutional",
+        "excerpt": (
+            "A 3-Judge bench of the Supreme Court held that freedom of speech and expression and the right to carry on trade "
+            "or business through the medium of the internet are constitutionally protected fundamental rights under Article "
+            "19(1)(a) and 19(1)(g). The Court ruled that indefinite suspension of telecom and internet services under the "
+            "Telecom Suspension Rules 2017 is illegal, subjecting government shutdown orders to proportionality review."
+        ),
+        "full_text": (
+            "IN THE SUPREME COURT OF INDIA\n"
+            "CIVIL ORIGINAL JURISDICTION\n\n"
+            "WRIT PETITION (CIVIL) NO. 1031 OF 2019\n"
+            "Anuradha Bhasin ... Petitioner\n"
+            "versus\n"
+            "Union of India and Others ... Respondents\n\n"
+            "CORAM: Hon'ble Mr. Justice N.V. Ramana, Hon'ble Mr. Justice R. Subhash Reddy, and Hon'ble Mr. Justice B.R. Gavai.\n\n"
+            "JUDGMENT:\n"
+            "1. The petitioner challenges the prolonged suspension of internet, communication, and movement restrictions in Jammu "
+            "and Kashmir following the abrogation of Article 370.\n\n"
+            "2. We hold that the freedom of speech and expression and freedom to practice any profession over the medium of internet "
+            "is an integral component of Article 19(1)(a) and 19(1)(g) of the Constitution of India. Any restriction on internet access "
+            "must satisfy the four-prong test of proportionality: legitimate goal, suitability, necessity, and balancing of rights.\n\n"
+            "3. An indefinite suspension of internet services is impermissible. Orders suspending internet must be published openly "
+            "and periodically reviewed by the designated Review Committee under Rule 2(5) of the Suspension Rules.\n\n"
+            "ORDER: Government directed to publish all suspension orders and review internet restrictions forthwith."
+        ),
+        "url": "https://indiankanoon.org/doc/141029272/",
+        "parties": [
+            {"role": "Petitioner", "name": "Anuradha Bhasin (Executive Editor, Kashmir Times)"},
+            {"role": "Respondent", "name": "Union of India and Jammu & Kashmir Administration"},
+        ],
+        "tags": [
+            "Article 19(1)(a)",
+            "Article 19(1)(g)",
+            "Internet Freedom",
+            "Freedom of Speech",
+            "Proportionality Test",
+            "Telecom Suspension Rules",
+            "Constitutional Law",
         ],
         "source": "sci",
     },
