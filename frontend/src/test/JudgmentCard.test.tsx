@@ -117,4 +117,26 @@ describe('JudgmentCard Component', () => {
     expect(screen.getByText('Best Match')).toBeInTheDocument();
     expect(screen.queryByText(/0\.032/)).not.toBeInTheDocument();
   });
+
+  it('triggers judgment prefetch on mouse enter or touch start for instant reader view', () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => mockJudgment,
+    } as Response);
+
+    render(
+      <JudgmentCard
+        judgment={mockJudgment}
+        isBookmarked={false}
+        onToggleBookmark={vi.fn()}
+        onSelectJudgment={vi.fn()}
+      />
+    );
+
+    const titleEl = screen.getByText('Gurbaksh Singh Sibbia v. State of Punjab');
+    const card = titleEl.closest('[role="button"]')!;
+    fireEvent.mouseEnter(card);
+    expect(fetchSpy).toHaveBeenCalled();
+  });
 });

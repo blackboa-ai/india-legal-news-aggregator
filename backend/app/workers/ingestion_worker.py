@@ -174,6 +174,13 @@ class IngestionWorker:
                     )
 
             await session.commit()
+            if stats.items_inserted > 0:
+                try:
+                    from app.services.cache_service import cache_service
+                    await cache_service.clear()
+                    logger.info("Invalidated cache after inserting %d records from %s", stats.items_inserted, feed_config.source_id)
+                except Exception as cache_err:
+                    logger.warning("Failed to invalidate cache after feed insertion: %s", cache_err)
 
         except Exception as feed_err:
             await session.rollback()
@@ -250,6 +257,14 @@ class IngestionWorker:
 
         duration = round(time.perf_counter() - start_mono, 2)
         end_wall = datetime.now(UTC).isoformat()
+
+        if total_inserted > 0:
+            try:
+                from app.services.cache_service import cache_service
+                await cache_service.clear()
+                logger.info("Invalidated all caches after ingestion cycle inserted %d records", total_inserted)
+            except Exception as cache_err:
+                logger.warning("Failed to invalidate cache after ingestion cycle: %s", cache_err)
 
         report = IngestionCycleReport(
             started_at=start_wall,

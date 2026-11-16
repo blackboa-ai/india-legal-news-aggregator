@@ -81,4 +81,43 @@ describe('API Client & Token Management', () => {
       })
     );
   });
+
+  it('manages in-memory prefetch cache for judgments detail', async () => {
+    const mockJudgment = {
+      id: 'pre-123',
+      title: 'Prefetched Judgment',
+    };
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => mockJudgment,
+    } as Response);
+
+    const detail = await api.judgments.getById('pre-123');
+    expect(detail).toEqual(mockJudgment);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    // Second call should return directly from in-memory cache without fetch
+    const cachedDetail = await api.judgments.getById('pre-123');
+    expect(cachedDetail).toEqual(mockJudgment);
+    expect(fetchSpy).toHaveBeenCalledTimes(1); // No additional fetch
+  });
+
+  it('forwards AbortSignal to fetch request for query cancellation', async () => {
+    const controller = new AbortController();
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ data: [], total: 0, limit: 10, offset: 0 }),
+    } as Response);
+
+    await api.judgments.list({ limit: 10 }, controller.signal);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        signal: controller.signal,
+      })
+    );
+  });
 });

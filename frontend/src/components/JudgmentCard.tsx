@@ -8,6 +8,7 @@ import {
   FolderPlus,
 } from 'lucide-react';
 import { Judgment, SearchResultItem } from '../types';
+import { prefetchJudgment } from '../api/client';
 
 interface JudgmentCardProps {
   judgment: Judgment | SearchResultItem;
@@ -65,7 +66,7 @@ export const formatJudgmentDate = (dateStr: string) => {
   }
 };
 
-export const JudgmentCard: React.FC<JudgmentCardProps> = ({
+export const JudgmentCard = React.memo<JudgmentCardProps>(({
   judgment,
   isBookmarked,
   onToggleBookmark,
@@ -82,6 +83,12 @@ export const JudgmentCard: React.FC<JudgmentCardProps> = ({
       role="button"
       tabIndex={0}
       onClick={() => onSelectJudgment(judgment)}
+      onMouseEnter={() => {
+        if (judgment?.id) prefetchJudgment(judgment.id);
+      }}
+      onTouchStart={() => {
+        if (judgment?.id) prefetchJudgment(judgment.id);
+      }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -222,4 +229,7 @@ export const JudgmentCard: React.FC<JudgmentCardProps> = ({
       </div>
     </div>
   );
-};
+});
+
+JudgmentCard.displayName = 'JudgmentCard';
+

@@ -30,6 +30,23 @@ import { BookmarksAndAlertsModal } from './components/BookmarksAndAlertsModal';
 import { Footer } from './components/Footer';
 
 const PAGE_SIZE = 25;
+const FEED_CACHE_KEY = 'india_legal_cached_feed';
+
+function getInitialCachedFeed(): { data: Judgment[]; total: number } | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(FEED_CACHE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed?.data) && parsed.data.length > 0) {
+        return { data: parsed.data, total: parsed.total || parsed.data.length };
+      }
+    }
+  } catch {
+    // localStorage unavailable
+  }
+  return null;
+}
 
 const formatFriendlyErrorMessage = (err: unknown): string => {
   if (err instanceof Error) {
@@ -64,11 +81,44 @@ export const App: React.FC = () => {
     limit: PAGE_SIZE,
   });
 
-  // Data States
-  const [judgments, setJudgments] = useState<(Judgment | SearchResultItem)[]>([]);
-  const [totalCount, setTotalCount] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  // Stale-While-Revalidate: Instant 0ms hydration from localStorage
+  const cachedFeedRef = useRef(getInitialCachedFeed());
+  const initialCachedFeed = cachedFeedRef.current;
+
+  // Data States (render cached feed instantaneously in 0ms on page load)
+  const [judgments, setJudgments] = useState<(Judgment | SearchResultItem)[]>(
+    () => initialCachedFeed?.data || []
+  );
+  const [totalCount, setTotalCount] = useState<number>(
+    () => initialCachedFeed?.total || 0
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(() => !initialCachedFeed);
   const [error, setError] = useState<string | null>(null);
+
+  // Debounced search query & AbortController request cancellation
+  const [debouncedQuery, setDebouncedQuery] = useState(filters.q);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // 250ms debounce on search typing
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    if (!filters.q.trim()) {
+      setDebouncedQuery('');
+      return;
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      setDebouncedQuery(filters.q);
+    }, 250);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [filters.q]);
 
   // Metadata (defaults gracefully to canonical categories and courts)
   const [categories, setCategories] = useState<LegalCategoryItem[]>(DEFAULT_CATEGORIES);
@@ -168,53 +218,111 @@ export const App: React.FC = () => {
     };
   }, [isAuthenticated, user?.id]);
 
-  // Primary Judgment & Search Query fetcher
+  // Primary Judgment & Search Query fetcher with AbortController cancellation & debouncing
   const fetchJudgments = useCallback(async () => {
+    // Abort previous in-flight request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    // Only show full loading skeleton if we don't have items to display
     setIsLoading(true);
     setError(null);
+
+    const isDefaultFeed =
+      !debouncedQuery.trim() &&
+      !filters.category &&
+      !filters.court &&
+      !filters.date_from &&
+      !filters.date_to &&
+      filters.page === 1;
+
     try {
       const offset = (filters.page - 1) * filters.limit;
 
-      if (filters.q.trim()) {
-        // Hybrid / Keyword / Semantic Search Query
-        const searchRes = await api.judgments.search({
-          q: filters.q.trim(),
-          mode: filters.mode,
-          category: filters.category || undefined,
-          court: filters.court || undefined,
-          limit: filters.limit,
-          offset,
-        });
+      if (debouncedQuery.trim()) {
+        // Hybrid / Keyword / Semantic Search Query with AbortSignal
+        const searchRes = await api.judgments.search(
+          {
+            q: debouncedQuery.trim(),
+            mode: filters.mode,
+            category: filters.category || undefined,
+            court: filters.court || undefined,
+            limit: filters.limit,
+            offset,
+          },
+          controller.signal
+        );
 
-        setJudgments(searchRes.results);
-        setTotalCount(searchRes.total);
-        setSearchMeta({
-          query_type: searchRes.query_type,
-          matched_terms: searchRes.matched_terms,
-        });
+        if (!controller.signal.aborted) {
+          setJudgments(searchRes.results);
+          setTotalCount(searchRes.total);
+          setSearchMeta({
+            query_type: searchRes.query_type,
+            matched_terms: searchRes.matched_terms,
+          });
+        }
       } else {
-        // Standard paginated filtered feed
-        const feedRes = await api.judgments.list({
-          category: filters.category || undefined,
-          court: filters.court || undefined,
-          date_from: filters.date_from || undefined,
-          date_to: filters.date_to || undefined,
-          limit: filters.limit,
-          offset,
-        });
+        // Standard paginated filtered feed with AbortSignal
+        const feedRes = await api.judgments.list(
+          {
+            category: filters.category || undefined,
+            court: filters.court || undefined,
+            date_from: filters.date_from || undefined,
+            date_to: filters.date_to || undefined,
+            limit: filters.limit,
+            offset,
+          },
+          controller.signal
+        );
 
-        setJudgments(feedRes.data);
-        setTotalCount(feedRes.total);
-        setSearchMeta(null);
+        if (!controller.signal.aborted) {
+          setJudgments(feedRes.data);
+          setTotalCount(feedRes.total);
+          setSearchMeta(null);
+
+          // Stale-while-revalidate: store fresh default feed for instantaneous 0ms hydration
+          if (isDefaultFeed && feedRes.data.length > 0) {
+            try {
+              localStorage.setItem(
+                FEED_CACHE_KEY,
+                JSON.stringify({
+                  data: feedRes.data,
+                  total: feedRes.total,
+                  timestamp: Date.now(),
+                })
+              );
+            } catch {
+              // Ignore storage quotas
+            }
+          }
+        }
       }
     } catch (err: unknown) {
+      if (controller.signal.aborted || (err instanceof Error && err.name === 'AbortError')) {
+        return; // Silent request cancellation
+      }
       setError(formatFriendlyErrorMessage(err));
-      setJudgments([]);
-      setTotalCount(0);
+      // Keep existing displayed items if background revalidation fails
+      setJudgments((prev) => (prev.length > 0 ? prev : []));
+      setTotalCount((prev) => (prev > 0 ? prev : 0));
     } finally {
-      setIsLoading(false);
+      if (!controller.signal.aborted) {
+        setIsLoading(false);
+      }
     }
-  }, [filters]);
+  }, [
+    debouncedQuery,
+    filters.mode,
+    filters.category,
+    filters.court,
+    filters.date_from,
+    filters.date_to,
+    filters.page,
+    filters.limit,
+  ]);
 
   useEffect(() => {
     fetchJudgments();
@@ -230,10 +338,18 @@ export const App: React.FC = () => {
 
   const handleSearchSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    setDebouncedQuery(filters.q);
     setFilters((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleResetFilters = () => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    setDebouncedQuery('');
     setFilters({
       q: '',
       mode: 'hybrid',
@@ -247,50 +363,55 @@ export const App: React.FC = () => {
     setSearchMeta(null);
   };
 
-  // Reader Open Handlers
-  const handleSelectJudgment = (judgment: Judgment) => {
+  // Memoized Reader Open & Precedent Selection Handlers
+  const handleSelectJudgment = useCallback((judgment: Judgment) => {
     setSelectedJudgment(judgment);
     setIsReaderOpen(true);
-  };
+  }, []);
 
-  const handleSelectSimilarJudgment = (similar: Judgment) => {
+  const handleSelectSimilarJudgment = useCallback((similar: Judgment) => {
     setSelectedJudgment(similar);
-  };
+  }, []);
 
-  // Bookmark Toggle
-  const handleToggleBookmark = async (
-    judgment: Judgment,
-    notes?: string,
-    tags?: string[]
-  ) => {
-    if (!isAuthenticated) {
-      showToast('Please sign in to save judgments to your workspace', 'info');
-      setIsAuthModalOpen(true);
-      return;
-    }
-
-    const judgmentId = judgment.id;
-    const isCurrentlySaved = bookmarkedIds.has(judgmentId);
-
-    try {
-      if (isCurrentlySaved) {
-        await api.bookmarks.remove(judgmentId);
-        setBookmarkedIds((prev) => {
-          const updated = new Set(prev);
-          updated.delete(judgmentId);
-          return updated;
-        });
-        showToast('Judgment removed from bookmarks', 'info');
-      } else {
-        await api.bookmarks.add(judgmentId, { notes, tags });
-        setBookmarkedIds((prev) => new Set(prev).add(judgmentId));
-        showToast('Judgment saved to bookmarks', 'success');
+  // Memoized Bookmark Toggle Handler
+  const handleToggleBookmark = useCallback(
+    async (judgment: Judgment, notes?: string, tags?: string[]) => {
+      if (!isAuthenticated) {
+        showToast('Please sign in to save judgments to your workspace', 'info');
+        setIsAuthModalOpen(true);
+        return;
       }
-    } catch (err) {
-      console.error('Failed to toggle bookmark:', err);
-      showToast('Action could not be completed', 'error');
-    }
-  };
+
+      const judgmentId = judgment.id;
+      const isCurrentlySaved = bookmarkedIds.has(judgmentId);
+
+      try {
+        if (isCurrentlySaved) {
+          await api.bookmarks.remove(judgmentId);
+          setBookmarkedIds((prev) => {
+            const updated = new Set(prev);
+            updated.delete(judgmentId);
+            return updated;
+          });
+          showToast('Judgment removed from bookmarks', 'info');
+        } else {
+          await api.bookmarks.add(judgmentId, { notes, tags });
+          setBookmarkedIds((prev) => new Set(prev).add(judgmentId));
+          showToast('Judgment saved to bookmarks', 'success');
+        }
+      } catch (err) {
+        console.error('Failed to toggle bookmark:', err);
+        showToast('Action could not be completed', 'error');
+      }
+    },
+    [isAuthenticated, bookmarkedIds, showToast]
+  );
+
+  // Memoized Card Add To Topic Handler
+  const handleCardAddToTopic = useCallback((judgment: Judgment) => {
+    setSelectedJudgment(judgment);
+    setIsReaderOpen(true);
+  }, []);
 
   // Add to Research Topic Folder
   const handleAddToTopic = async (topicId: string, judgmentId: string) => {
@@ -426,8 +547,8 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {/* Loading Skeletons */}
-        {isLoading ? (
+        {/* Loading Skeletons - displayed when loading and no judgments in cache/state */}
+        {isLoading && judgments.length === 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 mb-8">
             {Array.from({ length: 6 }).map((_, i) => (
               <div
@@ -478,12 +599,9 @@ export const App: React.FC = () => {
                   key={judgment.id}
                   judgment={judgment}
                   isBookmarked={bookmarkedIds.has(judgment.id)}
-                  onToggleBookmark={() => handleToggleBookmark(judgment)}
+                  onToggleBookmark={handleToggleBookmark}
                   onSelectJudgment={handleSelectJudgment}
-                  onAddToTopic={() => {
-                    setSelectedJudgment(judgment);
-                    setIsReaderOpen(true);
-                  }}
+                  onAddToTopic={handleCardAddToTopic}
                 />
               ))}
             </div>

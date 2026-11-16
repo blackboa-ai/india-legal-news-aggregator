@@ -222,17 +222,39 @@ async function request<T>(
 // API Service Methods
 // -----------------------------------------------------------------------------
 
+// Fast in-memory cache for full judgment details (populated by prefetching or view)
+export const judgmentDetailCache = new Map<string, Judgment>();
+
+export function getPrefetchedJudgment(id: string): Judgment | undefined {
+  return judgmentDetailCache.get(id);
+}
+
+export async function prefetchJudgment(id: string): Promise<Judgment | null> {
+  if (judgmentDetailCache.has(id)) {
+    return judgmentDetailCache.get(id)!;
+  }
+  try {
+    const detail = await api.judgments.getById(id);
+    return detail;
+  } catch {
+    return null;
+  }
+}
+
 export const api = {
   // Judgments & Search
   judgments: {
-    list: (params: {
-      category?: string;
-      court?: string;
-      date_from?: string;
-      date_to?: string;
-      limit?: number;
-      offset?: number;
-    } = {}): Promise<JudgmentListResponse> => {
+    list: (
+      params: {
+        category?: string;
+        court?: string;
+        date_from?: string;
+        date_to?: string;
+        limit?: number;
+        offset?: number;
+      } = {},
+      signal?: AbortSignal
+    ): Promise<JudgmentListResponse> => {
       const searchParams = new URLSearchParams();
       if (params.category) searchParams.set('category', params.category);
       if (params.court) searchParams.set('court', params.court);
@@ -242,17 +264,20 @@ export const api = {
       if (params.offset !== undefined) searchParams.set('offset', String(params.offset));
 
       const query = searchParams.toString();
-      return request<JudgmentListResponse>(`/judgments${query ? `?${query}` : ''}`);
+      return request<JudgmentListResponse>(`/judgments${query ? `?${query}` : ''}`, { signal });
     },
 
-    search: (params: {
-      q: string;
-      mode?: 'hybrid' | 'keyword' | 'semantic';
-      category?: string;
-      court?: string;
-      limit?: number;
-      offset?: number;
-    }): Promise<SearchResponse> => {
+    search: (
+      params: {
+        q: string;
+        mode?: 'hybrid' | 'keyword' | 'semantic';
+        category?: string;
+        court?: string;
+        limit?: number;
+        offset?: number;
+      },
+      signal?: AbortSignal
+    ): Promise<SearchResponse> => {
       const searchParams = new URLSearchParams();
       searchParams.set('q', params.q);
       if (params.mode) searchParams.set('mode', params.mode);
@@ -261,11 +286,18 @@ export const api = {
       if (params.limit !== undefined) searchParams.set('limit', String(params.limit));
       if (params.offset !== undefined) searchParams.set('offset', String(params.offset));
 
-      return request<SearchResponse>(`/search?${searchParams.toString()}`);
+      return request<SearchResponse>(`/search?${searchParams.toString()}`, { signal });
     },
 
-    getById: (id: string): Promise<Judgment> => {
-      return request<Judgment>(`/judgments/${id}`);
+    getById: async (id: string, signal?: AbortSignal): Promise<Judgment> => {
+      if (judgmentDetailCache.has(id)) {
+        return judgmentDetailCache.get(id)!;
+      }
+      const item = await request<Judgment>(`/judgments/${id}`, { signal });
+      if (item && item.id) {
+        judgmentDetailCache.set(item.id, item);
+      }
+      return item;
     },
 
     getSimilar: (id: string, limit = 5): Promise<Judgment[]> => {

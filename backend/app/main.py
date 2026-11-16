@@ -13,6 +13,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -77,6 +78,9 @@ def create_application() -> FastAPI:
             allow_headers=["*"],
         )
 
+    # GZip compression middleware (compresses response payloads >= 500 bytes)
+    application.add_middleware(GZipMiddleware, minimum_size=500)
+
     # Production Security Headers & Structured Request Latency Logging Middleware
     @application.middleware("http")
     async def security_and_latency_middleware(request: Request, call_next):
@@ -123,6 +127,20 @@ def create_application() -> FastAPI:
         )
         response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none';"
         response.headers["X-Response-Time-Ms"] = f"{latency_ms:.2f}"
+
+        # Public feed/search caching headers (HTTP Cache-Control: public, max-age=30, stale-while-revalidate=60)
+        if request.method == "GET" and response.status_code == 200:
+            path = request.url.path
+            is_feed_or_search = (
+                path.startswith(f"{settings.API_V1_STR}/judgments")
+                or path.startswith(f"{settings.API_V1_STR}/search")
+                or path.startswith(f"{settings.API_V1_STR}/similar")
+                or path.startswith(f"{settings.API_V1_STR}/categories")
+                or path.startswith(f"{settings.API_V1_STR}/courts")
+                or path in ("/categories", "/courts", "/search", "/judgments")
+            )
+            if is_feed_or_search and "Cache-Control" not in response.headers:
+                response.headers["Cache-Control"] = "public, max-age=30, stale-while-revalidate=60"
 
         # Structured request latency logging
         client_ip = request.client.host if request.client else "unknown"
