@@ -1,0 +1,78 @@
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { JudgmentCard } from '../components/JudgmentCard';
+import { Judgment } from '../types';
+
+describe('JudgmentCard Component', () => {
+  const mockJudgment: Judgment = {
+    id: 'f87a87e2-411a-4ab0-bbfb-3719bca40001',
+    external_id: 'hash123',
+    title: 'Gurbaksh Singh Sibbia v. State of Punjab',
+    short_title: 'Gurbaksh Singh Sibbia',
+    court_code: 'sc',
+    court_name: 'Supreme Court of India',
+    court_level: 1,
+    judgment_date: '2024-04-15',
+    subject_category: 'Criminal',
+    excerpt: 'Constitution bench ruling on the scope and ambit of Section 438 of the Code of Criminal Procedure.',
+    full_text: 'Full judgment text for anticipatory bail principles...',
+    url: 'https://indiankanoon.org/doc/12345/',
+    parties: [{ role: 'appellant', name: 'Gurbaksh Singh Sibbia' }],
+    tags: ['Section 438 CrPC', 'Article 21', 'Anticipatory Bail'],
+    source: 'indiankanoon',
+    is_archived: true,
+    classification_confidence: 0.98,
+    created_at: '2024-04-15T10:00:00Z',
+    updated_at: '2024-04-15T10:00:00Z',
+  };
+
+  it('renders court badge, title, excerpt and statute tags', () => {
+    render(
+      <JudgmentCard
+        judgment={mockJudgment}
+        isBookmarked={false}
+        onToggleBookmark={vi.fn()}
+        onSelectJudgment={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('Supreme Court of India')).toBeInTheDocument();
+    expect(screen.getByText('Criminal')).toBeInTheDocument();
+    expect(screen.getByText('Gurbaksh Singh Sibbia v. State of Punjab')).toBeInTheDocument();
+    expect(screen.getByText(/Constitution bench ruling/i)).toBeInTheDocument();
+    expect(screen.getByText('Section 438 CrPC')).toBeInTheDocument();
+    expect(screen.getByText('Article 21')).toBeInTheDocument();
+  });
+
+  it('calls onToggleBookmark when bookmark button is clicked', () => {
+    const handleBookmark = vi.fn();
+    render(
+      <JudgmentCard
+        judgment={mockJudgment}
+        isBookmarked={false}
+        onToggleBookmark={handleBookmark}
+        onSelectJudgment={vi.fn()}
+      />
+    );
+
+    const bookmarkBtn = screen.getByTitle('Save to Bookmarks');
+    fireEvent.click(bookmarkBtn);
+    expect(handleBookmark).toHaveBeenCalledWith(mockJudgment);
+  });
+
+  it('calls onSelectJudgment when Read Judgment button is clicked', () => {
+    const handleSelect = vi.fn();
+    render(
+      <JudgmentCard
+        judgment={mockJudgment}
+        isBookmarked={false}
+        onToggleBookmark={vi.fn()}
+        onSelectJudgment={handleSelect}
+      />
+    );
+
+    const readBtn = screen.getByText('Read Judgment');
+    fireEvent.click(readBtn);
+    expect(handleSelect).toHaveBeenCalledWith(mockJudgment);
+  });
+});
