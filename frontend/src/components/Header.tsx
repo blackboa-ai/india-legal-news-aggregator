@@ -7,12 +7,14 @@ import {
   LogOut,
   User as UserIcon,
   Search,
+  Star,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface HeaderProps {
   onOpenAuth: () => void;
   onOpenDashboard: (tab?: 'bookmarks' | 'alerts' | 'matches' | 'topics') => void;
+  onOpenFeedback?: () => void;
   bookmarkCount: number;
   alertMatchCount?: number;
   onScrollToSearch?: () => void;
@@ -21,6 +23,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   onOpenAuth,
   onOpenDashboard,
+  onOpenFeedback,
   bookmarkCount,
   alertMatchCount = 0,
   onScrollToSearch,
@@ -99,6 +102,19 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               )}
             </button>
+
+            {/* Feedback Trigger Button */}
+            {onOpenFeedback && (
+              <button
+                type="button"
+                onClick={onOpenFeedback}
+                aria-label="Submit feedback or review"
+                className="hidden lg:flex items-center space-x-1.5 px-3 py-2 min-h-[44px] rounded-xl text-xs font-semibold text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-400/30 transition shadow-sm"
+              >
+                <Star className="h-3.5 w-3.5 fill-amber-400/40 text-amber-400" />
+                <span>Feedback</span>
+              </button>
+            )}
 
             {/* Auth State Button */}
             {isAuthenticated && user ? (

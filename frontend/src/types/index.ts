@@ -144,3 +144,33 @@ export interface FilterState {
   page: number;
   limit: number;
 }
+
+export interface Feedback {
+  id: string;
+  rating: number;
+  feedback_text: string;
+  email?: string | null;
+  category: string;
+  user_id?: string | null;
+  created_at: string;
+}
+
+export interface FeedbackCreate {
+  rating: number;
+  feedback_text: string;
+  email?: string;
+  category?: string;
+}
+
+export interface FeedbackStats {
+  total_count: number;
+  average_rating: number;
+  rating_distribution: Record<string, number>;
+}
+
+export interface FeedbackListResponse {
+  data: Feedback[];
+  total: number;
+  stats: FeedbackStats;
+}
+

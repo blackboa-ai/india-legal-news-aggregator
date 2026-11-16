@@ -11,6 +11,12 @@ from app.schemas.auth import (
     UserRegisterRequest,
     UserResponse,
 )
+from app.schemas.feedback import (
+    FeedbackCreate,
+    FeedbackListResponse,
+    FeedbackResponse,
+    FeedbackStats,
+)
 from app.schemas.health import HealthResponse
 from app.schemas.judgment import (
     CourtItem,
@@ -42,6 +48,11 @@ from app.schemas.user_features import (
 __all__ = [
     # Health
     "HealthResponse",
+    # Feedback
+    "FeedbackCreate",
+    "FeedbackResponse",
+    "FeedbackStats",
+    "FeedbackListResponse",
     # Judgments & Search
     "Party",
     "JudgmentBase",

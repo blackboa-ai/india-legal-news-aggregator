@@ -1,7 +1,11 @@
 import React from 'react';
-import { Scale, ExternalLink, ShieldCheck } from 'lucide-react';
+import { Scale, ExternalLink, ShieldCheck, MessageSquareHeart } from 'lucide-react';
 
-export const Footer: React.FC = () => {
+interface FooterProps {
+  onOpenFeedback?: () => void;
+}
+
+export const Footer: React.FC<FooterProps> = ({ onOpenFeedback }) => {
   return (
     <footer className="bg-slate-900 border-t border-slate-800 text-slate-400 text-xs py-10 mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -100,7 +104,17 @@ export const Footer: React.FC = () => {
         <div className="pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 gap-2">
           <p>© {new Date().getFullYear()} India Legal News Aggregator. Built with precision for the Indian Bar & Judiciary.</p>
           <div className="flex items-center space-x-4">
-            <span>v2.0 Master Execution Plan</span>
+            {onOpenFeedback && (
+              <button
+                type="button"
+                onClick={onOpenFeedback}
+                className="text-amber-400 hover:text-amber-300 transition flex items-center space-x-1"
+              >
+                <MessageSquareHeart className="h-3 w-3" />
+                <span>Give Feedback</span>
+              </button>
+            )}
+            <span>v2.0 Legal Engine</span>
             <button
               type="button"
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}

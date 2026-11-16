@@ -6,7 +6,7 @@ Mounts all v1 sub-routers for health, judgments, search, auth, bookmarks, alerts
 
 from fastapi import APIRouter
 
-from app.api.v1 import admin, auth, bookmarks, health, judgments, user
+from app.api.v1 import admin, auth, bookmarks, feedback, health, judgments, user
 
 api_router = APIRouter()
 
@@ -27,6 +27,9 @@ api_router.include_router(bookmarks.alerts_router, tags=["Alerts"])
 
 # Research Topics router -> /api/v1/topics, /api/v1/topics/{id}/judgments
 api_router.include_router(user.router, tags=["Topics"])
+
+# Feedback & Reviews router -> /api/v1/feedback
+api_router.include_router(feedback.router, tags=["Feedback"])
 
 # Admin router -> /api/v1/admin/refresh
 api_router.include_router(admin.router, tags=["Admin"])

@@ -27,6 +27,7 @@ import { JudgmentCard } from './components/JudgmentCard';
 import { JudgmentModal } from './components/JudgmentModal';
 import { AuthModal } from './components/AuthModal';
 import { BookmarksAndAlertsModal } from './components/BookmarksAndAlertsModal';
+import { FeedbackModal, FloatingFeedbackButton } from './components/FeedbackModal';
 import { Footer } from './components/Footer';
 
 const PAGE_SIZE = 25;
@@ -133,6 +134,7 @@ export const App: React.FC = () => {
   const [selectedJudgment, setSelectedJudgment] = useState<Judgment | null>(null);
   const [isReaderOpen, setIsReaderOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState<boolean>(false);
   const [isDashboardOpen, setIsDashboardOpen] = useState<boolean>(false);
   const [dashboardTab, setDashboardTab] = useState<
     'bookmarks' | 'alerts' | 'matches' | 'topics'
@@ -467,6 +469,7 @@ export const App: React.FC = () => {
       <Header
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onOpenDashboard={handleOpenDashboard}
+        onOpenFeedback={() => setIsFeedbackOpen(true)}
         bookmarkCount={bookmarkedIds.size}
         alertMatchCount={alertMatchCount}
         onScrollToSearch={() => {
@@ -693,8 +696,17 @@ export const App: React.FC = () => {
         onOpenAuth={() => setIsAuthModalOpen(true)}
       />
 
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
+      />
+
+      {/* Floating Action Button */}
+      <FloatingFeedbackButton onClick={() => setIsFeedbackOpen(true)} />
+
       {/* Footer */}
-      <Footer />
+      <Footer onOpenFeedback={() => setIsFeedbackOpen(true)} />
     </div>
   );
 };

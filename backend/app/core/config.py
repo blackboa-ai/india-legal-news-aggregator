@@ -79,6 +79,10 @@ class Settings(BaseSettings):
         default="dev-admin-secret-key-change-in-production",
         description="API Key required for administrative operations like manual RSS triggers",
     )
+    FEEDBACK_NOTIFICATION_EMAIL: str | None = Field(
+        default=None,
+        description="Optional recipient email address for newly submitted user reviews",
+    )
 
     # Embeddings & Inference Configuration (< 250 MB RAM constraint)
     EMBEDDING_PROVIDER: str = Field(

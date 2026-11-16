@@ -9,6 +9,9 @@ import {
   Bookmark,
   BookmarkListResponse,
   CourtItem,
+  Feedback,
+  FeedbackCreate,
+  FeedbackListResponse,
   Judgment,
   JudgmentListResponse,
   LegalCategoryItem,
@@ -458,6 +461,25 @@ export const api = {
       return request<{ status: string; topic_id: string }>(`/topics/${topic_id}`, {
         method: 'DELETE',
       });
+    },
+  },
+
+  // Feedback & User Reviews
+  feedback: {
+    submit: (payload: FeedbackCreate): Promise<Feedback> => {
+      return request<Feedback>('/feedback', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    list: (params: { limit?: number; offset?: number; category?: string } = {}): Promise<FeedbackListResponse> => {
+      const searchParams = new URLSearchParams();
+      if (params.limit !== undefined) searchParams.set('limit', String(params.limit));
+      if (params.offset !== undefined) searchParams.set('offset', String(params.offset));
+      if (params.category) searchParams.set('category', params.category);
+      const q = searchParams.toString();
+      return request<FeedbackListResponse>(`/feedback${q ? `?${q}` : ''}`);
     },
   },
 
