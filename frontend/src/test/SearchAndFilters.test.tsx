@@ -25,7 +25,7 @@ describe('SearchAndFilters Component', () => {
     { id: 'constitutional', name: 'Constitutional', description: 'Constitutional laws' },
   ];
 
-  it('renders search input and category pills', () => {
+  it('renders prominent search input and category pills', () => {
     render(
       <SearchAndFilters
         filters={defaultFilters}
@@ -38,7 +38,7 @@ describe('SearchAndFilters Component', () => {
     );
 
     expect(
-      screen.getByPlaceholderText(/Search judgments, laws & sections/i)
+      screen.getByPlaceholderText(/Search judgments, sections/i)
     ).toBeInTheDocument();
     expect(screen.getByText('Smart Search')).toBeInTheDocument();
     expect(screen.getByText('Exact Words')).toBeInTheDocument();
@@ -100,5 +100,22 @@ describe('SearchAndFilters Component', () => {
     const submitBtn = screen.getByTestId('search-submit-btn');
     fireEvent.click(submitBtn);
     expect(handleSearchSubmit).toHaveBeenCalled();
+  });
+
+  it('toggles mobile collapsible filters when clicked', () => {
+    render(
+      <SearchAndFilters
+        filters={defaultFilters}
+        onFilterChange={vi.fn()}
+        onSearchSubmit={vi.fn()}
+        onResetFilters={vi.fn()}
+        categories={mockCategories}
+        courts={mockCourts}
+      />
+    );
+
+    const toggleBtn = screen.getByText(/Filters \(Court & Date\)/i);
+    expect(toggleBtn).toBeInTheDocument();
+    fireEvent.click(toggleBtn);
   });
 });

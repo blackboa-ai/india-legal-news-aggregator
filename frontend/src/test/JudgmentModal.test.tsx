@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { JudgmentModal } from '../components/JudgmentModal';
+import { JudgmentModal, normalizeReaderText } from '../components/JudgmentModal';
 import { Judgment } from '../types';
 
 describe('JudgmentModal Component', () => {
@@ -79,6 +79,41 @@ describe('JudgmentModal Component', () => {
     expect(handleClose).toHaveBeenCalled();
   });
 
+  it('calls onClose when Escape key is pressed', () => {
+    const handleClose = vi.fn();
+    render(
+      <JudgmentModal
+        judgment={mockJudgment}
+        isOpen={true}
+        onClose={handleClose}
+        isBookmarked={false}
+        onToggleBookmark={vi.fn()}
+        onSelectSimilarJudgment={vi.fn()}
+      />
+    );
+
+    fireEvent.keyDown(window, { key: 'Escape', code: 'Escape' });
+    expect(handleClose).toHaveBeenCalled();
+  });
+
+  it('calls onClose when dimmed backdrop is clicked', () => {
+    const handleClose = vi.fn();
+    const { container } = render(
+      <JudgmentModal
+        judgment={mockJudgment}
+        isOpen={true}
+        onClose={handleClose}
+        isBookmarked={false}
+        onToggleBookmark={vi.fn()}
+        onSelectSimilarJudgment={vi.fn()}
+      />
+    );
+
+    const backdrop = container.firstChild as HTMLElement;
+    fireEvent.click(backdrop);
+    expect(handleClose).toHaveBeenCalled();
+  });
+
   it('switches to similar precedents tab when clicked', () => {
     render(
       <JudgmentModal
@@ -94,5 +129,17 @@ describe('JudgmentModal Component', () => {
     const similarTab = screen.getByText(/Similar Precedents/i);
     fireEvent.click(similarTab);
     expect(screen.getByText('Related Legal Precedents')).toBeInTheDocument();
+  });
+
+  describe('normalizeReaderText helper', () => {
+    it('normalizes single-word and wrapped line breaks into clean paragraphs', () => {
+      const rawScraped = 'The\nSupreme\nCourt\nof\nIndia\nheld\nthat personal liberty is inviolable.\n\nSecond paragraph here.';
+      const normalized = normalizeReaderText(rawScraped);
+      expect(normalized).toBe('The Supreme Court of India held that personal liberty is inviolable.\n\nSecond paragraph here.');
+    });
+
+    it('handles empty input gracefully', () => {
+      expect(normalizeReaderText('')).toBe('');
+    });
   });
 });

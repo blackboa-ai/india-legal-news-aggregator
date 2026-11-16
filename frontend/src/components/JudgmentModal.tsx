@@ -27,6 +27,54 @@ interface JudgmentModalProps {
   onAddToTopic?: (topicId: string, judgmentId: string) => Promise<void>;
 }
 
+/**
+ * Normalizes stray single-word or short line breaks from RSS/HTML scraping
+ * into clean, readable paragraphs while preserving legitimate list items and multi-line breaks.
+ */
+export const normalizeReaderText = (rawText: string): string => {
+  if (!rawText) return '';
+  // Standardize carriage returns to newlines
+  const standardized = rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+  // Split into structural paragraph chunks separated by 2 or more linebreaks
+  const rawParagraphs = standardized.split(/\n{2,}/);
+
+  const cleanedParagraphs = rawParagraphs
+    .map((chunk) => {
+      const lines = chunk
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean);
+
+      let merged = '';
+      for (let i = 0; i < lines.length; i++) {
+        const currentLine = lines[i];
+        if (i === 0) {
+          merged = currentLine;
+        } else {
+          const prevLine = lines[i - 1];
+          // Check if current line is a bullet/numbered list item
+          const isListItem = /^(\d+[\.\)]|\([a-zA-Z0-9]+\)|[-•*])\s/.test(currentLine);
+          // Check if previous line ended with a hyphen indicating a broken word
+          const endsWithHyphen = prevLine.endsWith('-') && /^[a-zA-Z]/.test(currentLine);
+
+          if (endsWithHyphen) {
+            merged = merged.slice(0, -1) + currentLine;
+          } else if (isListItem) {
+            merged += '\n' + currentLine;
+          } else {
+            // Stray scraped line-break or wrapped word: join with space
+            merged += ' ' + currentLine;
+          }
+        }
+      }
+      return merged;
+    })
+    .filter(Boolean);
+
+  return cleanedParagraphs.join('\n\n');
+};
+
 export const JudgmentModal: React.FC<JudgmentModalProps> = ({
   judgment,
   isOpen,
@@ -101,6 +149,20 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
     };
   }, [judgment?.id, isOpen]);
 
+  // Handle Escape key to close modal
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   // Lock body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -118,6 +180,8 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
   const activeJudgment = fullJudgment || judgment;
   const courtInfo = getCourtLevelBadge(activeJudgment.court_level);
   const categoryStyle = getCategoryColor(activeJudgment.subject_category);
+  const rawContent = activeJudgment.full_text || activeJudgment.excerpt || '';
+  const normalizedContent = normalizeReaderText(rawContent);
 
   const handleCopyCitation = () => {
     const citationText = `${activeJudgment.short_title || activeJudgment.title} (${activeJudgment.court_name}, ${formatJudgmentDate(activeJudgment.judgment_date)}). Available at: ${activeJudgment.url}`;
@@ -148,95 +212,84 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-0 sm:p-4 md:p-6 animate-fadeIn">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex md:items-center md:justify-center items-end p-0 md:p-6 animate-fadeIn"
+    >
       <div
-        className="bg-white rounded-none sm:rounded-2xl shadow-2xl border border-slate-200 w-full sm:max-w-5xl h-[100dvh] sm:h-auto sm:max-h-[92vh] flex flex-col overflow-hidden relative"
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white w-full h-[92vh] rounded-t-2xl mt-auto md:mt-0 md:h-auto md:max-h-[85vh] md:max-w-2xl md:w-full md:rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden relative"
         role="dialog"
         aria-modal="true"
         aria-labelledby="judgment-title"
       >
-        {/* Modal Top Bar */}
-        <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/90 sticky top-0 z-20">
-          <div className="flex items-center space-x-2">
+        {/* Sticky Top Header Bar */}
+        <div className="px-4 py-3 sm:px-6 sm:py-3.5 border-b border-slate-200 bg-white/95 backdrop-blur-sm sticky top-0 z-20 shrink-0 flex items-center justify-between gap-2">
+          {/* Left: Court Badge & Date */}
+          <div className="flex items-center space-x-2 min-w-0">
             <span
-              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${courtInfo.badgeClass}`}
+              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold shrink-0 ${courtInfo.badgeClass}`}
             >
-              <Building className="h-3 w-3 mr-1" />
+              <Building className="h-3.5 w-3.5 mr-1" />
               {courtInfo.label}
             </span>
             <span
-              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${categoryStyle}`}
+              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border shrink-0 ${categoryStyle}`}
             >
               {activeJudgment.subject_category}
             </span>
-            <span className="text-xs text-slate-500 inline-flex items-center">
-              <Calendar className="h-3 w-3 mr-1 text-slate-400" />
+            <span className="text-xs text-slate-500 hidden sm:inline-flex items-center shrink-0">
+              <Calendar className="h-3.5 w-3.5 mr-1 text-slate-400" />
               {formatJudgmentDate(activeJudgment.judgment_date)}
             </span>
           </div>
 
-          {/* Action buttons & Close */}
-          <div className="flex items-center space-x-1 sm:space-x-2">
-            <button
-              type="button"
-              onClick={handleCopyCitation}
-              title="Copy Citation"
-              className="p-2 min-h-[40px] rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition text-xs flex items-center space-x-1"
-            >
-              {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
-              <span className="hidden md:inline">{copied ? 'Copied' : 'Cite'}</span>
-            </button>
-
-            <a
-              href={activeJudgment.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Open canonical source page"
-              className="p-2 min-h-[40px] rounded-lg text-slate-500 hover:text-amber-700 hover:bg-slate-200 transition text-xs flex items-center space-x-1"
-            >
-              <ExternalLink className="h-4 w-4" />
-              <span className="hidden md:inline">Source</span>
-            </a>
-
-            <button
-              type="button"
-              onClick={() => {
-                if (isBookmarked) {
-                  onToggleBookmark(activeJudgment);
-                } else {
-                  setShowNotesModal(true);
-                }
-              }}
-              className={`px-3 py-2 min-h-[40px] rounded-lg text-xs font-semibold flex items-center space-x-1 transition ${
-                isBookmarked
-                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                  : 'bg-slate-900 text-white hover:bg-slate-800'
-              }`}
-            >
-              <BookmarkIcon
-                className="h-3.5 w-3.5"
-                fill={isBookmarked ? 'currentColor' : 'none'}
-              />
-              <span>{isBookmarked ? 'Saved' : 'Bookmark'}</span>
-            </button>
+          {/* Right: Font size toggle (desktop) + Prominent 44x44px Close Button */}
+          <div className="flex items-center space-x-2 shrink-0">
+            <div className="hidden sm:flex items-center space-x-1 border border-slate-200 rounded-xl p-1 bg-slate-50">
+              <button
+                type="button"
+                onClick={() => setFontSize('normal')}
+                className={`min-h-[32px] px-2.5 py-1 rounded-lg text-xs font-medium transition ${
+                  fontSize === 'normal'
+                    ? 'bg-white shadow-sm text-slate-900 font-bold'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+                title="Normal font size"
+              >
+                A
+              </button>
+              <button
+                type="button"
+                onClick={() => setFontSize('large')}
+                className={`min-h-[32px] px-2.5 py-1 rounded-lg text-sm font-medium transition ${
+                  fontSize === 'large'
+                    ? 'bg-white shadow-sm text-slate-900 font-bold'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+                title="Large font size"
+              >
+                A+
+              </button>
+            </div>
 
             <button
               type="button"
               onClick={onClose}
-              className="p-2 min-h-[40px] min-w-[40px] rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition flex items-center justify-center"
+              className="min-h-[44px] min-w-[44px] rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition flex items-center justify-center"
               aria-label="Close modal"
             >
-              <X className="h-5 w-5" />
+              <X className="h-6 w-6" />
             </button>
           </div>
         </div>
 
-        {/* Navigation Tabs (Judgment Text vs Similar Precedents) */}
-        <div className="flex items-center space-x-4 px-6 border-b border-slate-200 bg-white text-xs font-semibold">
+        {/* Navigation Tabs (Full Judgment vs Similar Precedents) */}
+        <div className="flex items-center space-x-4 px-4 sm:px-6 border-b border-slate-200 bg-white text-xs font-semibold shrink-0">
           <button
             type="button"
             onClick={() => setActiveTab('judgment')}
-            className={`py-3 flex items-center space-x-1.5 border-b-2 transition ${
+            className={`min-h-[44px] flex items-center space-x-1.5 border-b-2 transition ${
               activeTab === 'judgment'
                 ? 'border-amber-600 text-amber-700'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -249,7 +302,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('precedents')}
-            className={`py-3 flex items-center space-x-1.5 border-b-2 transition ${
+            className={`min-h-[44px] flex items-center space-x-1.5 border-b-2 transition ${
               activeTab === 'precedents'
                 ? 'border-amber-600 text-amber-700'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -261,23 +314,23 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="overflow-y-auto scroll-smooth overscroll-contain p-4 sm:p-6 flex-1 space-y-6">
+        <div className="overflow-y-auto scroll-smooth overscroll-contain p-4 sm:p-6 flex-1 space-y-5">
           {activeTab === 'judgment' ? (
             <>
-              {/* Title & Case Name */}
+              {/* Title & Court attribution */}
               <div>
                 <h1
                   id="judgment-title"
-                  className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight mb-2"
+                  className="text-lg sm:text-xl font-bold text-slate-900 leading-snug mb-1.5"
                 >
                   {activeJudgment.title}
                 </h1>
                 {activeJudgment.short_title && activeJudgment.short_title !== activeJudgment.title && (
-                  <p className="text-sm font-medium text-slate-600 italic">
-                    {activeJudgment.short_title}
+                  <p className="text-xs sm:text-sm font-medium text-slate-600 italic mb-1">
+                    Case: {activeJudgment.short_title}
                   </p>
                 )}
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-slate-500">
                   {activeJudgment.court_name} • Pronounced on {formatJudgmentDate(activeJudgment.judgment_date)}
                 </p>
               </div>
@@ -324,12 +377,12 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
               {/* Add to Research Topic Folder Selector */}
               {topics.length > 0 && onAddToTopic && (
                 <div className="flex flex-wrap items-center gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs">
-                  <FolderPlus className="h-4 w-4 text-indigo-600" />
+                  <FolderPlus className="h-4 w-4 text-indigo-600 shrink-0" />
                   <span className="font-semibold text-slate-700">Save to Research Topic:</span>
                   <select
                     value={selectedTopicId}
                     onChange={(e) => setSelectedTopicId(e.target.value)}
-                    className="border border-slate-300 rounded-md px-2 py-1 bg-white text-slate-800"
+                    className="border border-slate-300 rounded-md px-2 py-1 bg-white text-slate-800 min-h-[36px]"
                   >
                     <option value="">Select Topic Folder...</option>
                     {topics.map((t) => (
@@ -342,73 +395,54 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
                     type="button"
                     disabled={!selectedTopicId || topicAdding}
                     onClick={handleAddToTopicClick}
-                    className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold transition disabled:opacity-50"
+                    className="px-3 py-1.5 min-h-[36px] bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold transition disabled:opacity-50"
                   >
                     {topicSuccess ? 'Saved!' : topicAdding ? 'Adding...' : 'Add'}
                   </button>
                 </div>
               )}
 
-              {/* Summary & Key Points */}
-              <div className="bg-amber-50/50 rounded-xl border border-amber-200/60 p-4">
-                <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider block mb-2">
-                  Summary & Key Points
-                </span>
-                <p className="text-sm text-slate-800 leading-relaxed font-sans">
-                  {activeJudgment.excerpt}
-                </p>
-              </div>
-
-              {/* Full Text Reader with Font Size toggle */}
-              <div>
-                <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    Full Judgment Text
+              {/* Summary / Key Points */}
+              {activeJudgment.excerpt && (
+                <div className="bg-amber-50/60 rounded-xl border border-amber-200/80 p-4">
+                  <span className="text-[11px] font-bold text-amber-900 uppercase tracking-wider block mb-1.5">
+                    Summary & Key Points
                   </span>
-                  <div className="flex items-center space-x-1 text-xs">
-                    <span className="text-slate-400 mr-1">Font:</span>
-                    <button
-                      type="button"
-                      onClick={() => setFontSize('normal')}
-                      className={`px-2 py-0.5 rounded ${
-                        fontSize === 'normal' ? 'bg-slate-200 text-slate-900 font-bold' : 'text-slate-500'
-                      }`}
-                    >
-                      A
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFontSize('large')}
-                      className={`px-2 py-0.5 rounded text-sm ${
-                        fontSize === 'large' ? 'bg-slate-200 text-slate-900 font-bold' : 'text-slate-500'
-                      }`}
-                    >
-                      A+
-                    </button>
-                  </div>
+                  <p className="text-xs sm:text-sm text-slate-800 leading-relaxed font-sans">
+                    {activeJudgment.excerpt}
+                  </p>
                 </div>
+              )}
+
+              {/* Full Text Reader with Normalized Paragraphs */}
+              <div className="space-y-3 pt-2">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                  Full Judgment & News Text
+                </span>
 
                 <div
-                  className={`judgment-body text-slate-800 whitespace-pre-line leading-relaxed ${
-                    fontSize === 'large' ? 'text-base' : 'text-sm'
+                  className={`judgment-body text-slate-800 space-y-3 leading-relaxed ${
+                    fontSize === 'large' ? 'text-base sm:text-lg' : 'text-sm sm:text-base'
                   }`}
                 >
-                  {activeJudgment.full_text || activeJudgment.excerpt}
+                  {normalizedContent.split('\n\n').map((paragraph, idx) => (
+                    <p key={idx} className="leading-relaxed font-sans">
+                      {paragraph}
+                    </p>
+                  ))}
                 </div>
               </div>
             </>
           ) : (
             /* Similar Precedents Tab */
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">
-                    Related Legal Precedents
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Related Indian court judgments on similar legal issues and topics
-                  </p>
-                </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Related Legal Precedents
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Related Indian court judgments on similar legal issues and topics
+                </p>
               </div>
 
               {isLoadingSimilar ? (
@@ -457,22 +491,97 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
           )}
         </div>
 
-        {/* Modal Footer */}
-        <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-500">
-          <span>Source: {activeJudgment.source}</span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 min-h-[40px] bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg font-medium transition"
-          >
-            Close
-          </button>
+        {/* Sticky Bottom Action Bar */}
+        <div className="sticky bottom-0 z-20 px-4 py-3 sm:px-6 sm:py-3.5 border-t border-slate-200 bg-white/95 backdrop-blur-sm flex items-center justify-between gap-2 shrink-0">
+          <div className="flex items-center space-x-2">
+            {/* Save/Bookmark Button */}
+            <button
+              type="button"
+              onClick={() => {
+                if (isBookmarked) {
+                  onToggleBookmark(activeJudgment);
+                } else {
+                  setShowNotesModal(true);
+                }
+              }}
+              className={`min-h-[44px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center space-x-2 transition ${
+                isBookmarked
+                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                  : 'bg-slate-900 text-white hover:bg-slate-800'
+              }`}
+            >
+              <BookmarkIcon
+                className="h-4 w-4"
+                fill={isBookmarked ? 'currentColor' : 'none'}
+              />
+              <span>{isBookmarked ? 'Saved' : 'Bookmark'}</span>
+            </button>
+
+            {/* Cite / Copy Citation Button */}
+            <button
+              type="button"
+              onClick={handleCopyCitation}
+              title="Copy Citation"
+              className="min-h-[44px] px-3.5 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100 transition text-xs font-semibold flex items-center space-x-1.5"
+            >
+              {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+              <span className="hidden sm:inline">{copied ? 'Copied' : 'Cite'}</span>
+            </button>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            {/* Read Original Source Link */}
+            {activeJudgment.url && (
+              <a
+                href={activeJudgment.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Open canonical source page in new tab"
+                className="min-h-[44px] px-3.5 sm:px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300/80 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center space-x-1.5"
+              >
+                <span>Original Source</span>
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            )}
+
+            {/* Mobile Font Size Toggle */}
+            <div className="flex sm:hidden items-center space-x-1 border border-slate-200 rounded-xl p-1 bg-slate-50 min-h-[44px]">
+              <button
+                type="button"
+                onClick={() => setFontSize('normal')}
+                className={`min-h-[36px] px-2 py-1 rounded-lg text-xs font-medium transition ${
+                  fontSize === 'normal'
+                    ? 'bg-white shadow-sm text-slate-900 font-bold'
+                    : 'text-slate-500'
+                }`}
+              >
+                A
+              </button>
+              <button
+                type="button"
+                onClick={() => setFontSize('large')}
+                className={`min-h-[36px] px-2 py-1 rounded-lg text-xs font-medium transition ${
+                  fontSize === 'large'
+                    ? 'bg-white shadow-sm text-slate-900 font-bold'
+                    : 'text-slate-500'
+                }`}
+              >
+                A+
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Save Bookmark with Notes Modal Overlay */}
         {showNotesModal && (
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-30">
-            <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-4">
+          <div
+            onClick={() => setShowNotesModal(false)}
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-30"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-4"
+            >
               <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
                 <BookmarkIcon className="h-4 w-4 text-amber-500" />
                 <span>Bookmark Judgment</span>
@@ -489,7 +598,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
                   onChange={(e) => setBookmarkNote(e.target.value)}
                   placeholder="e.g., Key precedent for Section 438 CrPC anticipatory bail guidelines..."
                   rows={3}
-                  className="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  className="w-full text-sm p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none"
                 />
               </div>
               <div>
@@ -501,21 +610,21 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
                   value={bookmarkTagsInput}
                   onChange={(e) => setBookmarkTagsInput(e.target.value)}
                   placeholder="e.g., bail, client-matter, high-priority"
-                  className="w-full text-xs p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  className="w-full text-sm min-h-[44px] px-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none"
                 />
               </div>
               <div className="flex items-center justify-end space-x-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowNotesModal(false)}
-                  className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg"
+                  className="px-4 py-2 min-h-[44px] text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleSaveBookmark}
-                  className="px-4 py-1.5 text-xs bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold"
+                  className="px-5 py-2 min-h-[44px] text-xs bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-semibold shadow-sm"
                 >
                   Save Bookmark
                 </button>
