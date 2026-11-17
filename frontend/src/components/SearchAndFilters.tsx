@@ -90,7 +90,12 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
   ).length;
 
   const hasActiveFilters = Boolean(
-    filters.q || filters.category || filters.court || filters.date_from || filters.date_to
+    filters.q ||
+      filters.category ||
+      filters.court ||
+      filters.date_from ||
+      filters.date_to ||
+      filters.content_type
   );
 
   return (
@@ -139,7 +144,49 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
         </div>
       </form>
 
-      {/* 2. Search Mode & Filter Controls Row */}
+      {/* 2. Content Type Navigation Pills (All Updates, Judgments & Orders, Legal News) */}
+      <div className="flex items-center gap-2 mb-4 overflow-x-auto no-scrollbar pb-1">
+        <button
+          type="button"
+          data-testid="filter-pill-all"
+          onClick={() => onFilterChange({ content_type: undefined, page: 1 })}
+          className={`min-h-[40px] sm:min-h-[44px] px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition shrink-0 flex items-center space-x-1.5 ${
+            !filters.content_type
+              ? 'bg-slate-900 text-white dark:bg-emerald-600 dark:text-white shadow-sm'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
+          }`}
+        >
+          <span>All Updates</span>
+        </button>
+
+        <button
+          type="button"
+          data-testid="filter-pill-judgment"
+          onClick={() => onFilterChange({ content_type: 'judgment', page: 1 })}
+          className={`min-h-[40px] sm:min-h-[44px] px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition shrink-0 flex items-center space-x-1.5 ${
+            filters.content_type === 'judgment'
+              ? 'bg-slate-900 text-white dark:bg-emerald-600 dark:text-white shadow-sm'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
+          }`}
+        >
+          <span>⚖️ Judgments & Orders</span>
+        </button>
+
+        <button
+          type="button"
+          data-testid="filter-pill-news"
+          onClick={() => onFilterChange({ content_type: 'news', page: 1 })}
+          className={`min-h-[40px] sm:min-h-[44px] px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition shrink-0 flex items-center space-x-1.5 ${
+            filters.content_type === 'news'
+              ? 'bg-slate-900 text-white dark:bg-emerald-600 dark:text-white shadow-sm'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
+          }`}
+        >
+          <span>📰 Legal News</span>
+        </button>
+      </div>
+
+      {/* 3. Search Mode & Filter Controls Row */}
       <div className="space-y-3 pt-1">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           {/* Segmented Search Mode Toggle: Smart Search | Exact Words | By Meaning */}
@@ -358,6 +405,19 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
                 onClick={() => onFilterChange({ court: '', page: 1 })}
                 className="ml-1.5 p-1 text-blue-600 hover:text-blue-800"
                 aria-label="Remove court filter"
+              >
+                ×
+              </button>
+            </span>
+          )}
+          {filters.content_type && (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 min-h-[32px]">
+              Type: {filters.content_type === 'judgment' ? 'Judgments & Orders' : 'Legal News'}
+              <button
+                type="button"
+                onClick={() => onFilterChange({ content_type: undefined, page: 1 })}
+                className="ml-1.5 p-1 text-emerald-600 hover:text-emerald-800"
+                aria-label="Remove content type filter"
               >
                 ×
               </button>

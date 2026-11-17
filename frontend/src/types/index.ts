@@ -3,6 +3,8 @@
  * Aligned with FastAPI backend schemas (v2.0)
  */
 
+export type ContentType = 'judgment' | 'news' | 'unknown';
+
 export interface Party {
   role: string;
   name: string;
@@ -27,14 +29,20 @@ export interface Judgment {
   source: string;
   is_archived: boolean;
   classification_confidence: number;
+  content_type?: ContentType;
+  content_type_confidence?: number;
   created_at: string;
   updated_at: string;
 }
+
+export type JudgmentItem = Judgment;
 
 export interface SearchResultItem extends Judgment {
   score: number;
   keyword_rank: number | null;
   semantic_rank: number | null;
+  content_type?: ContentType;
+  content_type_confidence?: number;
 }
 
 export interface SearchResponse {
@@ -134,11 +142,32 @@ export interface Topic {
 
 export type SearchMode = 'hybrid' | 'keyword' | 'semantic';
 
+export interface JudgmentQueryParams {
+  category?: string;
+  court?: string;
+  content_type?: ContentType | 'all';
+  date_from?: string;
+  date_to?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface SearchQueryParams {
+  q: string;
+  mode?: SearchMode;
+  category?: string;
+  court?: string;
+  content_type?: ContentType | 'all';
+  limit?: number;
+  offset?: number;
+}
+
 export interface FilterState {
   q: string;
   mode: SearchMode;
   category: string;
   court: string;
+  content_type?: ContentType;
   date_from: string;
   date_to: string;
   page: number;

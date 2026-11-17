@@ -118,4 +118,102 @@ describe('SearchAndFilters Component', () => {
     expect(toggleBtn).toBeInTheDocument();
     fireEvent.click(toggleBtn);
   });
+
+  it('renders 3 content type navigation pills (All Updates, Judgments & Orders, Legal News)', () => {
+    render(
+      <SearchAndFilters
+        filters={defaultFilters}
+        onFilterChange={vi.fn()}
+        onSearchSubmit={vi.fn()}
+        onResetFilters={vi.fn()}
+        categories={mockCategories}
+        courts={mockCourts}
+      />
+    );
+
+    expect(screen.getByTestId('filter-pill-all')).toHaveTextContent('All Updates');
+    expect(screen.getByTestId('filter-pill-judgment')).toHaveTextContent('⚖️ Judgments & Orders');
+    expect(screen.getByTestId('filter-pill-news')).toHaveTextContent('📰 Legal News');
+  });
+
+  it('calls onFilterChange with judgment content type when Judgments & Orders pill is clicked', () => {
+    const handleFilterChange = vi.fn();
+    render(
+      <SearchAndFilters
+        filters={defaultFilters}
+        onFilterChange={handleFilterChange}
+        onSearchSubmit={vi.fn()}
+        onResetFilters={vi.fn()}
+        categories={mockCategories}
+        courts={mockCourts}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('filter-pill-judgment'));
+    expect(handleFilterChange).toHaveBeenCalledWith({ content_type: 'judgment', page: 1 });
+  });
+
+  it('calls onFilterChange with news content type when Legal News pill is clicked', () => {
+    const handleFilterChange = vi.fn();
+    render(
+      <SearchAndFilters
+        filters={defaultFilters}
+        onFilterChange={handleFilterChange}
+        onSearchSubmit={vi.fn()}
+        onResetFilters={vi.fn()}
+        categories={mockCategories}
+        courts={mockCourts}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('filter-pill-news'));
+    expect(handleFilterChange).toHaveBeenCalledWith({ content_type: 'news', page: 1 });
+  });
+
+  it('calls onFilterChange with undefined content type when All Updates pill is clicked', () => {
+    const handleFilterChange = vi.fn();
+    render(
+      <SearchAndFilters
+        filters={{ ...defaultFilters, content_type: 'judgment' }}
+        onFilterChange={handleFilterChange}
+        onSearchSubmit={vi.fn()}
+        onResetFilters={vi.fn()}
+        categories={mockCategories}
+        courts={mockCourts}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('filter-pill-all'));
+    expect(handleFilterChange).toHaveBeenCalledWith({ content_type: undefined, page: 1 });
+  });
+
+  it('applies active styling to the currently selected content type pill', () => {
+    const { rerender } = render(
+      <SearchAndFilters
+        filters={{ ...defaultFilters, content_type: undefined }}
+        onFilterChange={vi.fn()}
+        onSearchSubmit={vi.fn()}
+        onResetFilters={vi.fn()}
+        categories={mockCategories}
+        courts={mockCourts}
+      />
+    );
+
+    expect(screen.getByTestId('filter-pill-all').className).toContain('bg-slate-900');
+    expect(screen.getByTestId('filter-pill-judgment').className).toContain('bg-slate-100');
+
+    rerender(
+      <SearchAndFilters
+        filters={{ ...defaultFilters, content_type: 'judgment' }}
+        onFilterChange={vi.fn()}
+        onSearchSubmit={vi.fn()}
+        onResetFilters={vi.fn()}
+        categories={mockCategories}
+        courts={mockCourts}
+      />
+    );
+
+    expect(screen.getByTestId('filter-pill-judgment').className).toContain('bg-slate-900');
+    expect(screen.getByTestId('filter-pill-all').className).toContain('bg-slate-100');
+  });
 });

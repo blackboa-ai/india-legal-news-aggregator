@@ -39,6 +39,30 @@ export const getCourtLevelBadge = (level: number) => {
   }
 };
 
+export const getContentTypeBadge = (contentType?: string) => {
+  switch (contentType) {
+    case 'judgment':
+      return {
+        label: '⚖️ COURT ORDER',
+        badgeClass:
+          'inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800',
+      };
+    case 'news':
+      return {
+        label: '📰 LEGAL NEWS',
+        badgeClass:
+          'inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950/60 dark:text-sky-300 dark:border-sky-800',
+      };
+    case 'unknown':
+    default:
+      return {
+        label: '⏳ UPDATE',
+        badgeClass:
+          'inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700',
+      };
+  }
+};
+
 export const getCategoryColor = (category: string) => {
   const normalized = category.toLowerCase();
   if (normalized.includes('crim')) return 'bg-rose-50 text-rose-700 border-rose-200';
@@ -74,6 +98,7 @@ export const JudgmentCard = React.memo<JudgmentCardProps>(({
   onAddToTopic,
 }) => {
   const courtInfo = getCourtLevelBadge(judgment.court_level);
+  const contentTypeBadge = getContentTypeBadge(judgment.content_type);
   const categoryStyle = getCategoryColor(judgment.subject_category);
   const searchItem = judgment as SearchResultItem;
   const isSearchRanked = typeof searchItem.score === 'number';
@@ -101,6 +126,14 @@ export const JudgmentCard = React.memo<JudgmentCardProps>(({
         {/* Header Metadata Row */}
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex flex-wrap items-center gap-1.5 text-xs min-w-0">
+            {/* Content Type Pill Badge */}
+            <span
+              data-testid="content-type-badge"
+              className={`shrink-0 ${contentTypeBadge.badgeClass}`}
+            >
+              {contentTypeBadge.label}
+            </span>
+
             {/* Court Level Badge */}
             <span
               className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] shrink-0 ${courtInfo.badgeClass}`}

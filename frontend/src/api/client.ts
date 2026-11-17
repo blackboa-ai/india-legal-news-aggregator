@@ -8,13 +8,17 @@ import {
   AlertMatchesResponse,
   Bookmark,
   BookmarkListResponse,
+  ContentType,
   CourtItem,
   Feedback,
   FeedbackCreate,
   FeedbackListResponse,
   Judgment,
+  JudgmentItem,
   JudgmentListResponse,
+  JudgmentQueryParams,
   LegalCategoryItem,
+  SearchQueryParams,
   SearchResponse,
   TokenResponse,
   Topic,
@@ -248,19 +252,15 @@ export const api = {
   // Judgments & Search
   judgments: {
     list: (
-      params: {
-        category?: string;
-        court?: string;
-        date_from?: string;
-        date_to?: string;
-        limit?: number;
-        offset?: number;
-      } = {},
+      params: JudgmentQueryParams = {},
       signal?: AbortSignal
     ): Promise<JudgmentListResponse> => {
       const searchParams = new URLSearchParams();
       if (params.category) searchParams.set('category', params.category);
       if (params.court) searchParams.set('court', params.court);
+      if (params.content_type && params.content_type !== 'all') {
+        searchParams.set('content_type', params.content_type);
+      }
       if (params.date_from) searchParams.set('date_from', params.date_from);
       if (params.date_to) searchParams.set('date_to', params.date_to);
       if (params.limit !== undefined) searchParams.set('limit', String(params.limit));
@@ -271,14 +271,7 @@ export const api = {
     },
 
     search: (
-      params: {
-        q: string;
-        mode?: 'hybrid' | 'keyword' | 'semantic';
-        category?: string;
-        court?: string;
-        limit?: number;
-        offset?: number;
-      },
+      params: SearchQueryParams,
       signal?: AbortSignal
     ): Promise<SearchResponse> => {
       const searchParams = new URLSearchParams();
@@ -286,6 +279,9 @@ export const api = {
       if (params.mode) searchParams.set('mode', params.mode);
       if (params.category) searchParams.set('category', params.category);
       if (params.court) searchParams.set('court', params.court);
+      if (params.content_type && params.content_type !== 'all') {
+        searchParams.set('content_type', params.content_type);
+      }
       if (params.limit !== undefined) searchParams.set('limit', String(params.limit));
       if (params.offset !== undefined) searchParams.set('offset', String(params.offset));
 
@@ -488,3 +484,16 @@ export const api = {
     return request<{ status: string; service: string }>('/health');
   },
 };
+
+// Top-level API helper exports
+export const fetchJudgments = (
+  params: JudgmentQueryParams = {},
+  signal?: AbortSignal
+): Promise<JudgmentListResponse> => api.judgments.list(params, signal);
+
+export const searchJudgments = (
+  params: SearchQueryParams,
+  signal?: AbortSignal
+): Promise<SearchResponse> => api.judgments.search(params, signal);
+
+export type { ContentType, JudgmentItem, JudgmentQueryParams, SearchQueryParams };

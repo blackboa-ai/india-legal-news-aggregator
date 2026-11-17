@@ -5,6 +5,8 @@ import {
   setStoredTokens,
   clearStoredTokens,
   api,
+  fetchJudgments,
+  searchJudgments,
   API_BASE_URL,
 } from '../api/client';
 
@@ -118,6 +120,57 @@ describe('API Client & Token Management', () => {
       expect.objectContaining({
         signal: controller.signal,
       })
+    );
+  });
+
+  it('fetchJudgments appends content_type=judgment to search params when defined', async () => {
+    const mockResponse = { data: [], total: 0, limit: 10, offset: 0 };
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => mockResponse,
+    } as Response);
+
+    await fetchJudgments({ content_type: 'judgment', limit: 10 });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      `${API_BASE_URL}/judgments?content_type=judgment&limit=10`,
+      expect.anything()
+    );
+  });
+
+  it('searchJudgments appends content_type=news to search params when defined', async () => {
+    const mockResponse = { results: [], query_type: 'hybrid', matched_terms: [], total: 0 };
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => mockResponse,
+    } as Response);
+
+    await searchJudgments({ q: 'collegium', content_type: 'news' });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      `${API_BASE_URL}/search?q=collegium&content_type=news`,
+      expect.anything()
+    );
+  });
+
+  it('omits content_type from URL search params when set to all or undefined', async () => {
+    const mockResponse = { data: [], total: 0, limit: 10, offset: 0 };
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => mockResponse,
+    } as Response);
+
+    await fetchJudgments({ content_type: 'all' });
+    expect(fetchSpy).toHaveBeenLastCalledWith(
+      `${API_BASE_URL}/judgments`,
+      expect.anything()
+    );
+
+    await fetchJudgments({ content_type: undefined });
+    expect(fetchSpy).toHaveBeenLastCalledWith(
+      `${API_BASE_URL}/judgments`,
+      expect.anything()
     );
   });
 });

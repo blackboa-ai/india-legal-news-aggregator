@@ -139,4 +139,74 @@ describe('JudgmentCard Component', () => {
     fireEvent.mouseEnter(card);
     expect(fetchSpy).toHaveBeenCalled();
   });
+
+  it('renders emerald badge with COURT ORDER label for judgment content type', () => {
+    const judgmentItem: Judgment = {
+      ...mockJudgment,
+      content_type: 'judgment',
+      content_type_confidence: 0.98,
+    };
+
+    render(
+      <JudgmentCard
+        judgment={judgmentItem}
+        isBookmarked={false}
+        onToggleBookmark={vi.fn()}
+        onSelectJudgment={vi.fn()}
+      />
+    );
+
+    const badge = screen.getByTestId('content-type-badge');
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveTextContent('⚖️ COURT ORDER');
+    expect(badge.className).toContain('bg-emerald-50');
+    expect(badge.className).toContain('text-emerald-700');
+  });
+
+  it('renders sky blue badge with LEGAL NEWS label for news content type', () => {
+    const newsItem: Judgment = {
+      ...mockJudgment,
+      title: 'Supreme Court Collegium recommends elevation of judges',
+      content_type: 'news',
+      content_type_confidence: 0.92,
+    };
+
+    render(
+      <JudgmentCard
+        judgment={newsItem}
+        isBookmarked={false}
+        onToggleBookmark={vi.fn()}
+        onSelectJudgment={vi.fn()}
+      />
+    );
+
+    const badge = screen.getByTestId('content-type-badge');
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveTextContent('📰 LEGAL NEWS');
+    expect(badge.className).toContain('bg-sky-50');
+    expect(badge.className).toContain('text-sky-700');
+  });
+
+  it('renders slate badge with UPDATE label for unknown or default content type', () => {
+    const unknownItem: Judgment = {
+      ...mockJudgment,
+      content_type: 'unknown',
+      content_type_confidence: 0.5,
+    };
+
+    render(
+      <JudgmentCard
+        judgment={unknownItem}
+        isBookmarked={false}
+        onToggleBookmark={vi.fn()}
+        onSelectJudgment={vi.fn()}
+      />
+    );
+
+    const badge = screen.getByTestId('content-type-badge');
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveTextContent('⏳ UPDATE');
+    expect(badge.className).toContain('bg-slate-100');
+    expect(badge.className).toContain('text-slate-600');
+  });
 });

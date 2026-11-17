@@ -77,6 +77,7 @@ export const App: React.FC = () => {
     mode: 'hybrid',
     category: '',
     court: '',
+    content_type: undefined,
     date_from: '',
     date_to: '',
     page: 1,
@@ -238,6 +239,7 @@ export const App: React.FC = () => {
       !debouncedQuery.trim() &&
       !filters.category &&
       !filters.court &&
+      !filters.content_type &&
       !filters.date_from &&
       !filters.date_to &&
       filters.page === 1;
@@ -253,6 +255,7 @@ export const App: React.FC = () => {
             mode: filters.mode,
             category: filters.category || undefined,
             court: filters.court || undefined,
+            content_type: filters.content_type || undefined,
             limit: filters.limit,
             offset,
           },
@@ -273,6 +276,7 @@ export const App: React.FC = () => {
           {
             category: filters.category || undefined,
             court: filters.court || undefined,
+            content_type: filters.content_type || undefined,
             date_from: filters.date_from || undefined,
             date_to: filters.date_to || undefined,
             limit: filters.limit,
@@ -323,6 +327,7 @@ export const App: React.FC = () => {
     filters.mode,
     filters.category,
     filters.court,
+    filters.content_type,
     filters.date_from,
     filters.date_to,
     filters.page,
@@ -360,6 +365,7 @@ export const App: React.FC = () => {
       mode: 'hybrid',
       category: '',
       court: '',
+      content_type: undefined,
       date_from: '',
       date_to: '',
       page: 1,
