@@ -1,0 +1,6 @@
+# India Legal News Aggregator - Robots Configuration
+User-agent: *
+Allow: /
+
+# Sitemap Location
+Sitemap: https://india-legal-news.vercel.app/sitemap.xml

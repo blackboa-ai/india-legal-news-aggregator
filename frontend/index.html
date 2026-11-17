@@ -4,17 +4,52 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231e3a8a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z'/><path d='m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z'/><path d='M7 21h10'/><path d='M12 3v18'/><path d='M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2'/></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="India Legal News Aggregator - Fast, intelligent hybrid search (BM25 + pgvector RRF) across Supreme Court, High Courts, and Tribunals." />
-    <title>India Legal News Aggregator | Hybrid Legal Research & Judgment Feed</title>
+    
+    <!-- SEO Primary Meta Tags -->
+    <title>India Legal News Aggregator | Real-Time Court Judgments & Legal Updates</title>
+    <meta name="title" content="India Legal News Aggregator | Real-Time Court Judgments & Legal Updates" />
+    <meta name="description" content="Fast, intelligent legal aggregator and hybrid search across Supreme Court of India, High Courts, and Tribunals. Live court orders, case law citations, and breaking legal journalism." />
+    <meta name="keywords" content="India legal news, Supreme Court of India judgments, High Court orders, Indian case laws, Section 438 CrPC, bail orders, legal research, Bar and Bench, LiveLaw" />
+    <meta name="author" content="India Legal News Aggregator" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <link rel="canonical" href="https://india-legal-news.vercel.app/" />
+
+    <!-- Open Graph / Facebook / LinkedIn -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://india-legal-news.vercel.app/" />
+    <meta property="og:title" content="India Legal News Aggregator | Real-Time Court Judgments & Legal Updates" />
+    <meta property="og:description" content="Fast, intelligent legal aggregator and hybrid search across Supreme Court of India, High Courts, and Tribunals." />
+    <meta property="og:site_name" content="India Legal News Aggregator" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:url" content="https://india-legal-news.vercel.app/" />
+    <meta name="twitter:title" content="India Legal News Aggregator | Real-Time Court Judgments & Legal Updates" />
+    <meta name="twitter:description" content="Fast, intelligent legal aggregator and hybrid search across Supreme Court of India, High Courts, and Tribunals." />
+
+    <!-- Schema.org JSON-LD Structured Data for Search Engines -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "India Legal News Aggregator",
+      "url": "https://india-legal-news.vercel.app/",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://india-legal-news.vercel.app/?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
 
-    <!-- Preconnect and DNS-prefetch to backend API origin for zero-latency initial handshake -->
-    <link rel="preconnect" href="http://127.0.0.1:8000" crossorigin>
-    <link rel="dns-prefetch" href="http://127.0.0.1:8000">
-    <link rel="preconnect" href="https://legal-aggregator-backend.onrender.com" crossorigin>
-    <link rel="dns-prefetch" href="https://legal-aggregator-backend.onrender.com">
+    <!-- Preconnect to backend API origin -->
+    <link rel="preconnect" href="https://india-legal-news-api.onrender.com" crossorigin>
+    <link rel="dns-prefetch" href="https://india-legal-news-api.onrender.com">
   </head>
   <body class="bg-slate-50 text-slate-900 antialiased min-h-screen">
     <div id="root"></div>
