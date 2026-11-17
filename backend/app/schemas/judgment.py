@@ -35,8 +35,8 @@ class JudgmentBase(BaseModel):
     source: str = Field(..., description="Feed source origin (indiankanoon, livelaw, barandbench, sci)")
     is_archived: bool = Field(default=True, description="Whether judgment is indexed and active")
     classification_confidence: float = Field(default=0.0, description="Classification confidence score (0.0 to 1.0)")
-    content_type: str = Field(default="unknown", description="3-state content classification: judgment, news, or unknown")
-    content_type_confidence: float = Field(default=0.0, description="Content type classification confidence score (0.0 to 1.0)")
+    content_type: str = Field(default="unknown", description="Content classification: 'judgment', 'news', or 'unknown'")
+    content_type_confidence: float = Field(default=0.0, description="Classification confidence score between 0.0 and 1.0")
 
     @model_validator(mode="before")
     @classmethod
@@ -94,8 +94,8 @@ class JudgmentListItem(BaseModel):
     source: str = ""
     is_archived: bool = True
     classification_confidence: float = 0.0
-    content_type: str = Field(default="unknown", description="3-state content classification: judgment, news, or unknown")
-    content_type_confidence: float = Field(default=0.0, description="Content type classification confidence score (0.0 to 1.0)")
+    content_type: str = Field(default="unknown", description="Content classification: 'judgment', 'news', or 'unknown'")
+    content_type_confidence: float = Field(default=0.0, description="Classification confidence score between 0.0 and 1.0")
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -179,8 +179,8 @@ class SearchResultItem(BaseModel):
     source: str = ""
     is_archived: bool = True
     classification_confidence: float = 0.0
-    content_type: str = Field(default="unknown", description="3-state content classification: judgment, news, or unknown")
-    content_type_confidence: float = Field(default=0.0, description="Content type classification confidence score (0.0 to 1.0)")
+    content_type: str = Field(default="unknown", description="Content classification: 'judgment', 'news', or 'unknown'")
+    content_type_confidence: float = Field(default=0.0, description="Classification confidence score between 0.0 and 1.0")
     created_at: datetime | None = None
     updated_at: datetime | None = None
     score: float = Field(..., description="Combined RRF score or similarity rank")

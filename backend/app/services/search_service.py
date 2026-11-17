@@ -47,6 +47,8 @@ class SearchCandidate:
     full_text: str | None = None
     is_archived: bool = True
     classification_confidence: float = 0.0
+    content_type: str = "unknown"
+    content_type_confidence: float = 0.0
     created_at: datetime.datetime | None = None
     updated_at: datetime.datetime | None = None
     score: float = 0.0
@@ -67,11 +69,14 @@ def compute_rrf(
     keyword_items: Sequence[dict[str, Any]],
     semantic_items: Sequence[dict[str, Any]],
     k: int = RRF_K_DEFAULT,
+    apply_judgment_boost: bool = True,
+    judgment_boost_factor: float = 1.15,
 ) -> list[dict[str, Any]]:
     """
     Computes Reciprocal Rank Fusion (RRF) scores across keyword and semantic ranked lists.
     Formula: RRF_score(d) = sum_{m in models} 1 / (k + rank_m(d))
     Ranks are 1-based (1, 2, ...).
+    Applies optional multiplier boost for authoritative 'judgment' content types.
     """
     scores: dict[Any, float] = {}
     combined_items: dict[Any, dict[str, Any]] = {}
@@ -94,11 +99,18 @@ def compute_rrf(
         if item_id not in combined_items:
             combined_items[item_id] = dict(item)
 
-    # 3. Compile sorted output
+    # 3. Compile sorted output with judgment boost
     ranked_list = []
     for item_id, item_data in combined_items.items():
+        base_score = scores[item_id]
+        c_type = item_data.get("content_type") or "unknown"
+        if apply_judgment_boost and c_type == "judgment":
+            final_score = base_score * judgment_boost_factor
+        else:
+            final_score = base_score
+
         res = dict(item_data)
-        res["score"] = round(scores[item_id], 6)
+        res["score"] = round(final_score, 6)
         res["keyword_rank"] = kw_ranks.get(item_id)
         res["semantic_rank"] = sem_ranks.get(item_id)
         ranked_list.append(res)
@@ -157,6 +169,7 @@ class SearchService:
         date_from: datetime.date | None = None,
         date_to: datetime.date | None = None,
         citation: str | None = None,
+        content_type: str | None = None,
     ) -> tuple[str, dict[str, Any]]:
         """
         Builds dynamic parameterized SQL WHERE clauses and parameter dictionary.
@@ -186,6 +199,10 @@ class SearchService:
             params["citation"] = citation.strip()
             params["citation_like"] = f"%{citation.strip()}%"
 
+        if content_type:
+            clauses.append("content_type = :content_type")
+            params["content_type"] = content_type.strip().lower()
+
         where_sql = " AND ".join(clauses)
         return where_sql, params
 
@@ -204,7 +221,8 @@ class SearchService:
         SELECT
             id, external_id, title, short_title, court_code, court_name, court_level,
             judgment_date, subject_category, excerpt, full_text, url, parties, tags, source,
-            is_archived, classification_confidence, created_at, updated_at,
+            is_archived, classification_confidence, content_type, content_type_confidence,
+            created_at, updated_at,
             ts_rank_cd(search_tsv, websearch_to_tsquery('english', :query)) as rank_score
         FROM judgments
         WHERE {where_sql}
@@ -225,7 +243,8 @@ class SearchService:
             SELECT
                 id, external_id, title, short_title, court_code, court_name, court_level,
                 judgment_date, subject_category, excerpt, full_text, url, parties, tags, source,
-                is_archived, classification_confidence, created_at, updated_at,
+                is_archived, classification_confidence, content_type, content_type_confidence,
+                created_at, updated_at,
                 1.0 as rank_score
             FROM judgments
             WHERE {where_sql}
@@ -255,7 +274,8 @@ class SearchService:
         SELECT
             id, external_id, title, short_title, court_code, court_name, court_level,
             judgment_date, subject_category, excerpt, full_text, url, parties, tags, source,
-            is_archived, classification_confidence, created_at, updated_at,
+            is_archived, classification_confidence, content_type, content_type_confidence,
+            created_at, updated_at,
             1.0 - (embedding <=> CAST(:query_vec AS vector)) as sim_score
         FROM judgments
         WHERE {where_sql}
@@ -283,6 +303,7 @@ class SearchService:
         date_from: datetime.date | None = None,
         date_to: datetime.date | None = None,
         citation: str | None = None,
+        content_type: str | None = None,
         limit: int = 10,
         offset: int = 0,
     ) -> SearchExecutionResult:
@@ -297,6 +318,7 @@ class SearchService:
             date_from=date_from,
             date_to=date_to,
             citation=citation,
+            content_type=content_type,
         )
 
         mode_normalized = mode.lower()
@@ -372,6 +394,8 @@ class SearchService:
                 full_text=r.get("full_text"),
                 is_archived=bool(r.get("is_archived", True)),
                 classification_confidence=float(r.get("classification_confidence", 0.0)),
+                content_type=str(r.get("content_type") or "unknown"),
+                content_type_confidence=float(r.get("content_type_confidence", 0.0) or 0.0),
                 created_at=r.get("created_at"),
                 updated_at=r.get("updated_at"),
                 score=float(r.get("score", 0.0)),

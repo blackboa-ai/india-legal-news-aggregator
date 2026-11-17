@@ -122,7 +122,11 @@ def _serialize_feed_item(item: Any) -> JudgmentResponse:
 async def list_judgments(
     category: str | None = Query(default=None, description="Filter by legal subject domain"),
     court: str | None = Query(default=None, description="Filter by court identifier code"),
-    content_type: str | None = Query(default=None, description="Filter by content type (judgment, news, unknown)"),
+    content_type: str | None = Query(
+        default=None,
+        pattern=r"^(judgment|news|unknown)$",
+        description="Filter by content type (judgment, news, unknown)",
+    ),
     date_from: date | None = Query(default=None, description="Filter judgments on or after this date"),
     date_to: date | None = Query(default=None, description="Filter judgments on or before this date"),
     limit: int = Query(default=25, ge=1, le=100, description="Page size limit"),
@@ -319,6 +323,11 @@ async def search_judgments(
     mode: str = Query(default="hybrid", description="Search mode: hybrid, keyword, or semantic"),
     category: str | None = Query(default=None, description="Filter by legal subject domain"),
     court: str | None = Query(default=None, description="Filter by court identifier code"),
+    content_type: str | None = Query(
+        default=None,
+        pattern=r"^(judgment|news|unknown)$",
+        description="Filter by content type (judgment, news, unknown)",
+    ),
     limit: int = Query(default=25, ge=1, le=100, description="Max results to return"),
     offset: int = Query(default=0, ge=0, description="Offset for pagination"),
     response: Response = None,
@@ -328,7 +337,7 @@ async def search_judgments(
     Executes Reciprocal Rank Fusion (RRF, k=60) combining PostgreSQL tsvector GIN
     BM25 ranking and pgvector cosine distance. Cached for 90s in fast in-memory TTL cache.
     """
-    cache_key = f"judgments:search:{q.strip()}:{mode}:{category}:{court}:{limit}:{offset}"
+    cache_key = f"judgments:search:{q.strip()}:{mode}:{category}:{court}:{content_type}:{limit}:{offset}"
     cached_data = await cache_service.get_json(cache_key)
     if cached_data:
         if response:
@@ -341,6 +350,7 @@ async def search_judgments(
         mode=mode,
         category=category,
         court=court,
+        content_type=content_type,
         limit=limit,
         offset=offset,
     )
@@ -364,6 +374,8 @@ async def search_judgments(
             source=c.source,
             is_archived=c.is_archived,
             classification_confidence=c.classification_confidence,
+            content_type=c.content_type,
+            content_type_confidence=c.content_type_confidence,
             created_at=c.created_at,
             updated_at=c.updated_at,
             score=c.score,
