@@ -10,6 +10,12 @@ backend_dir = Path(__file__).resolve().parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
+from app.core.config import settings
+from app.services.cache_service import cache_service
+
+settings.ENVIRONMENT = "test"
+cache_service._redis_available = False
+
 # Enable asyncio event loop to operate cleanly in sandboxed environments without loopback socketpair
 if sys.platform == "win32":
     try:

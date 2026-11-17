@@ -17,10 +17,13 @@ from typing import Any
 from unittest.mock import MagicMock, Mock
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import get_api_client_tier
+from app.auth import RateLimiter
+from app.core.config import settings
 from app.core.database import get_db
 from app.models.judgment import Judgment
 from app.schemas.judgment import (
@@ -38,6 +41,7 @@ from app.services.search_service import search_service
 logger = logging.getLogger("app.api.judgments")
 
 router = APIRouter()
+search_rate_limiter = RateLimiter(requests_per_minute=settings.PUBLIC_SEARCH_RATE_LIMIT_PER_MINUTE)
 
 # ------------------------------------------------------------------------------
 # Canonical Indian Legal Metadata
@@ -331,12 +335,24 @@ async def search_judgments(
     limit: int = Query(default=25, ge=1, le=100, description="Max results to return"),
     offset: int = Query(default=0, ge=0, description="Offset for pagination"),
     response: Response = None,
+    client_tier: str = Depends(get_api_client_tier),
     db: AsyncSession = Depends(get_db),
+    request: Request = None,
 ):
     """
     Executes Reciprocal Rank Fusion (RRF, k=60) combining PostgreSQL tsvector GIN
     BM25 ranking and pgvector cosine distance. Cached for 90s in fast in-memory TTL cache.
     """
+    if client_tier == "public" and request is not None:
+        client_ip = request.headers.get(
+            "X-Forwarded-For", request.client.host if request.client else "unknown"
+        ).split(",")[0].strip()
+        if not await search_rate_limiter.is_allowed(client_ip):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Public search rate limit exceeded. Please wait a minute or use a VIP API Key.",
+            )
+
     cache_key = f"judgments:search:{q.strip()}:{mode}:{category}:{court}:{content_type}:{limit}:{offset}"
     cached_data = await cache_service.get_json(cache_key)
     if cached_data:

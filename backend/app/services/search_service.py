@@ -8,6 +8,7 @@ by legal category, court code, date range, and statutory tags.
 """
 
 import datetime
+import hashlib
 import logging
 import re
 from collections.abc import Sequence
@@ -19,6 +20,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.judgment import Judgment
+from app.services.cache_service import cache_service
 from app.services.embedding_service import embedding_service
 
 logger = logging.getLogger("app.services.search")
@@ -310,6 +312,11 @@ class SearchService:
         """
         Main entrypoint for hybrid, keyword, and semantic legal search.
         """
+        cache_key = f"search:{hashlib.sha256(f'{query}:{category}:{court}:{date_from}:{date_to}:{content_type}'.encode()).hexdigest()}"
+        cached_result = await cache_service.get(cache_key)
+        if cached_result is not None and isinstance(cached_result, SearchExecutionResult):
+            return cached_result
+
         clean_query = query.strip()
         matched_terms = extract_matched_terms(clean_query)
         where_sql, params = self.build_filter_clauses(
@@ -405,12 +412,14 @@ class SearchService:
             for r in sliced
         ]
 
-        return SearchExecutionResult(
+        execution_result = SearchExecutionResult(
             results=candidates,
             query_type=mode_normalized,
             matched_terms=matched_terms,
             total=total_candidates,
         )
+        await cache_service.set(cache_key, execution_result, ttl_seconds=900)
+        return execution_result
 
     async def find_similar_judgments(
         self,

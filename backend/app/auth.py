@@ -40,47 +40,55 @@ class RateLimiter:
         self.requests_per_minute = requests_per_minute
         self._memory_timestamps: dict[str, list[float]] = defaultdict(list)
 
-    async def __call__(self, request: Request) -> bool:
-        client_host = request.client.host if request.client else "127.0.0.1"
-        key = f"ratelimit:{client_host}"
+    def reset(self) -> None:
+        """Clears in-memory sliding window timestamps."""
+        self._memory_timestamps.clear()
+
+    async def is_allowed(self, identifier: str) -> bool:
+        """
+        Evaluates whether an identifier (e.g. IP) is allowed under the rate limit.
+        Returns True if allowed, False if throttled.
+        """
+        key = f"ratelimit:{identifier}"
         now = time.time()
         window_start = now - 60.0
 
         # 1. Try Redis cache if available
         try:
-            redis_client = await cache_service._get_redis()
-            if redis_client:
-                pipe = redis_client.pipeline()
-                pipe.incr(key)
-                pipe.expire(key, 60)
-                results = await pipe.execute()
-                count = int(results[0])
-                if count > self.requests_per_minute:
-                    raise HTTPException(
-                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                        detail="Too many requests. Please slow down and retry in 60 seconds.",
-                        headers={"Retry-After": "60"},
-                    )
-                return True
-        except HTTPException:
-            raise
+            if getattr(cache_service, "_redis_available", False) is True:
+                redis_client = await cache_service._get_redis()
+                if redis_client:
+                    pipe = redis_client.pipeline()
+                    pipe.incr(key)
+                    pipe.expire(key, 60)
+                    results = await pipe.execute()
+                    count = int(results[0])
+                    if count > self.requests_per_minute:
+                        return False
+                    return True
         except Exception as exc:
             logger.debug(f"Redis rate limiting bypassed, using in-memory: {exc}")
 
         # 2. In-memory sliding window fallback
-        timestamps = self._memory_timestamps[client_host]
-        # Purge timestamps outside the 60-second window
+        timestamps = self._memory_timestamps[identifier]
         valid_timestamps = [t for t in timestamps if t > window_start]
         if len(valid_timestamps) >= self.requests_per_minute:
-            self._memory_timestamps[client_host] = valid_timestamps
+            self._memory_timestamps[identifier] = valid_timestamps
+            return False
+
+        valid_timestamps.append(now)
+        self._memory_timestamps[identifier] = valid_timestamps
+        return True
+
+    async def __call__(self, request: Request) -> bool:
+        client_host = request.client.host if request.client else "127.0.0.1"
+        allowed = await self.is_allowed(client_host)
+        if not allowed:
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Too many requests. Please slow down and retry in 60 seconds.",
                 headers={"Retry-After": "60"},
             )
-
-        valid_timestamps.append(now)
-        self._memory_timestamps[client_host] = valid_timestamps
         return True
 
 

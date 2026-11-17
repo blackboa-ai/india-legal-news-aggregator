@@ -5,6 +5,7 @@ Uses Pydantic BaseSettings for strict environment variable validation.
 """
 
 import json
+from typing import Any
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -79,6 +80,14 @@ class Settings(BaseSettings):
         default="dev-admin-secret-key-change-in-production",
         description="API Key required for administrative operations like manual RSS triggers",
     )
+    AUTHORIZED_API_KEYS: list[str] = Field(
+        default_factory=list,
+        description="List of pre-shared VIP API keys",
+    )
+    PUBLIC_SEARCH_RATE_LIMIT_PER_MINUTE: int = Field(
+        default=30,
+        description="Max search requests per minute per IP for anonymous users",
+    )
     FEEDBACK_NOTIFICATION_EMAIL: str | None = Field(
         default=None,
         description="Optional recipient email address for newly submitted user reviews",
@@ -139,6 +148,28 @@ class Settings(BaseSettings):
             return [origin.strip() for origin in v_stripped.split(",") if origin.strip()]
         elif isinstance(v, (list, tuple)):
             return [str(origin) for origin in v]
+        return []
+
+    @field_validator("AUTHORIZED_API_KEYS", mode="before")
+    @classmethod
+    def assemble_authorized_api_keys(cls, v: Any) -> list[str]:
+        """
+        Parses authorized VIP API keys from a comma-separated string, JSON array, or list.
+        """
+        if isinstance(v, str):
+            v_stripped = v.strip()
+            if not v_stripped:
+                return []
+            if v_stripped.startswith("[") and v_stripped.endswith("]"):
+                try:
+                    loaded = json.loads(v_stripped)
+                    if isinstance(loaded, list):
+                        return [str(k).strip() for k in loaded if str(k).strip()]
+                except json.JSONDecodeError:
+                    pass
+            return [k.strip() for k in v_stripped.split(",") if k.strip()]
+        elif isinstance(v, (list, tuple)):
+            return [str(k).strip() for k in v if str(k).strip()]
         return []
 
 

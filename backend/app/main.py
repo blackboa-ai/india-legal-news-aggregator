@@ -32,6 +32,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     Lifespan context manager for application startup and graceful shutdown.
     Ensures Redis connections, APScheduler jobs, and background tasks are cleanly managed.
     """
+    # Startup phase: validate production security configuration
+    if settings.ENVIRONMENT.lower() == "production" and settings.JWT_SECRET.startswith("insecure_dev_jwt"):
+        raise RuntimeError("FATAL: Insecure default JWT_SECRET cannot be used in production environment.")
+
     # Startup phase: start scheduler only in production/development, skip in test environment
     if settings.ENVIRONMENT != "test":
         try:
@@ -58,13 +62,15 @@ def create_application() -> FastAPI:
     Lightweight, high-performance, and configured for free-tier constraints.
     Includes security headers middleware, request latency tracking, and global error handling.
     """
+    is_prod = settings.ENVIRONMENT.lower() == "production"
+
     application = FastAPI(
         title=settings.PROJECT_NAME,
         version=settings.VERSION,
         description="India Legal News Aggregator API - $0/month free-tier architecture with hybrid search.",
-        openapi_url="/openapi.json",
-        docs_url="/docs",
-        redoc_url="/redoc",
+        openapi_url=None if is_prod else "/openapi.json",
+        docs_url=None if is_prod else "/docs",
+        redoc_url=None if is_prod else "/redoc",
         lifespan=lifespan,
     )
 
@@ -273,17 +279,18 @@ def create_application() -> FastAPI:
             "service": settings.PROJECT_NAME,
             "version": settings.VERSION,
             "status": "online",
-            "docs": "/docs",
+            "docs": None if is_prod else "/docs",
         }
 
-    # Aliases for API documentation
-    @application.get(f"{settings.API_V1_STR}/docs", include_in_schema=False)
-    async def v1_docs_redirect():
-        return RedirectResponse(url="/docs")
+    # Aliases for API documentation (disabled in production)
+    if not is_prod:
+        @application.get(f"{settings.API_V1_STR}/docs", include_in_schema=False)
+        async def v1_docs_redirect():
+            return RedirectResponse(url="/docs")
 
-    @application.get(f"{settings.API_V1_STR}/openapi.json", include_in_schema=False)
-    async def v1_openapi_redirect():
-        return RedirectResponse(url="/openapi.json")
+        @application.get(f"{settings.API_V1_STR}/openapi.json", include_in_schema=False)
+        async def v1_openapi_redirect():
+            return RedirectResponse(url="/openapi.json")
 
     return application
 

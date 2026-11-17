@@ -80,7 +80,8 @@ class CacheService:
         self._async_lock = asyncio.Lock()
 
     async def _get_redis(self) -> Any | None:
-        if self._redis_available is False:
+        if self._redis_available is False or settings.ENVIRONMENT == "test":
+            self._redis_available = False
             return None
 
         if self._redis_client is not None:
@@ -107,15 +108,15 @@ class CacheService:
             self._redis_client = None
             return None
 
-    async def get(self, key: str) -> str | None:
+    async def get(self, key: str) -> Any | None:
         """
-        Retrieves a string value by key.
+        Retrieves a value by key.
         Checks ultra-fast L1 in-memory cache first (< 0.2ms), then L2 Redis.
         """
         # 1. Fast in-memory check
         val = self.l1_cache.get(key)
         if val is not None:
-            return val if isinstance(val, str) else json.dumps(val, default=str)
+            return val
 
         # 2. Redis check
         redis_client = await self._get_redis()
@@ -157,9 +158,9 @@ class CacheService:
                 return None
         return None
 
-    async def set(self, key: str, value: str, ttl_seconds: int | None = None) -> bool:
+    async def set(self, key: str, value: Any, ttl_seconds: int | None = None) -> bool:
         """
-        Stores a string key-value pair with TTL (seconds).
+        Stores a key-value pair with TTL (seconds).
         """
         ttl = ttl_seconds if ttl_seconds is not None else self.default_ttl
         self.l1_cache.set(key, value, float(ttl))
@@ -167,7 +168,8 @@ class CacheService:
         redis_client = await self._get_redis()
         if redis_client:
             try:
-                await redis_client.set(key, value, ex=ttl)
+                if isinstance(value, str):
+                    await redis_client.set(key, value, ex=ttl)
             except Exception as e:
                 logger.warning("Redis SET failed for key '%s': %s", key, e)
 
