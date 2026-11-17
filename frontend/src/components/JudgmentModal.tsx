@@ -184,6 +184,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
 
   const activeJudgment = fullJudgment || judgment;
   const courtInfo = getCourtLevelBadge(activeJudgment.court_level);
+  const contentTypeBadge = getContentTypeBadge(activeJudgment.content_type);
   const categoryStyle = getCategoryColor(activeJudgment.subject_category);
   const rawContent = activeJudgment.full_text || activeJudgment.excerpt || '';
   const normalizedContent = normalizeReaderText(rawContent);
@@ -232,11 +233,11 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
         <div className="px-4 py-3 sm:px-6 sm:py-3.5 border-b border-slate-200 bg-white/95 backdrop-blur-sm sticky top-0 z-20 shrink-0 flex items-center justify-between gap-2">
           {/* Left: Court Badge & Date */}
           <div className="flex items-center space-x-2 min-w-0">
-            <span
-              className={getContentTypeBadge(activeJudgment.content_type).badgeClass}
-            >
-              {getContentTypeBadge(activeJudgment.content_type).label}
-            </span>
+            {contentTypeBadge && (
+              <span className={contentTypeBadge.badgeClass}>
+                {contentTypeBadge.label}
+              </span>
+            )}
             <span
               className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold shrink-0 ${courtInfo.badgeClass}`}
             >

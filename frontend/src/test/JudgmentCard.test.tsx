@@ -158,7 +158,7 @@ describe('JudgmentCard Component', () => {
 
     const badge = screen.getByTestId('content-type-badge');
     expect(badge).toBeInTheDocument();
-    expect(badge).toHaveTextContent('⚖️ COURT ORDER');
+    expect(badge).toHaveTextContent('COURT ORDER');
     expect(badge.className).toContain('bg-emerald-50');
     expect(badge.className).toContain('text-emerald-700');
   });
@@ -182,12 +182,12 @@ describe('JudgmentCard Component', () => {
 
     const badge = screen.getByTestId('content-type-badge');
     expect(badge).toBeInTheDocument();
-    expect(badge).toHaveTextContent('📰 LEGAL NEWS');
+    expect(badge).toHaveTextContent('LEGAL NEWS');
     expect(badge.className).toContain('bg-sky-50');
     expect(badge.className).toContain('text-sky-700');
   });
 
-  it('renders slate badge with UPDATE label for unknown or default content type', () => {
+  it('does not render content-type badge for unknown or undefined content type', () => {
     const unknownItem: Judgment = {
       ...mockJudgment,
       content_type: 'unknown',
@@ -203,10 +203,6 @@ describe('JudgmentCard Component', () => {
       />
     );
 
-    const badge = screen.getByTestId('content-type-badge');
-    expect(badge).toBeInTheDocument();
-    expect(badge).toHaveTextContent('⏳ UPDATE');
-    expect(badge.className).toContain('bg-slate-100');
-    expect(badge.className).toContain('text-slate-600');
+    expect(screen.queryByTestId('content-type-badge')).not.toBeInTheDocument();
   });
 });

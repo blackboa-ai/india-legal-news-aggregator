@@ -31,7 +31,7 @@ import { FeedbackModal, FloatingFeedbackButton } from './components/FeedbackModa
 import { Footer } from './components/Footer';
 
 const PAGE_SIZE = 25;
-const FEED_CACHE_KEY = 'india_legal_cached_feed';
+const FEED_CACHE_KEY = 'india_legal_cached_feed_v2_1';
 
 function getInitialCachedFeed(): { data: Judgment[]; total: number } | null {
   if (typeof window === 'undefined') return null;
@@ -56,16 +56,20 @@ const formatFriendlyErrorMessage = (err: unknown): string => {
     if (
       lower.includes('fetch') ||
       lower.includes('500') ||
+      lower.includes('502') ||
+      lower.includes('503') ||
+      lower.includes('504') ||
       lower.includes('api') ||
       lower.includes('failed') ||
       lower.includes('network') ||
-      lower.includes('connect')
+      lower.includes('connect') ||
+      lower.includes('timeout')
     ) {
-      return 'Unable to load updates right now. Please try again.';
+      return 'The backend server may be waking up from sleep (Render free tier spin-up can take ~30-50s). Please wait a few seconds and try again.';
     }
     return err.message;
   }
-  return 'Unable to load updates right now. Please try again.';
+  return 'The backend server may be waking up from sleep (Render free tier spin-up can take ~30-50s). Please wait a few seconds and try again.';
 };
 
 export const App: React.FC = () => {

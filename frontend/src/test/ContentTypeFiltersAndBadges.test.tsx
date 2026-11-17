@@ -45,7 +45,7 @@ describe('Phase 4: Content Type Filter Tabs & Card Badges', () => {
     );
 
     const judgmentPill = screen.getByTestId('filter-pill-judgment');
-    expect(judgmentPill).toHaveTextContent('⚖️ Judgments & Orders');
+    expect(judgmentPill).toHaveTextContent('Judgments & Orders');
     fireEvent.click(judgmentPill);
 
     expect(handleFilterChange).toHaveBeenCalledTimes(1);
@@ -69,7 +69,7 @@ describe('Phase 4: Content Type Filter Tabs & Card Badges', () => {
     );
 
     const newsPill = screen.getByTestId('filter-pill-news');
-    expect(newsPill).toHaveTextContent('📰 Legal News');
+    expect(newsPill).toHaveTextContent('Legal News');
     fireEvent.click(newsPill);
 
     expect(handleFilterChange).toHaveBeenCalledTimes(1);
@@ -191,7 +191,7 @@ describe('Phase 4: Content Type Filter Tabs & Card Badges', () => {
     );
 
     const judgmentBadge = screen.getByTestId('content-type-badge');
-    expect(judgmentBadge).toHaveTextContent('⚖️ COURT ORDER');
+    expect(judgmentBadge).toHaveTextContent('COURT ORDER');
     expect(judgmentBadge.className).toContain('bg-emerald-50');
     expect(judgmentBadge.className).toContain('text-emerald-700');
     expect(judgmentBadge.className).toContain('border-emerald-200');
@@ -218,26 +218,43 @@ describe('Phase 4: Content Type Filter Tabs & Card Badges', () => {
     );
 
     const newsBadge = screen.getByTestId('content-type-badge');
-    expect(newsBadge).toHaveTextContent('📰 LEGAL NEWS');
+    expect(newsBadge).toHaveTextContent('LEGAL NEWS');
     expect(newsBadge.className).toContain('bg-sky-50');
     expect(newsBadge.className).toContain('text-sky-700');
     expect(newsBadge.className).toContain('border-sky-200');
+
+    // 3. Render unknown item -> verify no content-type badge
+    const unknownItem: Judgment = {
+      ...baseItem,
+      id: 'item-3',
+      content_type: 'unknown',
+    };
+
+    rerender(
+      <JudgmentCard
+        judgment={unknownItem}
+        isBookmarked={false}
+        onToggleBookmark={vi.fn()}
+        onSelectJudgment={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByTestId('content-type-badge')).not.toBeInTheDocument();
   });
 
   it('getContentTypeBadge utility returns expected labels and classes', () => {
     const judgmentBadge = getContentTypeBadge('judgment');
-    expect(judgmentBadge.label).toBe('⚖️ COURT ORDER');
-    expect(judgmentBadge.badgeClass).toContain('bg-emerald-50 text-emerald-700');
+    expect(judgmentBadge?.label).toBe('COURT ORDER');
+    expect(judgmentBadge?.badgeClass).toContain('bg-emerald-50 text-emerald-700');
 
     const newsBadge = getContentTypeBadge('news');
-    expect(newsBadge.label).toBe('📰 LEGAL NEWS');
-    expect(newsBadge.badgeClass).toContain('bg-sky-50 text-sky-700');
+    expect(newsBadge?.label).toBe('LEGAL NEWS');
+    expect(newsBadge?.badgeClass).toContain('bg-sky-50 text-sky-700');
 
     const unknownBadge = getContentTypeBadge('unknown');
-    expect(unknownBadge.label).toBe('⏳ UPDATE');
-    expect(unknownBadge.badgeClass).toContain('bg-slate-100 text-slate-600');
+    expect(unknownBadge).toBeNull();
 
     const fallbackBadge = getContentTypeBadge(undefined);
-    expect(fallbackBadge.label).toBe('⏳ UPDATE');
+    expect(fallbackBadge).toBeNull();
   });
 });

@@ -65,4 +65,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT:-8000}/api/v1/health || curl -f http://localhost:${PORT:-8000}/health || exit 1
 
 # Start uvicorn with a single worker to respect the strictly under 250 MB RAM limit
-CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
+CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]

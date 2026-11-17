@@ -169,7 +169,7 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
           }`}
         >
-          <span>⚖️ Judgments & Orders</span>
+          <span>Judgments & Orders</span>
         </button>
 
         <button
@@ -182,7 +182,7 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
           }`}
         >
-          <span>📰 Legal News</span>
+          <span>Legal News</span>
         </button>
       </div>
 

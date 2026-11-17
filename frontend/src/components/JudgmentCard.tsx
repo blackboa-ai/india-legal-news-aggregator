@@ -2,8 +2,6 @@ import React from 'react';
 import {
   Bookmark as BookmarkIcon,
   BookOpen,
-  Calendar,
-  Building,
   Sparkles,
   FolderPlus,
 } from 'lucide-react';
@@ -43,23 +41,19 @@ export const getContentTypeBadge = (contentType?: string) => {
   switch (contentType) {
     case 'judgment':
       return {
-        label: '⚖️ COURT ORDER',
+        label: 'COURT ORDER',
         badgeClass:
           'inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800',
       };
     case 'news':
       return {
-        label: '📰 LEGAL NEWS',
+        label: 'LEGAL NEWS',
         badgeClass:
           'inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950/60 dark:text-sky-300 dark:border-sky-800',
       };
     case 'unknown':
     default:
-      return {
-        label: '⏳ UPDATE',
-        badgeClass:
-          'inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700',
-      };
+      return null;
   }
 };
 
@@ -127,18 +121,19 @@ export const JudgmentCard = React.memo<JudgmentCardProps>(({
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex flex-wrap items-center gap-1.5 text-xs min-w-0">
             {/* Content Type Pill Badge */}
-            <span
-              data-testid="content-type-badge"
-              className={`shrink-0 ${contentTypeBadge.badgeClass}`}
-            >
-              {contentTypeBadge.label}
-            </span>
+            {contentTypeBadge && (
+              <span
+                data-testid="content-type-badge"
+                className={`shrink-0 ${contentTypeBadge.badgeClass}`}
+              >
+                {contentTypeBadge.label}
+              </span>
+            )}
 
             {/* Court Level Badge */}
             <span
               className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] shrink-0 ${courtInfo.badgeClass}`}
             >
-              <Building className="h-3 w-3 mr-1" />
               {judgment.court_name || courtInfo.label}
             </span>
 
@@ -151,7 +146,6 @@ export const JudgmentCard = React.memo<JudgmentCardProps>(({
 
             {/* Date */}
             <span className="inline-flex items-center text-slate-500 text-[11px] shrink-0">
-              <Calendar className="h-3 w-3 mr-1 text-slate-400" />
               {formatJudgmentDate(judgment.judgment_date)}
             </span>
           </div>

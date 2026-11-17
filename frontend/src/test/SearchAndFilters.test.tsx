@@ -132,8 +132,8 @@ describe('SearchAndFilters Component', () => {
     );
 
     expect(screen.getByTestId('filter-pill-all')).toHaveTextContent('All Updates');
-    expect(screen.getByTestId('filter-pill-judgment')).toHaveTextContent('⚖️ Judgments & Orders');
-    expect(screen.getByTestId('filter-pill-news')).toHaveTextContent('📰 Legal News');
+    expect(screen.getByTestId('filter-pill-judgment')).toHaveTextContent('Judgments & Orders');
+    expect(screen.getByTestId('filter-pill-news')).toHaveTextContent('Legal News');
   });
 
   it('calls onFilterChange with judgment content type when Judgments & Orders pill is clicked', () => {
