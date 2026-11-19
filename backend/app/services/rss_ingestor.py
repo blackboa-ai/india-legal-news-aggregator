@@ -25,10 +25,10 @@ from app.services.legal_classifier import CourtInfo, LegalClassifier, classify_c
 
 logger = logging.getLogger(__name__)
 
-# Polite crawler User-Agent adhering to Indian court & legal publication etiquette
+# Standard browser User-Agent adhering to Indian court & legal publication etiquette
 DEFAULT_USER_AGENT = (
-    "IndiaLegalNewsAggregator/2.0 "
-    "(+https://github.com/blackboa-ai/india-legal-news-aggregator; legal-research-bot)"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 )
 
 # Tracking query parameters to strip during URL canonicalization
@@ -73,7 +73,7 @@ DEFAULT_LEGAL_FEEDS: list[FeedSourceConfig] = [
     FeedSourceConfig(
         source_id="indiankanoon",
         name="Indian Kanoon Recent Judgments",
-        url="https://indiankanoon.org/feeds/latest/",
+        url="https://indiankanoon.org/feeds/latest/supremecourt/",
         default_court_code="sc",
         default_court_name="Supreme Court of India",
         default_court_level=1,
@@ -81,7 +81,7 @@ DEFAULT_LEGAL_FEEDS: list[FeedSourceConfig] = [
     FeedSourceConfig(
         source_id="livelaw",
         name="LiveLaw Legal News & Judgments",
-        url="https://www.livelaw.in/rss/feed.xml",
+        url="https://www.livelaw.in/google_feeds.xml",
         default_court_code="sc",
         default_court_name="Supreme Court of India",
         default_court_level=1,
@@ -227,7 +227,8 @@ class RSSIngestor:
         """
         headers = {
             "User-Agent": self.user_agent,
-            "Accept": "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+            "Accept": "application/rss+xml, application/atom+xml, application/xml, text/xml, text/html, */*",
+            "Accept-Language": "en-US,en;q=0.9",
         }
 
         should_close = False

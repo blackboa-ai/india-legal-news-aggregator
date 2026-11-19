@@ -17,6 +17,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import httpx
+
 # Ensure backend root is on sys.path for direct script execution
 backend_root = Path(__file__).resolve().parent.parent.parent
 if str(backend_root) not in sys.path:
@@ -201,10 +203,18 @@ class IngestionWorker:
         except Exception as feed_err:
             await session.rollback()
             stats.error = str(feed_err)
-            logger.exception(
-                "Error processing legal feed '%s'",
-                feed_config.name,
-            )
+            if isinstance(feed_err, (httpx.HTTPStatusError, httpx.RequestError, httpx.TimeoutException)):
+                logger.warning(
+                    "Network error fetching legal feed '%s' (%s): %s",
+                    feed_config.name,
+                    feed_config.url,
+                    str(feed_err),
+                )
+            else:
+                logger.exception(
+                    "Error processing legal feed '%s'",
+                    feed_config.name,
+                )
 
         stats.duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
         return stats

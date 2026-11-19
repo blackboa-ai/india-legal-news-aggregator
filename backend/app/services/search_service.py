@@ -144,11 +144,17 @@ def extract_matched_terms(query: str) -> list[str]:
             if clean_m and clean_m not in terms:
                 terms.append(clean_m)
 
-    # Extract general keywords (> 2 chars) not already captured
-    words = re.findall(r"\b[A-Za-z0-9_-]{3,}\b", query)
-    stop_words = {"the", "and", "for", "with", "from", "that", "this", "under", "court", "judge"}
+    # Extract general keywords (>= 3 chars, or 2-char legal acronyms) not already captured
+    two_letter_acronyms = {"ed", "it", "sc", "hc", "ni", "cr", "pc", "ib", "ip"}
+    words = re.findall(r"\b[A-Za-z0-9_-]{2,}\b", query)
+    stop_words = {
+        "the", "and", "for", "with", "from", "that", "this", "under", "court",
+        "judge", "in", "to", "of", "on", "at", "by", "an", "as", "is", "or",
+    }
     for w in words:
         w_lower = w.lower()
+        if len(w) == 2 and w_lower not in two_letter_acronyms and not w.isupper():
+            continue
         if w_lower not in stop_words and not any(w_lower in t.lower() for t in terms):
             terms.append(w)
 
@@ -218,6 +224,8 @@ class SearchService:
     ) -> list[dict[str, Any]]:
         """
         Executes PostgreSQL tsvector full-text search with ts_rank_cd ranking.
+        Falls back to comprehensive ILIKE matching across title, excerpt, full_text,
+        and statutory tags if tsvector returns 0 rows or encounters a tsquery syntax issue.
         """
         sql = f"""
         SELECT
@@ -237,26 +245,42 @@ class SearchService:
         try:
             result = await session.execute(text(sql), exec_params)
             rows = result.mappings().all()
-            return [dict(r) for r in rows]
+            if rows:
+                return [dict(r) for r in rows]
         except Exception as e:
-            # Fallback for plain ILIKE matching if websearch_to_tsquery fails or tsquery syntax error
             logger.debug("tsvector query failed, running ILIKE fallback: %s", e)
-            fallback_sql = f"""
-            SELECT
-                id, external_id, title, short_title, court_code, court_name, court_level,
-                judgment_date, subject_category, excerpt, full_text, url, parties, tags, source,
-                is_archived, classification_confidence, content_type, content_type_confidence,
-                created_at, updated_at,
-                1.0 as rank_score
-            FROM judgments
-            WHERE {where_sql}
-              AND (title ILIKE :q_like OR excerpt ILIKE :q_like)
-            ORDER BY judgment_date DESC
-            LIMIT :limit;
-            """
-            fb_params = {**params, "q_like": f"%{query}%", "limit": limit}
+
+        # Fallback for plain ILIKE matching across title, excerpt, full_text, and tags
+        fallback_sql = f"""
+        SELECT
+            id, external_id, title, short_title, court_code, court_name, court_level,
+            judgment_date, subject_category, excerpt, full_text, url, parties, tags, source,
+            is_archived, classification_confidence, content_type, content_type_confidence,
+            created_at, updated_at,
+            CASE
+                WHEN title ILIKE :q_like THEN 1.5
+                WHEN excerpt ILIKE :q_like THEN 1.2
+                WHEN full_text ILIKE :q_like THEN 1.0
+                ELSE 0.8
+            END as rank_score
+        FROM judgments
+        WHERE {where_sql}
+          AND (
+              title ILIKE :q_like
+              OR excerpt ILIKE :q_like
+              OR full_text ILIKE :q_like
+              OR :query = ANY(tags)
+          )
+        ORDER BY rank_score DESC, judgment_date DESC
+        LIMIT :limit;
+        """
+        fb_params = {**params, "q_like": f"%{query}%", "query": query, "limit": limit}
+        try:
             result = await session.execute(text(fallback_sql), fb_params)
             return [dict(r) for r in result.mappings().all()]
+        except Exception as fb_err:
+            logger.debug("ILIKE fallback query failed: %s", fb_err)
+            return []
 
     async def execute_semantic_search(
         self,
@@ -265,9 +289,12 @@ class SearchService:
         where_sql: str,
         params: dict[str, Any],
         limit: int = 20,
+        min_similarity: float = 0.08,
     ) -> list[dict[str, Any]]:
         """
         Executes pgvector cosine similarity search (<=> operator) against Judgment.embedding.
+        Filters out low-similarity candidates below min_similarity threshold to prevent
+        completely unrelated noise/hallucinations on out-of-domain queries.
         """
         # Convert vector to Postgres vector literal string '[0.1, 0.2, ...]'
         vec_str = f"[{','.join(f'{x:.6f}' for x in query_vector)}]"
@@ -290,7 +317,7 @@ class SearchService:
         try:
             result = await session.execute(text(sql), exec_params)
             rows = result.mappings().all()
-            return [dict(r) for r in rows]
+            return [dict(r) for r in rows if float(r.get("sim_score", 0.0) or 0.0) >= min_similarity]
         except Exception as e:
             logger.warning("pgvector similarity search failed: %s", e)
             return []
@@ -415,7 +442,7 @@ class SearchService:
         execution_result = SearchExecutionResult(
             results=candidates,
             query_type=mode_normalized,
-            matched_terms=matched_terms,
+            matched_terms=matched_terms if total_candidates > 0 else [],
             total=total_candidates,
         )
         await cache_service.set(cache_key, execution_result, ttl_seconds=900)

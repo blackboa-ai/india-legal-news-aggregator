@@ -95,7 +95,9 @@ export const JudgmentCard = React.memo<JudgmentCardProps>(({
   const contentTypeBadge = getContentTypeBadge(judgment.content_type);
   const categoryStyle = getCategoryColor(judgment.subject_category);
   const searchItem = judgment as SearchResultItem;
-  const isSearchRanked = typeof searchItem.score === 'number';
+  const isSearchRanked =
+    typeof searchItem.score === 'number' &&
+    (searchItem.keyword_rank === 1 || searchItem.semantic_rank === 1 || searchItem.score >= 0.025);
 
   return (
     <div

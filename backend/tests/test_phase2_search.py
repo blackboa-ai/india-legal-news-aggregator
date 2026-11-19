@@ -364,6 +364,50 @@ class TestSearchServiceFilters:
             assert res.results[0].semantic_rank == 1
             assert res.results[0].keyword_rank is None
 
+    @pytest.mark.asyncio
+    async def test_out_of_domain_query_returns_zero_results(self):
+        """When neither keyword nor semantic criteria are met, hybrid search returns empty without random results."""
+        service = SearchService()
+        mock_session = AsyncMock()
+
+        # Both keyword and semantic searches return empty
+        with patch.object(service, "execute_keyword_search", AsyncMock(return_value=[])), \
+             patch.object(service, "execute_semantic_search", AsyncMock(return_value=[])):
+            res = await service.search(mock_session, query="UPI", mode="hybrid")
+            assert res.total == 0
+            assert len(res.results) == 0
+            assert res.matched_terms == []
+
+    @pytest.mark.asyncio
+    async def test_semantic_search_filters_below_min_similarity(self):
+        """Verifies execute_semantic_search drops rows with sim_score < min_similarity."""
+        service = SearchService()
+        mock_session = AsyncMock()
+
+        # Database returns rows, but their similarity is near 0
+        mock_mapping_result = MagicMock()
+        mock_mapping_result.mappings.return_value.all.return_value = [
+            {"id": uuid4(), "title": "Bail Case", "sim_score": 0.02},
+            {"id": uuid4(), "title": "Divorce Case", "sim_score": -0.05},
+            {"id": uuid4(), "title": "UPI Guidelines", "sim_score": 0.45},
+        ]
+        mock_session.execute.return_value = mock_mapping_result
+
+        filtered = await service.execute_semantic_search(
+            session=mock_session,
+            query_vector=[0.1] * 384,
+            where_sql="is_archived = true",
+            params={},
+            min_similarity=0.08,
+        )
+        assert len(filtered) == 1
+        assert filtered[0]["title"] == "UPI Guidelines"
+
+    def test_extract_matched_terms_two_letter_acronyms(self):
+        terms = extract_matched_terms("Investigation by ED under PMLA and IT Act before SC")
+        assert "ED" in terms or "ed" in [t.lower() for t in terms]
+        assert "SC" in terms or "sc" in [t.lower() for t in terms]
+
 
 # ==============================================================================
 # 4. Redis Caching & In-Memory Fallback Resilience

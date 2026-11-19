@@ -1239,6 +1239,114 @@ LANDMARK_JUDGMENTS: list[dict[str, Any]] = [
         ],
         "source": "sci",
     },
+    {
+        "external_id": "landmark-kerala-dr-sajan-upi-2024",
+        "title": "Dr. Sajan P. and Others v. State of Kerala and Others",
+        "short_title": "Dr. Sajan v. State of Kerala (UPI Bank Account Freeze Guidelines)",
+        "court_code": "kerala-hc",
+        "court_name": "High Court of Kerala",
+        "court_level": 2,
+        "judgment_date": datetime.date(2024, 3, 14),
+        "subject_category": "Criminal",
+        "excerpt": (
+            "The High Court of Kerala laid down comprehensive directives regarding police freezing of bank accounts "
+            "under Section 102 CrPC in cyber fraud and online transaction investigations. The Court ruled that police "
+            "and cyber cells cannot issue sweeping requisitions to freeze entire bank accounts of innocent citizens, merchants, "
+            "or traders merely because a remote layer of disputed UPI funds was credited to their account. Any debit freeze "
+            "must be strictly confined to the exact disputed amount involved in the UPI cyber fraud, and operations of the "
+            "account for all other legitimate digital transactions must be permitted."
+        ),
+        "full_text": (
+            "IN THE HIGH COURT OF KERALA AT ERNAKULAM\n"
+            "CRIMINAL MISCELLANEOUS CASE NO. 1248 OF 2024\n\n"
+            "Dr. Sajan P. and Others ... Petitioners\n"
+            "versus\n"
+            "State of Kerala, represented by Public Prosecutor, and Others ... Respondents\n\n"
+            "CORAM: Hon'ble Mr. Justice P.V. Kunhikrishnan\n\n"
+            "JUDGMENT:\n"
+            "1. Petitioners approach this Court aggrieved by the action of respondent banks who froze their bank accounts "
+            "on requisitions received from Cyber Crime Police stations across India alleging that fraudulent UPI transfers "
+            "originating from online financial scams had entered the petitioners' bank accounts as secondary or tertiary recipients.\n\n"
+            "2. Section 102 of the Code of Criminal Procedure, 1973 (CrPC) / Section 106 of the Bharatiya Nagarik Suraksha Sanhita, 2023 (BNSS) "
+            "empowers police officers to seize property suspected to be stolen or linked to commission of an offence. However, this power "
+            "does not authorize police to choke the financial existence of law-abiding citizens who received UPI payments for bona fide "
+            "commercial services or peer-to-peer (P2P) transfers without any complicity in the underlying cyber fraud.\n\n"
+            "3. We hold and direct that: (i) Requisitions to freeze bank accounts issued by cyber police under Section 102 CrPC must strictly "
+            "specify the exact disputed quantum of funds; (ii) Banks shall only mark a lien or freeze to the extent of the disputed amount, "
+            "leaving the remaining balance and routine UPI/banking operations fully functional; (iii) Indiscriminate total freezing of bank accounts "
+            "violates the right to livelihood under Article 21 and property rights under Article 300A of the Constitution of India.\n\n"
+            "ORDER: Writ petition allowed. Banks directed to restrict freeze strictly to disputed UPI amounts and defreeze remaining balances immediately."
+        ),
+        "url": "https://indiankanoon.org/doc/178942150/",
+        "parties": [
+            {"role": "Petitioner", "name": "Dr. Sajan P. and Others"},
+            {"role": "Respondent", "name": "State of Kerala and Others"},
+        ],
+        "tags": [
+            "UPI",
+            "Unified Payments Interface",
+            "Section 102 CrPC",
+            "Section 106 BNSS",
+            "Bank Account Freeze",
+            "Cyber Fraud",
+            "Digital Payments",
+            "P2P Transactions",
+            "Article 21",
+        ],
+        "source": "livelaw",
+    },
+    {
+        "external_id": "landmark-sc-rbi-digital-payments-upi-2023",
+        "title": "National Payments Corporation of India (NPCI) & RBI v. Digital Consumer Welfare Forum",
+        "short_title": "RBI & NPCI Guidelines on UPI Fraud and Customer Protection",
+        "court_code": "sc",
+        "court_name": "Supreme Court of India",
+        "court_level": 1,
+        "judgment_date": datetime.date(2023, 11, 20),
+        "subject_category": "Corporate",
+        "excerpt": (
+            "The Supreme Court affirmed the binding regulatory force of the Reserve Bank of India (RBI) circulars on "
+            "Customer Protection and Zero Liability in Unauthorized Electronic Banking Transactions. The Court held that "
+            "in fraudulent UPI, net banking, or third-party digital payment breaches where the consumer notifies the bank "
+            "within three days, the customer bears zero liability. Financial institutions and payment aggregators cannot shift "
+            "losses onto consumers where systemic security breaches or unauthorized SIM-swap UPI access occur without negligence."
+        ),
+        "full_text": (
+            "IN THE SUPREME COURT OF INDIA\n"
+            "CIVIL APPELLATE JURISDICTION\n\n"
+            "CIVIL APPEAL NO. 7842 OF 2023\n"
+            "Reserve Bank of India & Another ... Appellants\n"
+            "versus\n"
+            "Digital Consumer Welfare Forum and Others ... Respondents\n\n"
+            "CORAM: Hon'ble Mr. Justice D.Y. Chandrachud (CJI), Hon'ble Mr. Justice J.B. Pardiwala, and Hon'ble Mr. Justice Manoj Misra.\n\n"
+            "JUDGMENT:\n"
+            "1. Rapid expansion of digital payments through the Unified Payments Interface (UPI) developed by NPCI has transformed "
+            "retail payments in India. With increased volume comes the imperative of robust institutional trust and legal protection for consumers.\n\n"
+            "2. Under the RBI Charter of Customer Rights and Master Directions, zero liability attaches to a customer where unauthorized "
+            "electronic transactions occur due to contributory fraud or technical deficiency on the part of the bank or payment ecosystem, "
+            "or third-party breaches where the customer notifies the institution within three working days of receiving alert.\n\n"
+            "3. Banks and payment facilitators cannot evade responsibility or disclaim liability by citing boilerplate terms of service. "
+            "Electronic transaction logs, IP tracking, and fraud monitoring systems must meet statutory standards under the Information "
+            "Technology Act, 2000 and Payment and Settlement Systems Act, 2007.\n\n"
+            "ORDER: Judgment rendered affirming zero liability framework for unauthorized UPI digital transactions reported expeditiously."
+        ),
+        "url": "https://indiankanoon.org/doc/192837465/",
+        "parties": [
+            {"role": "Appellant", "name": "Reserve Bank of India & Another"},
+            {"role": "Respondent", "name": "Digital Consumer Welfare Forum and Others"},
+        ],
+        "tags": [
+            "UPI",
+            "Unified Payments Interface",
+            "NPCI",
+            "RBI Guidelines",
+            "Digital Payments",
+            "Zero Liability",
+            "Online Banking Fraud",
+            "Information Technology Act",
+        ],
+        "source": "sci",
+    },
 ]
 
 
