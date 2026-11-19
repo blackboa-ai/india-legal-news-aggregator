@@ -33,6 +33,7 @@ bcrypt==4.0.1
 apscheduler==3.10.4
 
 # Lightweight Embeddings (< 90 MB RAM inference, no PyTorch)
+numpy>=1.26.4,<2.0.0
 onnxruntime==1.18.0
 tokenizers==0.19.1
 

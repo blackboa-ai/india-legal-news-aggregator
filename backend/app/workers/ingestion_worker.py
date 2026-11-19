@@ -183,7 +183,7 @@ class IngestionWorker:
                         stats.items_inserted += 1
                     else:
                         stats.items_duplicate += 1
-                except (ValueError, TypeError, KeyError) as item_err:
+                except Exception as item_err:
                     logger.warning(
                         "Failed to persist item %s (%s): %s",
                         item.external_id,

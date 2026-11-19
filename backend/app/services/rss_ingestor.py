@@ -131,16 +131,19 @@ def sanitize_html_text(raw_html: str | None, preserve_newlines: bool = False) ->
         return ""
 
     sep = "\n\n" if preserve_newlines else " "
-    try:
-        soup = BeautifulSoup(raw_html, "html.parser")
-        # Remove active or formatting markup tags
-        for element in soup(["script", "style", "noscript", "iframe", "header", "footer", "nav", "aside"]):
-            element.decompose()
+    if "<" not in raw_html:
+        text = raw_html
+    else:
+        try:
+            soup = BeautifulSoup(raw_html, "html.parser")
+            # Remove active or formatting markup tags
+            for element in soup(["script", "style", "noscript", "iframe", "header", "footer", "nav", "aside"]):
+                element.decompose()
 
-        text = soup.get_text(separator=sep)
-    except (ValueError, TypeError, AttributeError):
-        # Fallback regex tag stripping in case of malformed markup
-        text = re.sub(r"<[^>]+>", sep, raw_html)
+            text = soup.get_text(separator=sep)
+        except (ValueError, TypeError, AttributeError):
+            # Fallback regex tag stripping in case of malformed markup
+            text = re.sub(r"<[^>]+>", sep, raw_html)
 
     # Unescape HTML entities (&nbsp;, &amp;, &#39;, etc.)
     text = html.unescape(text)

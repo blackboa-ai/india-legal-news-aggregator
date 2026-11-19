@@ -134,22 +134,24 @@ class EmbeddingService:
         try:
             from pathlib import Path
 
-            import onnxruntime as ort
-            from tokenizers import Tokenizer
-
             model_path = Path("backend/models/all-MiniLM-L6-v2.onnx")
             tokenizer_path = Path("backend/models/tokenizer.json")
 
-            if model_path.exists() and tokenizer_path.exists():
-                opts = ort.SessionOptions()
-                opts.intra_op_num_threads = 1
-                opts.inter_op_num_threads = 1
-                opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-                self._onnx_session = ort.InferenceSession(str(model_path), opts)
-                self._tokenizer = Tokenizer.from_file(str(tokenizer_path))
-                logger.info("Successfully loaded ONNX all-MiniLM-L6-v2 embedding model")
-                return True
-        except Exception as e:
+            if not (model_path.exists() and tokenizer_path.exists()):
+                return False
+
+            import onnxruntime as ort
+            from tokenizers import Tokenizer
+
+            opts = ort.SessionOptions()
+            opts.intra_op_num_threads = 1
+            opts.inter_op_num_threads = 1
+            opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+            self._onnx_session = ort.InferenceSession(str(model_path), opts)
+            self._tokenizer = Tokenizer.from_file(str(tokenizer_path))
+            logger.info("Successfully loaded ONNX all-MiniLM-L6-v2 embedding model")
+            return True
+        except (Exception, BaseException) as e:
             logger.debug("ONNX runtime embedding initialization skipped: %s", e)
 
         return False
