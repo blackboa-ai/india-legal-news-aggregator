@@ -205,4 +205,30 @@ describe('JudgmentCard Component', () => {
 
     expect(screen.queryByTestId('content-type-badge')).not.toBeInTheDocument();
   });
+
+  it('renders International court badge and WORLD NEWS content badge for international items', () => {
+    const intlItem: Judgment = {
+      ...mockJudgment,
+      court_code: 'international',
+      court_name: 'International Breaking News',
+      court_level: 4,
+      subject_category: 'International',
+      content_type: 'news',
+      content_type_confidence: 1.0,
+    };
+
+    render(
+      <JudgmentCard
+        judgment={intlItem}
+        isBookmarked={false}
+        onToggleBookmark={vi.fn()}
+        onSelectJudgment={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('International')).toBeInTheDocument();
+    const badge = screen.getByTestId('content-type-badge');
+    expect(badge).toHaveTextContent('WORLD NEWS');
+    expect(badge.className).toContain('bg-indigo-50');
+  });
 });

@@ -94,6 +94,15 @@ DEFAULT_LEGAL_FEEDS: list[FeedSourceConfig] = [
         default_court_name="Supreme Court of India",
         default_court_level=1,
     ),
+    FeedSourceConfig(
+        source_id="bbc",
+        name="BBC World Breaking News",
+        url="https://feeds.bbci.co.uk/news/world/rss.xml",
+        default_court_code="international",
+        default_court_name="International Breaking News",
+        default_court_level=4,
+        enabled=True,
+    ),
 ]
 
 

@@ -216,4 +216,49 @@ describe('SearchAndFilters Component', () => {
     expect(screen.getByTestId('filter-pill-judgment').className).toContain('bg-slate-900');
     expect(screen.getByTestId('filter-pill-all').className).toContain('bg-slate-100');
   });
+
+  it('renders International Breaking News pill and triggers onFilterChange with court=international', () => {
+    const handleFilterChange = vi.fn();
+    render(
+      <SearchAndFilters
+        filters={defaultFilters}
+        onFilterChange={handleFilterChange}
+        onSearchSubmit={vi.fn()}
+        onResetFilters={vi.fn()}
+        categories={mockCategories}
+        courts={mockCourts}
+      />
+    );
+
+    const intlPill = screen.getByTestId('filter-pill-international');
+    expect(intlPill).toHaveTextContent('International Breaking News');
+    fireEvent.click(intlPill);
+
+    expect(handleFilterChange).toHaveBeenCalledWith({
+      court: 'international',
+      content_type: undefined,
+      page: 1,
+    });
+  });
+
+  it('clicking All Updates resets court when previously international', () => {
+    const handleFilterChange = vi.fn();
+    render(
+      <SearchAndFilters
+        filters={{ ...defaultFilters, court: 'international' }}
+        onFilterChange={handleFilterChange}
+        onSearchSubmit={vi.fn()}
+        onResetFilters={vi.fn()}
+        categories={mockCategories}
+        courts={mockCourts}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('filter-pill-all'));
+    expect(handleFilterChange).toHaveBeenCalledWith({
+      content_type: undefined,
+      court: '',
+      page: 1,
+    });
+  });
 });

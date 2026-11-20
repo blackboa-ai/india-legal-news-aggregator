@@ -183,8 +183,8 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
   if (!isOpen || !judgment) return null;
 
   const activeJudgment = fullJudgment || judgment;
-  const courtInfo = getCourtLevelBadge(activeJudgment.court_level);
-  const contentTypeBadge = getContentTypeBadge(activeJudgment.content_type);
+  const courtInfo = getCourtLevelBadge(activeJudgment.court_level, activeJudgment.court_code);
+  const contentTypeBadge = getContentTypeBadge(activeJudgment.content_type, activeJudgment.court_code);
   const categoryStyle = getCategoryColor(activeJudgment.subject_category);
   const rawContent = activeJudgment.full_text || activeJudgment.excerpt || '';
   const normalizedContent = normalizeReaderText(rawContent);

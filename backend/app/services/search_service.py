@@ -193,6 +193,8 @@ class SearchService:
         if court:
             clauses.append("court_code = :court")
             params["court"] = court.strip().lower()
+        elif category != "International":
+            clauses.append("court_code != 'international'")
 
         if date_from:
             clauses.append("judgment_date >= :date_from")

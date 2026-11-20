@@ -560,6 +560,9 @@ class LegalClassifier:
         Detects Indian court or tribunal from title and text.
         Falls back to default_court or generic Supreme Court.
         """
+        if default_court and default_court.court_code == "international":
+            return default_court
+
         if text:
             for pattern, court_info in cls.COURT_MAPPINGS:
                 if pattern.search(text):
@@ -700,7 +703,10 @@ class LegalClassifier:
         parties = cls.extract_parties(title) or cls.extract_parties(text[:300])
 
         # 5. Determine category & confidence
-        subject_category, confidence = cls.categorize(combined_text, statute_tags)
+        if default_court and default_court.court_code == "international":
+            subject_category, confidence = "International", 1.0
+        else:
+            subject_category, confidence = cls.categorize(combined_text, statute_tags)
 
         # 6. Determine content type & confidence
         content_type, content_type_confidence = classify_content_type(
@@ -799,6 +805,8 @@ def classify_content_type(
     # Rule A: Authoritative source override
     if clean_source in ("sci", "indiankanoon"):
         return ("judgment", 1.0)
+    if clean_source == "bbc":
+        return ("news", 1.0)
 
     clean_title = (title or "").strip()
     clean_text = (text or "").strip()

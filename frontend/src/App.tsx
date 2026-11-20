@@ -573,9 +573,14 @@ export const App: React.FC = () => {
         pageTitle = `"${filters.q.trim()}" - Indian Legal Search & Precedents`;
         pageDesc = `Explore judicial precedents, legal judgments, and case citations matching "${filters.q.trim()}" across Indian courts.`;
       } else if (filters.court) {
-        const courtName = courts.find((c) => c.code === filters.court)?.name || 'High Court';
-        pageTitle = `${courtName} Recent Judgments & Legal Orders`;
-        pageDesc = `Latest verified court orders, judgments, and legal rulings from ${courtName}.`;
+        if (filters.court === 'international') {
+          pageTitle = 'Latest International Breaking News & World Headlines | India Legal News';
+          pageDesc = 'Live breaking international news, global headlines, and geopolitical updates from around the world.';
+        } else {
+          const courtName = courts.find((c) => c.code === filters.court)?.name || 'High Court';
+          pageTitle = `${courtName} Recent Judgments & Legal Orders`;
+          pageDesc = `Latest verified court orders, judgments, and legal rulings from ${courtName}.`;
+        }
       } else if (filters.category) {
         pageTitle = `${filters.category} Law Judgments & Case Laws`;
         pageDesc = `Comprehensive database of ${filters.category} law decisions, statutory citations, and court orders in India.`;
@@ -726,10 +731,14 @@ export const App: React.FC = () => {
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4 px-1">
           <div className="flex items-center space-x-2">
             <h2 className="text-sm font-bold text-slate-800">
-              {filters.q ? 'Search Results' : 'Latest Legal Judgments & Orders'}
+              {filters.q
+                ? 'Search Results'
+                : filters.court === 'international'
+                ? 'Latest International Breaking News'
+                : 'Latest Legal Judgments & Orders'}
             </h2>
             <span className="text-xs px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-semibold">
-              {totalCount} {totalCount === 1 ? 'case' : 'cases'}
+              {totalCount} {filters.court === 'international' ? (totalCount === 1 ? 'article' : 'articles') : (totalCount === 1 ? 'case' : 'cases')}
             </span>
           </div>
 

@@ -72,6 +72,7 @@ INDIAN_COURTS: list[dict[str, Any]] = [
     {"code": "gujarat-hc", "name": "High Court of Gujarat", "level": 2},
     {"code": "nclat", "name": "National Company Law Appellate Tribunal", "level": 3},
     {"code": "ngt", "name": "National Green Tribunal", "level": 3},
+    {"code": "international", "name": "International Breaking News", "level": 4},
 ]
 
 
@@ -183,6 +184,10 @@ async def list_judgments(
         base_conditions.append(Judgment.subject_category == category_val)
     if court_val:
         base_conditions.append(Judgment.court_code == court_val)
+    else:
+        # Generic calls (including external client queries) default to domestic legal updates
+        if category_val != "International":
+            base_conditions.append(Judgment.court_code != "international")
     if content_type_val:
         base_conditions.append(Judgment.content_type == content_type_val)
     if date_from_val:

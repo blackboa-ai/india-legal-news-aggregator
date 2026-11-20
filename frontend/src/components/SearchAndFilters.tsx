@@ -48,6 +48,7 @@ export const DEFAULT_COURTS: CourtItem[] = [
   { code: 'gujarat-hc', name: 'High Court of Gujarat', level: 2 },
   { code: 'nclat', name: 'National Company Law Appellate Tribunal', level: 3 },
   { code: 'ngt', name: 'National Green Tribunal', level: 3 },
+  { code: 'international', name: 'International Breaking News', level: 4 },
 ];
 
 export const DEFAULT_CATEGORIES: LegalCategoryItem[] = CANONICAL_CATEGORIES.map((cat) => ({
@@ -144,14 +145,20 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
         </div>
       </form>
 
-      {/* 2. Content Type Navigation Pills (All Updates, Judgments & Orders, Legal News) */}
+      {/* 2. Content Type Navigation Pills (All Updates, Judgments & Orders, Legal News, International Breaking News) */}
       <div className="flex items-center gap-2 mb-4 overflow-x-auto no-scrollbar pb-1">
         <button
           type="button"
           data-testid="filter-pill-all"
-          onClick={() => onFilterChange({ content_type: undefined, page: 1 })}
+          onClick={() =>
+            onFilterChange({
+              content_type: undefined,
+              ...(filters.court === 'international' ? { court: '' } : {}),
+              page: 1,
+            })
+          }
           className={`min-h-[40px] sm:min-h-[44px] px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition shrink-0 flex items-center space-x-1.5 ${
-            !filters.content_type
+            !filters.content_type && filters.court !== 'international'
               ? 'bg-slate-900 text-white dark:bg-emerald-600 dark:text-white shadow-sm'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
           }`}
@@ -162,9 +169,15 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
         <button
           type="button"
           data-testid="filter-pill-judgment"
-          onClick={() => onFilterChange({ content_type: 'judgment', page: 1 })}
+          onClick={() =>
+            onFilterChange({
+              content_type: 'judgment',
+              ...(filters.court === 'international' ? { court: '' } : {}),
+              page: 1,
+            })
+          }
           className={`min-h-[40px] sm:min-h-[44px] px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition shrink-0 flex items-center space-x-1.5 ${
-            filters.content_type === 'judgment'
+            filters.content_type === 'judgment' && filters.court !== 'international'
               ? 'bg-slate-900 text-white dark:bg-emerald-600 dark:text-white shadow-sm'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
           }`}
@@ -175,14 +188,40 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
         <button
           type="button"
           data-testid="filter-pill-news"
-          onClick={() => onFilterChange({ content_type: 'news', page: 1 })}
+          onClick={() =>
+            onFilterChange({
+              content_type: 'news',
+              ...(filters.court === 'international' ? { court: '' } : {}),
+              page: 1,
+            })
+          }
           className={`min-h-[40px] sm:min-h-[44px] px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition shrink-0 flex items-center space-x-1.5 ${
-            filters.content_type === 'news'
+            filters.content_type === 'news' && filters.court !== 'international'
               ? 'bg-slate-900 text-white dark:bg-emerald-600 dark:text-white shadow-sm'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
           }`}
         >
           <span>Legal News</span>
+        </button>
+
+        <button
+          type="button"
+          data-testid="filter-pill-international"
+          onClick={() =>
+            onFilterChange({
+              court: 'international',
+              content_type: undefined,
+              page: 1,
+            })
+          }
+          className={`min-h-[40px] sm:min-h-[44px] px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition shrink-0 flex items-center space-x-1.5 ${
+            filters.court === 'international'
+              ? 'bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-500'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
+          }`}
+        >
+          <span className="text-sm">🌐</span>
+          <span>International Breaking News</span>
         </button>
       </div>
 
@@ -399,7 +438,7 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
           )}
           {filters.court && (
             <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-blue-50 text-blue-800 border border-blue-200 min-h-[32px]">
-              Court: {filters.court}
+              {filters.court === 'international' ? 'International Breaking News' : `Court: ${filters.court}`}
               <button
                 type="button"
                 onClick={() => onFilterChange({ court: '', page: 1 })}

@@ -16,7 +16,13 @@ interface JudgmentCardProps {
   onAddToTopic?: (judgment: Judgment) => void;
 }
 
-export const getCourtLevelBadge = (level: number) => {
+export const getCourtLevelBadge = (level: number, courtCode?: string) => {
+  if (courtCode === 'international' || level === 4) {
+    return {
+      label: 'International',
+      badgeClass: 'bg-indigo-100 text-indigo-900 border border-indigo-300 font-semibold',
+    };
+  }
   switch (level) {
     case 1:
       return {
@@ -37,7 +43,14 @@ export const getCourtLevelBadge = (level: number) => {
   }
 };
 
-export const getContentTypeBadge = (contentType?: string) => {
+export const getContentTypeBadge = (contentType?: string, courtCode?: string) => {
+  if (courtCode === 'international') {
+    return {
+      label: 'WORLD NEWS',
+      badgeClass:
+        'inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800',
+    };
+  }
   switch (contentType) {
     case 'judgment':
       return {
@@ -59,6 +72,7 @@ export const getContentTypeBadge = (contentType?: string) => {
 
 export const getCategoryColor = (category: string) => {
   const normalized = category.toLowerCase();
+  if (normalized.includes('internat')) return 'bg-indigo-50 text-indigo-700 border-indigo-200';
   if (normalized.includes('crim')) return 'bg-rose-50 text-rose-700 border-rose-200';
   if (normalized.includes('const')) return 'bg-amber-50 text-amber-700 border-amber-200';
   if (normalized.includes('corp') || normalized.includes('tax'))
@@ -91,8 +105,8 @@ export const JudgmentCard = React.memo<JudgmentCardProps>(({
   onSelectJudgment,
   onAddToTopic,
 }) => {
-  const courtInfo = getCourtLevelBadge(judgment.court_level);
-  const contentTypeBadge = getContentTypeBadge(judgment.content_type);
+  const courtInfo = getCourtLevelBadge(judgment.court_level, judgment.court_code);
+  const contentTypeBadge = getContentTypeBadge(judgment.content_type, judgment.court_code);
   const categoryStyle = getCategoryColor(judgment.subject_category);
   const searchItem = judgment as SearchResultItem;
   const isSearchRanked =
