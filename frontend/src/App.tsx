@@ -32,6 +32,7 @@ import { Footer } from './components/Footer';
 import {
   updateSEOMetadata,
   buildJudgmentSchema,
+  buildBreadcrumbSchema,
   SITE_ORIGIN,
 } from './utils/seo';
 
@@ -560,30 +561,65 @@ export const App: React.FC = () => {
         canonicalUrl: `${SITE_ORIGIN}/?judgment=${encodeURIComponent(selectedJudgment.id)}`,
         ogType: 'article',
         keywords: selectedJudgment.tags,
-        schema: buildJudgmentSchema(
-          selectedJudgment,
-          `${SITE_ORIGIN}/?judgment=${encodeURIComponent(selectedJudgment.id)}`
-        ),
+        schema: [
+          buildJudgmentSchema(
+            selectedJudgment,
+            `${SITE_ORIGIN}/?judgment=${encodeURIComponent(selectedJudgment.id)}`
+          ),
+          buildBreadcrumbSchema([
+            { name: 'Home', url: `${SITE_ORIGIN}/` },
+            {
+              name: selectedJudgment.court_name || 'Supreme Court of India',
+              url: `${SITE_ORIGIN}/?court=${encodeURIComponent(selectedJudgment.court_code || 'sc')}`,
+            },
+            {
+              name: selectedJudgment.short_title || selectedJudgment.title,
+              url: `${SITE_ORIGIN}/?judgment=${encodeURIComponent(selectedJudgment.id)}`,
+            },
+          ]),
+        ],
       });
     } else {
       let pageTitle = '';
       let pageDesc = '';
+      const breadcrumbs = [{ name: 'Home', url: `${SITE_ORIGIN}/` }];
 
       if (filters.q.trim()) {
         pageTitle = `"${filters.q.trim()}" - Indian Legal Search & Precedents`;
         pageDesc = `Explore judicial precedents, legal judgments, and case citations matching "${filters.q.trim()}" across Indian courts.`;
+        breadcrumbs.push({
+          name: `Search: "${filters.q.trim()}"`,
+          url: `${SITE_ORIGIN}/?q=${encodeURIComponent(filters.q.trim())}`,
+        });
       } else if (filters.court) {
         if (filters.court === 'international') {
           pageTitle = 'Latest International Breaking News & World Headlines | India Legal News';
           pageDesc = 'Live breaking international news, global headlines, and geopolitical updates from around the world.';
+          breadcrumbs.push({
+            name: 'International Breaking News',
+            url: `${SITE_ORIGIN}/?court=international`,
+          });
         } else {
           const courtName = courts.find((c) => c.code === filters.court)?.name || 'High Court';
           pageTitle = `${courtName} Recent Judgments & Legal Orders`;
           pageDesc = `Latest verified court orders, judgments, and legal rulings from ${courtName}.`;
+          breadcrumbs.push({
+            name: courtName,
+            url: `${SITE_ORIGIN}/?court=${encodeURIComponent(filters.court)}`,
+          });
         }
       } else if (filters.category) {
         pageTitle = `${filters.category} Law Judgments & Case Laws`;
         pageDesc = `Comprehensive database of ${filters.category} law decisions, statutory citations, and court orders in India.`;
+        breadcrumbs.push({
+          name: `${filters.category} Law`,
+          url: `${SITE_ORIGIN}/?category=${encodeURIComponent(filters.category)}`,
+        });
+      } else if (filters.content_type) {
+        breadcrumbs.push({
+          name: filters.content_type === 'judgment' ? 'Judgments & Orders' : 'Legal News',
+          url: `${SITE_ORIGIN}/?type=${encodeURIComponent(filters.content_type)}`,
+        });
       }
 
       const currentUrl = typeof window !== 'undefined' ? window.location.href : `${SITE_ORIGIN}/`;
@@ -592,6 +628,20 @@ export const App: React.FC = () => {
         description: pageDesc || undefined,
         canonicalUrl: currentUrl,
         ogType: 'website',
+        schema: [
+          {
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: 'India Legal News Aggregator',
+            url: `${SITE_ORIGIN}/`,
+            potentialAction: {
+              '@type': 'SearchAction',
+              target: `${SITE_ORIGIN}/?q={search_term_string}`,
+              'query-input': 'required name=search_term_string',
+            },
+          },
+          buildBreadcrumbSchema(breadcrumbs),
+        ],
       });
     }
   }, [isReaderOpen, selectedJudgment, filters.q, filters.court, filters.category, courts]);

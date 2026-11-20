@@ -83,18 +83,28 @@ function updateJsonLd(schema?: Record<string, unknown> | Array<Record<string, un
   const SCRIPT_ID = 'seo-structured-data';
   let scriptEl = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
 
-  const payload = schema || {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'India Legal News Aggregator',
-    url: `${SITE_ORIGIN}/`,
-    description: DEFAULT_SITE_DESCRIPTION,
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: `${SITE_ORIGIN}/?q={search_term_string}`,
-      'query-input': 'required name=search_term_string',
-    },
-  };
+  let payload: Record<string, unknown>;
+  if (Array.isArray(schema)) {
+    payload = {
+      '@context': 'https://schema.org',
+      '@graph': schema,
+    };
+  } else if (schema) {
+    payload = schema;
+  } else {
+    payload = {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'India Legal News Aggregator',
+      url: `${SITE_ORIGIN}/`,
+      description: DEFAULT_SITE_DESCRIPTION,
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: `${SITE_ORIGIN}/?q={search_term_string}`,
+        'query-input': 'required name=search_term_string',
+      },
+    };
+  }
 
   if (!scriptEl) {
     scriptEl = document.createElement('script');
