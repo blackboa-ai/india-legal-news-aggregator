@@ -1,0 +1,17 @@
+{
+  "name": "India Legal News Aggregator",
+  "short_name": "India Legal News",
+  "description": "Real-time court judgments, legal news, and hybrid search across Supreme Court of India, High Courts, and Tribunals.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["news", "legal", "education"]
+}

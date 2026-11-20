@@ -29,6 +29,11 @@ import { AuthModal } from './components/AuthModal';
 import { BookmarksAndAlertsModal } from './components/BookmarksAndAlertsModal';
 import { FeedbackModal, FloatingFeedbackButton } from './components/FeedbackModal';
 import { Footer } from './components/Footer';
+import {
+  updateSEOMetadata,
+  buildJudgmentSchema,
+  SITE_ORIGIN,
+} from './utils/seo';
 
 const PAGE_SIZE = 25;
 const FEED_CACHE_KEY = 'india_legal_cached_feed_v2_1';
@@ -72,11 +77,8 @@ const formatFriendlyErrorMessage = (err: unknown): string => {
   return 'The backend server may be waking up from sleep (Render free tier spin-up can take ~30-50s). Please wait a few seconds and try again.';
 };
 
-export const App: React.FC = () => {
-  const { isAuthenticated, user } = useAuth();
-
-  // Search & Filter State
-  const [filters, setFilters] = useState<FilterState>({
+function getInitialFiltersFromUrl(): FilterState {
+  const defaultFilters: FilterState = {
     q: '',
     mode: 'hybrid',
     category: '',
@@ -86,7 +88,39 @@ export const App: React.FC = () => {
     date_to: '',
     page: 1,
     limit: PAGE_SIZE,
-  });
+  };
+
+  if (typeof window === 'undefined') return defaultFilters;
+
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('q') || '';
+    const court = params.get('court') || '';
+    const category = params.get('category') || '';
+    const type = params.get('type');
+    const content_type =
+      type === 'judgment' || type === 'news' || type === 'unknown' ? type : undefined;
+    const pageNum = parseInt(params.get('page') || '1', 10);
+    const page = isNaN(pageNum) || pageNum < 1 ? 1 : pageNum;
+
+    return {
+      ...defaultFilters,
+      q,
+      court,
+      category,
+      content_type,
+      page,
+    };
+  } catch {
+    return defaultFilters;
+  }
+}
+
+export const App: React.FC = () => {
+  const { isAuthenticated, user } = useAuth();
+
+  // Search & Filter State hydrated from URL query parameters for SEO & direct links
+  const [filters, setFilters] = useState<FilterState>(() => getInitialFiltersFromUrl());
 
   // Stale-While-Revalidate: Instant 0ms hydration from localStorage
   const cachedFeedRef = useRef(getInitialCachedFeed());
@@ -103,7 +137,7 @@ export const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Debounced search query & AbortController request cancellation
-  const [debouncedQuery, setDebouncedQuery] = useState(filters.q);
+  const [debouncedQuery, setDebouncedQuery] = useState(() => getInitialFiltersFromUrl().q);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -378,15 +412,184 @@ export const App: React.FC = () => {
     setSearchMeta(null);
   };
 
-  // Memoized Reader Open & Precedent Selection Handlers
+  // Memoized Reader Open & Precedent Selection Handlers with clean URL synchronization
   const handleSelectJudgment = useCallback((judgment: Judgment) => {
     setSelectedJudgment(judgment);
     setIsReaderOpen(true);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('judgment', judgment.id);
+      window.history.pushState({ judgmentId: judgment.id }, '', url.pathname + url.search);
+    }
   }, []);
 
   const handleSelectSimilarJudgment = useCallback((similar: Judgment) => {
     setSelectedJudgment(similar);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('judgment', similar.id);
+      window.history.pushState({ judgmentId: similar.id }, '', url.pathname + url.search);
+    }
   }, []);
+
+  const handleCloseReader = useCallback(() => {
+    setIsReaderOpen(false);
+    setSelectedJudgment(null);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('judgment')) {
+        url.searchParams.delete('judgment');
+        window.history.pushState({}, '', url.pathname + (url.search ? url.search : ''));
+      }
+    }
+  }, []);
+
+  // Deep-linking: Load judgment directly from URL (?judgment=<id>) on initial page landing
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const initialJudgmentId = new URLSearchParams(window.location.search).get('judgment');
+    if (!initialJudgmentId) return;
+
+    let isMounted = true;
+    const loadDeepLinkedJudgment = async () => {
+      // 1. Look in cached items
+      const cached = initialCachedFeed?.data?.find((j) => j.id === initialJudgmentId);
+      if (cached && isMounted) {
+        setSelectedJudgment(cached);
+        setIsReaderOpen(true);
+        return;
+      }
+
+      // 2. Fetch from backend API
+      try {
+        const item = await api.judgments.getById(initialJudgmentId);
+        if (item && isMounted) {
+          setSelectedJudgment(item);
+          setIsReaderOpen(true);
+        }
+      } catch (err) {
+        console.warn('Could not load deep-linked judgment:', err);
+      }
+    };
+
+    loadDeepLinkedJudgment();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Support browser Back/Forward navigation smoothly
+  useEffect(() => {
+    const handlePopState = async () => {
+      if (typeof window === 'undefined') return;
+      const params = new URLSearchParams(window.location.search);
+      const jId = params.get('judgment');
+      if (!jId) {
+        setIsReaderOpen(false);
+        setSelectedJudgment(null);
+      } else if (!selectedJudgment || selectedJudgment.id !== jId) {
+        const found = judgments.find((j) => j.id === jId);
+        if (found) {
+          setSelectedJudgment(found);
+          setIsReaderOpen(true);
+        } else {
+          try {
+            const fetched = await api.judgments.getById(jId);
+            if (fetched) {
+              setSelectedJudgment(fetched);
+              setIsReaderOpen(true);
+            }
+          } catch {
+            // Ignore fetch failure
+          }
+        }
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [judgments, selectedJudgment]);
+
+  // Synchronize active filters with browser URL query parameters for shareable/bookmarkable search pages
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+
+    if (debouncedQuery.trim()) {
+      url.searchParams.set('q', debouncedQuery.trim());
+    } else {
+      url.searchParams.delete('q');
+    }
+
+    if (filters.court) {
+      url.searchParams.set('court', filters.court);
+    } else {
+      url.searchParams.delete('court');
+    }
+
+    if (filters.category) {
+      url.searchParams.set('category', filters.category);
+    } else {
+      url.searchParams.delete('category');
+    }
+
+    if (filters.content_type) {
+      url.searchParams.set('type', filters.content_type);
+    } else {
+      url.searchParams.delete('type');
+    }
+
+    if (filters.page > 1) {
+      url.searchParams.set('page', String(filters.page));
+    } else {
+      url.searchParams.delete('page');
+    }
+
+    if (isReaderOpen && selectedJudgment) {
+      url.searchParams.set('judgment', selectedJudgment.id);
+    }
+
+    window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+  }, [debouncedQuery, filters.court, filters.category, filters.content_type, filters.page, isReaderOpen, selectedJudgment]);
+
+  // Synchronize SEO Title, Meta Tags & Schema.org JSON-LD
+  useEffect(() => {
+    if (isReaderOpen && selectedJudgment) {
+      updateSEOMetadata({
+        title: `${selectedJudgment.title} | ${selectedJudgment.court_name || 'Supreme Court of India'}`,
+        description: selectedJudgment.excerpt || selectedJudgment.summary || selectedJudgment.title,
+        canonicalUrl: `${SITE_ORIGIN}/?judgment=${encodeURIComponent(selectedJudgment.id)}`,
+        ogType: 'article',
+        keywords: selectedJudgment.tags,
+        schema: buildJudgmentSchema(
+          selectedJudgment,
+          `${SITE_ORIGIN}/?judgment=${encodeURIComponent(selectedJudgment.id)}`
+        ),
+      });
+    } else {
+      let pageTitle = '';
+      let pageDesc = '';
+
+      if (filters.q.trim()) {
+        pageTitle = `"${filters.q.trim()}" - Indian Legal Search & Precedents`;
+        pageDesc = `Explore judicial precedents, legal judgments, and case citations matching "${filters.q.trim()}" across Indian courts.`;
+      } else if (filters.court) {
+        const courtName = courts.find((c) => c.code === filters.court)?.name || 'High Court';
+        pageTitle = `${courtName} Recent Judgments & Legal Orders`;
+        pageDesc = `Latest verified court orders, judgments, and legal rulings from ${courtName}.`;
+      } else if (filters.category) {
+        pageTitle = `${filters.category} Law Judgments & Case Laws`;
+        pageDesc = `Comprehensive database of ${filters.category} law decisions, statutory citations, and court orders in India.`;
+      }
+
+      const currentUrl = typeof window !== 'undefined' ? window.location.href : `${SITE_ORIGIN}/`;
+      updateSEOMetadata({
+        title: pageTitle || undefined,
+        description: pageDesc || undefined,
+        canonicalUrl: currentUrl,
+        ogType: 'website',
+      });
+    }
+  }, [isReaderOpen, selectedJudgment, filters.q, filters.court, filters.category, courts]);
 
   // Memoized Bookmark Toggle Handler
   const handleToggleBookmark = useCallback(
@@ -678,7 +881,7 @@ export const App: React.FC = () => {
       <JudgmentModal
         judgment={selectedJudgment}
         isOpen={isReaderOpen}
-        onClose={() => setIsReaderOpen(false)}
+        onClose={handleCloseReader}
         isBookmarked={selectedJudgment ? bookmarkedIds.has(selectedJudgment.id) : false}
         onToggleBookmark={handleToggleBookmark}
         onSelectSimilarJudgment={handleSelectSimilarJudgment}

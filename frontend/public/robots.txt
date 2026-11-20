@@ -2,5 +2,16 @@
 User-agent: *
 Allow: /
 
-# Sitemap Location
+User-agent: Googlebot
+Allow: /
+Allow: /?judgment=*
+Allow: /?court=*
+Allow: /?category=*
+Allow: /?type=*
+
+User-agent: Googlebot-News
+Allow: /
+Allow: /?judgment=*
+
+# Sitemap Index
 Sitemap: https://india-legal-news.vercel.app/sitemap.xml

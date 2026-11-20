@@ -100,7 +100,7 @@ export const JudgmentCard = React.memo<JudgmentCardProps>(({
     (searchItem.keyword_rank === 1 || searchItem.semantic_rank === 1 || searchItem.score >= 0.025);
 
   return (
-    <div
+    <article
       role="button"
       tabIndex={0}
       onClick={() => onSelectJudgment(judgment)}
@@ -120,7 +120,7 @@ export const JudgmentCard = React.memo<JudgmentCardProps>(({
     >
       <div>
         {/* Header Metadata Row */}
-        <div className="flex items-center justify-between gap-2 mb-3">
+        <header className="flex items-center justify-between gap-2 mb-3">
           <div className="flex flex-wrap items-center gap-1.5 text-xs min-w-0">
             {/* Content Type Pill Badge */}
             {contentTypeBadge && (
@@ -147,9 +147,12 @@ export const JudgmentCard = React.memo<JudgmentCardProps>(({
             </span>
 
             {/* Date */}
-            <span className="inline-flex items-center text-slate-500 text-[11px] shrink-0">
+            <time
+              dateTime={judgment.judgment_date}
+              className="inline-flex items-center text-slate-500 text-[11px] shrink-0"
+            >
               {formatJudgmentDate(judgment.judgment_date)}
-            </span>
+            </time>
           </div>
 
           {/* Bookmark & Topic Action Buttons */}
@@ -187,11 +190,22 @@ export const JudgmentCard = React.memo<JudgmentCardProps>(({
               />
             </button>
           </div>
-        </div>
+        </header>
 
-        {/* Title (strictly clamped to 2 lines for uniform grid alignment) */}
+        {/* Title (strictly clamped to 2 lines for uniform grid alignment with crawlable anchor) */}
         <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-amber-700 transition mb-2 leading-snug line-clamp-2">
-          {judgment.title}
+          <a
+            href={`/?judgment=${encodeURIComponent(judgment.id)}`}
+            onClick={(e) => {
+              if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) {
+                e.preventDefault();
+                onSelectJudgment(judgment);
+              }
+            }}
+            className="hover:underline focus:outline-none"
+          >
+            {judgment.title}
+          </a>
         </h3>
 
         {/* Short Title if distinct */}
@@ -256,7 +270,7 @@ export const JudgmentCard = React.memo<JudgmentCardProps>(({
           <span>Read Full</span>
         </button>
       </div>
-    </div>
+    </article>
   );
 });
 
