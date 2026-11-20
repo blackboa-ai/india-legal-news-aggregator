@@ -109,6 +109,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
 
   useEffect(() => {
     setFullJudgment(judgment);
+    setActiveTab('judgment');
     if (!judgment?.id || !isOpen) return;
 
     let isMounted = true;
@@ -476,7 +477,10 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
                   {similarJudgments.map((similar) => (
                     <div
                       key={similar.id}
-                      onClick={() => onSelectSimilarJudgment(similar)}
+                      onClick={() => {
+                        setActiveTab('judgment');
+                        onSelectSimilarJudgment(similar);
+                      }}
                       className="p-4 bg-slate-50 hover:bg-amber-50/60 border border-slate-200 hover:border-amber-300 rounded-xl cursor-pointer transition flex items-start justify-between group"
                     >
                       <div className="space-y-1.5 flex-1 pr-4">

@@ -131,6 +131,39 @@ describe('JudgmentModal Component', () => {
     expect(screen.getByText('Related Legal Precedents')).toBeInTheDocument();
   });
 
+  it('resets to judgment tab when judgment prop updates after selecting a similar precedent', () => {
+    const { rerender } = render(
+      <JudgmentModal
+        judgment={mockJudgment}
+        isOpen={true}
+        onClose={vi.fn()}
+        isBookmarked={false}
+        onToggleBookmark={vi.fn()}
+        onSelectSimilarJudgment={vi.fn()}
+      />
+    );
+
+    // Switch to similar precedents tab
+    fireEvent.click(screen.getByText(/Similar Precedents/i));
+    expect(screen.getByText('Related Legal Precedents')).toBeInTheDocument();
+
+    // Rerender with a new selected judgment
+    const newJudgment = { ...mockJudgment, id: 'new-id-123', title: 'New Case Ruling' };
+    rerender(
+      <JudgmentModal
+        judgment={newJudgment}
+        isOpen={true}
+        onClose={vi.fn()}
+        isBookmarked={false}
+        onToggleBookmark={vi.fn()}
+        onSelectSimilarJudgment={vi.fn()}
+      />
+    );
+
+    // Verify it automatically switched back to the full judgment text tab
+    expect(screen.getByText('Full Judgment & News Text')).toBeInTheDocument();
+  });
+
   describe('normalizeReaderText helper', () => {
     it('normalizes single-word and wrapped line breaks into clean paragraphs', () => {
       const rawScraped = 'The\nSupreme\nCourt\nof\nIndia\nheld\nthat personal liberty is inviolable.\n\nSecond paragraph here.';
