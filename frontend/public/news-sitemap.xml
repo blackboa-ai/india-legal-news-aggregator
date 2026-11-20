@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+
+  <!-- Breaking International Headlines -->
+  <url>
+    <loc>https://india-legal-news.vercel.app/?court=international</loc>
+    <news:news>
+      <news:publication>
+        <news:name>India Legal News Aggregator</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2026-11-21T02:00:00Z</news:publication_date>
+      <news:title>Latest International Breaking News &amp; World Headlines</news:title>
+    </news:news>
+  </url>
+
+  <!-- Supreme Court of India Live Feed -->
+  <url>
+    <loc>https://india-legal-news.vercel.app/?court=sc</loc>
+    <news:news>
+      <news:publication>
+        <news:name>India Legal News Aggregator</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2026-11-21T01:30:00Z</news:publication_date>
+      <news:title>Supreme Court of India Recent Judgments, Constitution Bench Orders &amp; Bail Rulings</news:title>
+    </news:news>
+  </url>
+
+  <!-- Legal News & Dispatches Feed -->
+  <url>
+    <loc>https://india-legal-news.vercel.app/?type=news</loc>
+    <news:news>
+      <news:publication>
+        <news:name>India Legal News Aggregator</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2026-11-21T01:00:00Z</news:publication_date>
+      <news:title>Breaking Indian Legal News, Bar Council Updates &amp; Judicial Dispatches</news:title>
+    </news:news>
+  </url>
+
+  <!-- Court Orders & Judgments Feed -->
+  <url>
+    <loc>https://india-legal-news.vercel.app/?type=judgment</loc>
+    <news:news>
+      <news:publication>
+        <news:name>India Legal News Aggregator</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2026-11-21T00:30:00Z</news:publication_date>
+      <news:title>Certified Court Orders, Case Citations &amp; Substantive Legal Precedents</news:title>
+    </news:news>
+  </url>
+
+  <!-- Delhi High Court -->
+  <url>
+    <loc>https://india-legal-news.vercel.app/?court=delhi-hc</loc>
+    <news:news>
+      <news:publication>
+        <news:name>India Legal News Aggregator</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2026-11-20T23:00:00Z</news:publication_date>
+      <news:title>Delhi High Court Daily Orders, Commercial Division &amp; Writ Decisions</news:title>
+    </news:news>
+  </url>
+
+  <!-- Bombay High Court -->
+  <url>
+    <loc>https://india-legal-news.vercel.app/?court=bombay-hc</loc>
+    <news:news>
+      <news:publication>
+        <news:name>India Legal News Aggregator</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2026-11-20T22:30:00Z</news:publication_date>
+      <news:title>Bombay High Court Orders, Anticipatory Bail Rulings &amp; Arbitration Precedents</news:title>
+    </news:news>
+  </url>
+
+  <!-- Criminal Law Hub -->
+  <url>
+    <loc>https://india-legal-news.vercel.app/?category=Criminal</loc>
+    <news:news>
+      <news:publication>
+        <news:name>India Legal News Aggregator</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2026-11-20T22:00:00Z</news:publication_date>
+      <news:title>Criminal Law Precedents under CrPC, BNSS, IPC, BNS, and Bail Jurisprudence</news:title>
+    </news:news>
+  </url>
+
+  <!-- Constitutional Law Hub -->
+  <url>
+    <loc>https://india-legal-news.vercel.app/?category=Constitutional</loc>
+    <news:news>
+      <news:publication>
+        <news:name>India Legal News Aggregator</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2026-11-20T21:30:00Z</news:publication_date>
+      <news:title>Constitutional Law &amp; Fundamental Rights Decisions under Article 21, 32 &amp; 226</news:title>
+    </news:news>
+  </url>
+
+</urlset>

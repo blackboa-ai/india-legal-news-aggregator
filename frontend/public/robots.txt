@@ -36,5 +36,7 @@ Allow: /
 User-agent: Applebot-Extended
 Allow: /
 
-# Sitemap Index
+# Sitemap Indexes for Googlebot & Googlebot-News
 Sitemap: https://india-legal-news.vercel.app/sitemap.xml
+Sitemap: https://india-legal-news.vercel.app/news-sitemap.xml
+Sitemap: https://india-legal-news.vercel.app/rss.xml

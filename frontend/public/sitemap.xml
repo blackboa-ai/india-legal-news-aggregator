@@ -83,8 +83,20 @@
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
+  <url>
+    <loc>https://india-legal-news.vercel.app/?court=international</loc>
+    <lastmod>2026-11-21</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.90</priority>
+  </url>
 
   <!-- Subject Category Law Hubs -->
+  <url>
+    <loc>https://india-legal-news.vercel.app/?category=International</loc>
+    <lastmod>2026-11-21</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.85</priority>
+  </url>
   <url>
     <loc>https://india-legal-news.vercel.app/?category=Criminal</loc>
     <lastmod>2026-11-20</lastmod>

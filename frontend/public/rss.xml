@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>India Legal News Aggregator</title>
+    <link>https://india-legal-news.vercel.app/</link>
+    <description>Real-time legal updates, Supreme Court of India judgments, High Court orders, and breaking world headlines with instant hybrid search.</description>
+    <language>en-in</language>
+    <lastBuildDate>Sat, 21 Nov 2026 02:00:00 +0530</lastBuildDate>
+    <atom:link href="https://india-legal-news.vercel.app/rss.xml" rel="self" type="application/rss+xml"/>
+
+    <item>
+      <title>Latest International Breaking News &amp; World Headlines</title>
+      <link>https://india-legal-news.vercel.app/?court=international</link>
+      <guid isPermaLink="true">https://india-legal-news.vercel.app/?court=international</guid>
+      <pubDate>Sat, 21 Nov 2026 02:00:00 +0530</pubDate>
+      <description>Live international breaking news, global geopolitical reports, and major world headlines aggregated in real time.</description>
+      <category>International</category>
+    </item>
+
+    <item>
+      <title>Supreme Court of India Recent Judgments &amp; Orders</title>
+      <link>https://india-legal-news.vercel.app/?court=sc</link>
+      <guid isPermaLink="true">https://india-legal-news.vercel.app/?court=sc</guid>
+      <pubDate>Sat, 21 Nov 2026 01:30:00 +0530</pubDate>
+      <description>Latest authoritative rulings, Constitution Bench judgments, and judicial orders from the Supreme Court of India.</description>
+      <category>Constitutional</category>
+    </item>
+
+    <item>
+      <title>High Court Legal Orders &amp; Precedents</title>
+      <link>https://india-legal-news.vercel.app/?type=judgment</link>
+      <guid isPermaLink="true">https://india-legal-news.vercel.app/?type=judgment</guid>
+      <pubDate>Sat, 21 Nov 2026 01:00:00 +0530</pubDate>
+      <description>Certified judicial orders, bail jurisprudence under CrPC and BNSS, and civil declarations across state High Courts.</description>
+      <category>Criminal</category>
+    </item>
+
+    <item>
+      <title>Breaking Legal Journalism &amp; Dispatches</title>
+      <link>https://india-legal-news.vercel.app/?type=news</link>
+      <guid isPermaLink="true">https://india-legal-news.vercel.app/?type=news</guid>
+      <pubDate>Sat, 21 Nov 2026 00:30:00 +0530</pubDate>
+      <description>Live reporting on court proceedings, bar council updates, and legal community dispatches from LiveLaw and Bar &amp; Bench.</description>
+      <category>Administrative</category>
+    </item>
+  </channel>
+</rss>

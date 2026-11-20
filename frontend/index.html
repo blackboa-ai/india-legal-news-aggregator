@@ -16,6 +16,7 @@
     <meta name="theme-color" content="#0f172a" />
     <link rel="canonical" href="https://india-legal-news.vercel.app/" />
     <link rel="manifest" href="/manifest.json" />
+    <link rel="alternate" type="application/rss+xml" title="India Legal News &amp; Updates Feed" href="https://india-legal-news.vercel.app/rss.xml" />
 
     <!-- Open Graph / Facebook / LinkedIn -->
     <meta property="og:type" content="website" />
@@ -39,14 +40,35 @@
     <script id="seo-structured-data" type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "India Legal News Aggregator",
-      "url": "https://india-legal-news.vercel.app/",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://india-legal-news.vercel.app/?q={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://india-legal-news.vercel.app/#website",
+          "name": "India Legal News Aggregator",
+          "url": "https://india-legal-news.vercel.app/",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://india-legal-news.vercel.app/?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "NewsMediaOrganization",
+          "@id": "https://india-legal-news.vercel.app/#organization",
+          "name": "India Legal News Aggregator",
+          "url": "https://india-legal-news.vercel.app/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://india-legal-news.vercel.app/og-image.png",
+            "width": 1200,
+            "height": 630
+          },
+          "publishingPrinciples": "https://india-legal-news.vercel.app/",
+          "sameAs": [
+            "https://github.com/blackboa-ai/india-legal-news-aggregator"
+          ]
+        }
+      ]
     }
     </script>
 
