@@ -113,9 +113,11 @@ export function buildJudgmentSchema(
   judgment: {
     id: string;
     title: string;
+    short_title?: string | null;
     excerpt?: string;
     summary?: string;
     court_name?: string;
+    court_code?: string;
     judgment_date?: string;
     updated_at?: string;
     subject_category?: string;
@@ -125,6 +127,9 @@ export function buildJudgmentSchema(
   canonicalUrl: string
 ): Record<string, unknown> {
   const isNews = judgment.content_type === 'news';
+  const courtName = judgment.court_name || 'Supreme Court of India';
+  const caseTitle = judgment.short_title || judgment.title;
+  const holdingText = judgment.excerpt || judgment.summary || judgment.title;
 
   return {
     '@context': 'https://schema.org',
@@ -134,12 +139,12 @@ export function buildJudgmentSchema(
       '@id': canonicalUrl,
     },
     headline: judgment.title,
-    description: judgment.excerpt || judgment.summary || judgment.title,
+    description: holdingText,
     datePublished: judgment.judgment_date || new Date().toISOString().split('T')[0],
     dateModified: judgment.updated_at || judgment.judgment_date || new Date().toISOString(),
     author: {
       '@type': 'Organization',
-      name: judgment.court_name || 'Supreme Court of India',
+      name: courtName,
     },
     publisher: {
       '@type': 'NewsMediaOrganization',
@@ -153,6 +158,29 @@ export function buildJudgmentSchema(
     articleSection: judgment.subject_category || 'Legal News',
     keywords: (judgment.tags || []).join(', ') || judgment.subject_category || 'Indian Law',
     image: DEFAULT_OG_IMAGE,
+    // Google AI Overviews & Perplexity Direct Answer Extracts (FAQ / Q&A Holding Schema)
+    hasPart: [
+      {
+        '@type': 'Question',
+        name: `What did the ${courtName} rule in ${caseTitle}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: holdingText,
+        },
+      },
+      ...(judgment.tags && judgment.tags.length > 0
+        ? [
+            {
+              '@type': 'Question',
+              name: `Which statutory provisions and legal sections are involved in ${caseTitle}?`,
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: `Key provisions and statutory citations applied: ${judgment.tags.join(', ')}.`,
+              },
+            },
+          ]
+        : []),
+    ],
   };
 }
 

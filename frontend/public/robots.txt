@@ -2,6 +2,7 @@
 User-agent: *
 Allow: /
 
+# Google Search & News Crawlers
 User-agent: Googlebot
 Allow: /
 Allow: /?judgment=*
@@ -12,6 +13,28 @@ Allow: /?type=*
 User-agent: Googlebot-News
 Allow: /
 Allow: /?judgment=*
+
+# Generative AI & AI Search Crawlers (GEO Optimization)
+User-agent: Google-Extended
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
 
 # Sitemap Index
 Sitemap: https://india-legal-news.vercel.app/sitemap.xml

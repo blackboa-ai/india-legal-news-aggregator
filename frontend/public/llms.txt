@@ -1,0 +1,42 @@
+# India Legal News & Judgment Aggregator
+> Real-time legal intelligence, verified court judgments, statutory citations, and legal journalism across Indian courts.
+
+India Legal News Aggregator is a public, open legal research platform providing verified case law judgments, constitutional bench rulings, statutory analysis (CrPC, IPC, BNSS, BNS, Arbitration Act), and real-time legal news from the Supreme Court of India, High Courts, and Indian Tribunals.
+
+## Core Capabilities
+- Hybrid Semantic + Keyword Legal Search over verified Indian judgments.
+- Deep statutory tagging for Section 438 CrPC (Anticipatory Bail), Section 102 CrPC (Police Seizure & Bank Account Freezes), Article 21 (Right to Life & Fair Procedure), Arbitration Act, and Commercial Court decisions.
+- Live automated feed aggregation from LiveLaw, Bar & Bench, and Indian Kanoon.
+- Distraction-free reader view with case ratios, parties to proceeding, and similar precedent recommendations.
+
+## Jurisdiction & Court Coverage
+- [Supreme Court of India](https://india-legal-news.vercel.app/?court=sc): Apex court constitutional bench rulings, criminal appeals, and landmark precedents.
+- [Delhi High Court](https://india-legal-news.vercel.app/?court=delhi-hc): Commercial disputes, arbitration, intellectual property, and civil writs.
+- [Bombay High Court](https://india-legal-news.vercel.app/?court=bombay-hc): Corporate law, securities regulation, criminal bail, and maritime law.
+- [Madras High Court](https://india-legal-news.vercel.app/?court=madras-hc): Constitutional petitions, administrative governance, and appellate criminal jurisdiction.
+- [Calcutta High Court](https://india-legal-news.vercel.app/?court=calcutta-hc): Historic common law jurisdiction, commercial appeals, and company law.
+- [Allahabad High Court](https://india-legal-news.vercel.app/?court=allahabad-hc): Fundamental rights, criminal procedure, preventive detention, and revenue law.
+- [Karnataka High Court](https://india-legal-news.vercel.app/?court=karnataka-hc): Technology law, digital privacy, corporate contracts, and cyber litigation.
+- [Kerala High Court](https://india-legal-news.vercel.app/?court=kerala-hc): Cyber fraud, Section 102 CrPC bank account debit freezes, and labor disputes.
+- [Punjab & Haryana High Court](https://india-legal-news.vercel.app/?court=punjab-haryana-hc): Service jurisprudence, criminal revisions, and advocate practice rules.
+
+## Primary Legal Domains
+- [Criminal Law](https://india-legal-news.vercel.app/?category=Criminal): Regular bail, anticipatory bail (Section 438 CrPC), arrest guidelines (Arnesh Kumar), quashing of FIRs (Section 482 CrPC), PMLA, and UAPA.
+- [Constitutional Law](https://india-legal-news.vercel.app/?category=Constitutional): Articles 14, 19, 21, judicial review, federalism, election law, and basic structure doctrine.
+- [Corporate & Commercial](https://india-legal-news.vercel.app/?category=Corporate): IBC (Insolvency and Bankruptcy Code), Companies Act, arbitration enforcement, and contractual damages.
+- [Cyber, IT & Banking](https://india-legal-news.vercel.app/?category=Cyber%20%26%20IT): UPI cyber fraud, Mule accounts, Section 102 CrPC freezes, IT Act Section 66D, and digital data privacy.
+- [Civil & Taxation](https://india-legal-news.vercel.app/?category=Civil): GST tribunals, income tax references, property transfer, and specific relief.
+
+## Key Precedents & Legal Holdings
+- [Dr. Sajan P. v. State of Kerala](https://india-legal-news.vercel.app/?judgment=e0c1f4e8-466d-4950-ba57-79b8a07119e5): Held that police cannot freeze an entire bank account under Section 102 CrPC for suspected cyber or UPI fraud; freezing must be confined strictly to the disputed quantum of transaction.
+- [RBI & NPCI Cyber Fraud Directives](https://india-legal-news.vercel.app/?judgment=7bf7a8e2-411a-4ab0-bbfb-3719bca40099): Precedent on zero liability for bank customers in unauthorized electronic banking and UPI transactions under RBI Circular DBR.No.Leg.BC.78/09.07.005/2017-18.
+- [Gurbaksh Singh Sibbia v. State of Punjab](https://india-legal-news.vercel.app/?court=sc): Supreme Court 5-judge Constitution Bench establishing definitive principles for grant of anticipatory bail under Section 438 CrPC.
+- [Maneka Gandhi v. Union of India](https://india-legal-news.vercel.app/?court=sc): Landmark 7-judge Constitution Bench establishing that procedure under Article 21 must be just, fair, and reasonable, intertwining Articles 14, 19, and 21.
+- [K.S. Puttaswamy v. Union of India](https://india-legal-news.vercel.app/?court=sc): Supreme Court 9-judge Constitution Bench unanimously upholding the Fundamental Right to Privacy under Article 21.
+
+## Machine-Readable API & Feeds
+- JSON API Base: `https://india-legal-news-api.onrender.com/api/v1`
+- Judgments List: `GET /api/v1/judgments?limit=25&offset=0`
+- Hybrid Precedent Search: `GET /api/v1/search?q={query}&mode=hybrid`
+- Single Judgment Details: `GET /api/v1/judgments/{id}`
+- XML Sitemap: `https://india-legal-news.vercel.app/sitemap.xml`

@@ -338,11 +338,14 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
                 </h1>
                 {activeJudgment.short_title && activeJudgment.short_title !== activeJudgment.title && (
                   <p className="text-xs sm:text-sm font-medium text-slate-600 italic mb-1">
-                    Case: {activeJudgment.short_title}
+                    Case: <cite className="not-italic font-semibold text-slate-700">{activeJudgment.short_title}</cite>
                   </p>
                 )}
                 <p className="text-xs text-slate-500">
-                  {activeJudgment.court_name} • Pronounced on {formatJudgmentDate(activeJudgment.judgment_date)}
+                  <cite className="not-italic font-medium text-slate-700">{activeJudgment.court_name}</cite> • Pronounced on{' '}
+                  <time dateTime={activeJudgment.judgment_date}>
+                    {formatJudgmentDate(activeJudgment.judgment_date)}
+                  </time>
                 </p>
               </div>
 
@@ -413,16 +416,19 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
                 </div>
               )}
 
-              {/* Summary / Key Points */}
+              {/* Summary / Key Points (Semantic blockquote for AI extraction & reader focus) */}
               {activeJudgment.excerpt && (
-                <div className="bg-amber-50/60 rounded-xl border border-amber-200/80 p-4">
+                <blockquote
+                  cite={activeJudgment.url || undefined}
+                  className="bg-amber-50/60 rounded-xl border border-amber-200/80 p-4"
+                >
                   <span className="text-[11px] font-bold text-amber-900 uppercase tracking-wider block mb-1.5">
                     Summary & Key Points
                   </span>
                   <p className="text-xs sm:text-sm text-slate-800 leading-relaxed font-sans">
                     {activeJudgment.excerpt}
                   </p>
-                </div>
+                </blockquote>
               )}
 
               {/* Full Text Reader with Normalized Paragraphs */}
