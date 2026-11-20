@@ -382,6 +382,189 @@ class RSSIngestor:
 
         return items
 
+    @staticmethod
+    def extract_article_text_from_html(html_text: str) -> tuple[str | None, str | None]:
+        """
+        Extracts clean summary excerpt and full body narrative text from news article HTML markup.
+        Compatible with LiveLaw, Bar & Bench, Indian Kanoon, and general legal portals.
+        """
+        if not html_text:
+            return None, None
+
+        try:
+            soup = BeautifulSoup(html_text, "html.parser")
+
+            # 1. Extract meta description for crisp summary excerpt
+            meta_desc = (
+                soup.find("meta", attrs={"name": "description"})
+                or soup.find("meta", attrs={"property": "og:description"})
+                or soup.find("meta", attrs={"name": "twitter:description"})
+            )
+            raw_desc = meta_desc.get("content", "").strip() if meta_desc else ""
+            excerpt = sanitize_html_text(raw_desc) if raw_desc else None
+
+            # 2. Extract article container
+            article_div = soup.find(
+                "div",
+                class_=lambda c: c and any(
+                    k in str(c).lower()
+                    for k in [
+                        "story-content",
+                        "story-detail",
+                        "story_detail",
+                        "content-detail",
+                        "article-body",
+                        "post-content",
+                        "doc_content",
+                        "judgments",
+                    ]
+                ),
+            ) or soup.find("article")
+
+            paragraphs: list[str] = []
+            if article_div:
+                for tag in article_div(["script", "style", "noscript", "iframe", "form", "button"]):
+                    tag.decompose()
+                for p in article_div.find_all("p"):
+                    text = p.get_text().strip()
+                    if len(text) > 30 and not any(
+                        skip in text.lower()
+                        for skip in [
+                            "share this",
+                            "listen to this article",
+                            "click here to download",
+                            "also read",
+                            "read full story",
+                            "subscribe to livelaw",
+                        ]
+                    ):
+                        cleaned = sanitize_html_text(text)
+                        if cleaned and len(cleaned) > 20:
+                            paragraphs.append(cleaned)
+
+            full_text = "\n\n".join(paragraphs) if paragraphs else None
+
+            # Fallback if meta description wasn't found but we got paragraphs
+            if not excerpt and paragraphs:
+                excerpt = paragraphs[0]
+
+            return excerpt, full_text
+        except Exception as e:
+            logger.debug("Failed parsing article HTML: %s", e)
+            return None, None
+
+    async def enrich_item_content(
+        self,
+        item: ParsedJudgmentItem,
+        client: httpx.AsyncClient | None = None,
+    ) -> bool:
+        """
+        Fetches the destination article web page to extract real narrative text and summary
+        when RSS feed provides only a headline or empty description (e.g. LiveLaw google_feeds).
+        """
+        # If item already has substantive text, skip enrichment
+        if item.full_text and len(item.full_text.strip()) > 200 and item.excerpt != item.title:
+            return False
+
+        if not item.url or not item.url.startswith("http"):
+            return False
+
+        should_close = False
+        if client is None:
+            client = httpx.AsyncClient(timeout=8.0, follow_redirects=True)
+            should_close = True
+
+        try:
+            headers = {"User-Agent": DEFAULT_USER_AGENT}
+            resp = await client.get(item.url, headers=headers)
+            if resp.status_code == 200:
+                html_text = resp.text
+                extracted_excerpt, extracted_full_text = self.extract_article_text_from_html(html_text)
+                if extracted_full_text:
+                    item.full_text = extracted_full_text
+                if extracted_excerpt and extracted_excerpt != item.title:
+                    item.excerpt = extracted_excerpt
+                elif extracted_full_text and item.excerpt == item.title:
+                    paragraphs = [p.strip() for p in extracted_full_text.split("\n\n") if p.strip()]
+                    item.excerpt = paragraphs[0] if paragraphs else extracted_full_text[:350]
+
+                # Re-run classifier now that we have rich narrative text
+                if extracted_full_text or extracted_excerpt:
+                    classification = LegalClassifier.classify(
+                        title=item.title,
+                        text=item.excerpt or item.title,
+                        source=item.source,
+                        default_court=CourtInfo(
+                            court_code=item.court_code,
+                            court_name=item.court_name,
+                            court_level=item.court_level,
+                        ),
+                        url=item.url,
+                    )
+                    if classification.court:
+                        item.court_code = classification.court.court_code
+                        item.court_name = classification.court.court_name
+                        item.court_level = classification.court.court_level
+                    if classification.subject_category:
+                        item.subject_category = classification.subject_category
+                    if classification.statute_tags:
+                        item.tags = list(dict.fromkeys((item.tags or []) + classification.statute_tags))
+                    if classification.parties:
+                        item.parties = classification.parties
+
+                    c_type, c_conf = classify_content_type(
+                        title=item.title,
+                        text=item.full_text or item.excerpt,
+                        source=item.source,
+                        url=item.url,
+                    )
+                    item.content_type = c_type
+                    item.content_type_confidence = c_conf
+                    return True
+        except Exception as err:
+            logger.debug("Failed enriching content for %s: %s", item.url, err)
+        finally:
+            if should_close:
+                await client.aclose()
+
+        return False
+
+    async def enrich_items_content(
+        self,
+        items: list[ParsedJudgmentItem],
+        client: httpx.AsyncClient | None = None,
+        max_enrich: int = 35,
+    ) -> int:
+        """
+        Concurrently enriches items missing full text, limited by concurrency semaphore.
+        """
+        candidates = [
+            item for item in items
+            if not item.full_text or len(item.full_text.strip()) < 150 or item.excerpt == item.title
+        ][:max_enrich]
+
+        if not candidates:
+            return 0
+
+        semaphore = asyncio.Semaphore(5)
+        should_close = False
+        if client is None:
+            client = httpx.AsyncClient(timeout=8.0, follow_redirects=True)
+            should_close = True
+
+        async def _enrich_with_sem(item: ParsedJudgmentItem) -> bool:
+            async with semaphore:
+                return await self.enrich_item_content(item, client=client)
+
+        try:
+            results = await asyncio.gather(*[_enrich_with_sem(it) for it in candidates], return_exceptions=True)
+            enriched_count = sum(1 for r in results if r is True)
+            logger.info("Enriched %d / %d legal items with full article text", enriched_count, len(candidates))
+            return enriched_count
+        finally:
+            if should_close:
+                await client.aclose()
+
     async def ingest_source(
         self,
         source_config: FeedSourceConfig,
@@ -397,6 +580,13 @@ class RSSIngestor:
         xml_content = await self.fetch_feed_xml(source_config.url, client=client)
         items = self.parse_feed_content(xml_content, source_config)
         logger.info("Parsed %d legal items from source: %s", len(items), source_config.source_id)
+
+        # Enrich items missing full text with live article content
+        try:
+            await self.enrich_items_content(items, client=client)
+        except Exception as enrich_err:
+            logger.debug("Enrichment skipped due to error: %s", enrich_err)
+
         return items
 
     async def ingest_all(
