@@ -329,6 +329,8 @@ class IngestionWorker:
             nonlocal total_fetched, total_inserted, total_duplicates, failed_sources
 
             for feed in self.feeds:
+                if not getattr(feed, "enabled", True):
+                    continue
                 if self._stop_event.is_set():
                     logger.info("Ingestion cycle interrupted by graceful shutdown request")
                     break

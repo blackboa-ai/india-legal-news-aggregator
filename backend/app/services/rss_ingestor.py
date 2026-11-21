@@ -60,23 +60,64 @@ class FeedSourceConfig:
     enabled: bool = True
 
 
-# Pre-configured legal sources covering Supreme Court, Kanoon, LiveLaw, Bar & Bench
+# Pre-configured legal sources covering Supreme Court, Kanoon High Courts, LiveLaw, Bar & Bench
 DEFAULT_LEGAL_FEEDS: list[FeedSourceConfig] = [
     FeedSourceConfig(
         source_id="sci",
         name="Supreme Court of India Judgments",
-        url="https://main.sci.gov.in/rss/judgments.xml",
+        url="https://sci.gov.in/rss/judgments.xml",
+        default_court_code="sc",
+        default_court_name="Supreme Court of India",
+        default_court_level=1,
+        enabled=False,  # SCI official site decommissioned XML feeds in WordPress redesign
+    ),
+    FeedSourceConfig(
+        source_id="indiankanoon",
+        name="Supreme Court of India (Kanoon)",
+        url="https://indiankanoon.org/feeds/latest/supremecourt/",
         default_court_code="sc",
         default_court_name="Supreme Court of India",
         default_court_level=1,
     ),
     FeedSourceConfig(
         source_id="indiankanoon",
-        name="Indian Kanoon Recent Judgments",
-        url="https://indiankanoon.org/feeds/latest/supremecourt/",
-        default_court_code="sc",
-        default_court_name="Supreme Court of India",
-        default_court_level=1,
+        name="Delhi High Court (Kanoon)",
+        url="https://indiankanoon.org/feeds/latest/delhi/",
+        default_court_code="delhi-hc",
+        default_court_name="High Court of Delhi",
+        default_court_level=2,
+    ),
+    FeedSourceConfig(
+        source_id="indiankanoon",
+        name="Bombay High Court (Kanoon)",
+        url="https://indiankanoon.org/feeds/latest/bombay/",
+        default_court_code="bombay-hc",
+        default_court_name="High Court of Bombay",
+        default_court_level=2,
+    ),
+    FeedSourceConfig(
+        source_id="indiankanoon",
+        name="Allahabad High Court (Kanoon)",
+        url="https://indiankanoon.org/feeds/latest/allahabad/",
+        default_court_code="allahabad-hc",
+        default_court_name="High Court of Allahabad",
+        default_court_level=2,
+    ),
+    FeedSourceConfig(
+        source_id="indiankanoon",
+        name="Calcutta High Court (Kanoon)",
+        url="https://indiankanoon.org/feeds/latest/kolkata/",
+        default_court_code="calcutta-hc",
+        default_court_name="High Court of Calcutta",
+        default_court_level=2,
+    ),
+    FeedSourceConfig(
+        source_id="indiankanoon",
+        name="Madras High Court (Kanoon)",
+        url="https://indiankanoon.org/feeds/latest/chennai/",
+        default_court_code="madras-hc",
+        default_court_name="High Court of Madras",
+        default_court_level=2,
     ),
     FeedSourceConfig(
         source_id="livelaw",

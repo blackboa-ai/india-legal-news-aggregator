@@ -100,6 +100,18 @@ export const formatJudgmentDate = (dateStr: string) => {
   }
 };
 
+export const getSourceLabel = (source?: string): string => {
+  if (!source) return 'Court Record';
+  const s = source.toLowerCase();
+  if (s === 'sci') return 'Supreme Court of India';
+  if (s === 'indiankanoon') return 'Court Order (Indian Kanoon)';
+  if (s === 'livelaw') return 'LiveLaw';
+  if (s === 'barandbench') return 'Bar & Bench';
+  if (s === 'bbc') return 'BBC World News';
+  if (s === 'delhi-hc') return 'Delhi High Court';
+  return source;
+};
+
 export const JudgmentCard = React.memo<JudgmentCardProps>(({
   judgment,
   isBookmarked,
@@ -262,8 +274,8 @@ export const JudgmentCard = React.memo<JudgmentCardProps>(({
       {/* Footer Row: Source Attribution & Reader Trigger */}
       <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 text-xs mt-3">
         <div className="flex items-center space-x-2 text-slate-400 min-w-0">
-          <span className="capitalize font-medium text-slate-500 truncate">
-            Source: {judgment.source || 'Indian Kanoon'}
+          <span className="font-medium text-slate-500 truncate" title={judgment.source}>
+            Source: {getSourceLabel(judgment.source)}
           </span>
           {isSearchRanked && (
             <span
