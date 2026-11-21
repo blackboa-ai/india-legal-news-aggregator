@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Lock, Mail, User as UserIcon, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -15,6 +15,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 }) => {
   const { login, register, loginWithGoogle, error, clearError } = useAuth();
   const [tab, setTab] = useState<'login' | 'register'>(defaultTab);
+
+  useEffect(() => {
+    setTab(defaultTab);
+  }, [defaultTab]);
 
   // Form states
   const [email, setEmail] = useState('');
@@ -65,20 +69,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   const handleGoogleMockSSO = async () => {
-    // In dev / test / demo environments, simulate Google ID token payload or prompt
-    const mockToken = `mock-google-id-token-${Date.now()}`;
-    setIsSubmitting(true);
-    try {
-      await loginWithGoogle(mockToken);
-      onClose();
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : 'Unable to sign in with Google. Please try again.';
-      setLocalError(msg);
-    } finally {
-      setIsSubmitting(false);
+    if (import.meta.env.DEV) {
+      // In dev / test / demo environments, simulate Google ID token payload or prompt
+      const mockToken = `mock-google-id-token-${Date.now()}`;
+      setIsSubmitting(true);
+      try {
+        await loginWithGoogle(mockToken);
+        onClose();
+      } catch (err: unknown) {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : 'Unable to sign in with Google. Please try again.';
+        setLocalError(msg);
+      } finally {
+        setIsSubmitting(false);
+      }
+    } else {
+      throw new Error("Mock auth used in production");
     }
   };
 

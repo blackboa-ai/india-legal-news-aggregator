@@ -37,7 +37,11 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Logo & Brand Title */}
           <div
             className="flex items-center space-x-2 sm:space-x-3 cursor-pointer min-w-0"
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
           >
             <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0">
               <Scale className="h-5 w-5 sm:h-6 sm:w-6" />

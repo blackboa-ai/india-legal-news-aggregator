@@ -21,11 +21,11 @@ export function updateSEOMetadata(config: SEOConfig = {}): void {
   if (typeof document === 'undefined') return;
 
   const rawTitle = config.title;
-  const fullTitle = rawTitle
-    ? rawTitle.includes('India Legal News')
-      ? rawTitle
-      : `${rawTitle} | India Legal News`
-    : DEFAULT_SITE_TITLE;
+  let fullTitle = DEFAULT_SITE_TITLE;
+  if (rawTitle) {
+    const cleaned = rawTitle.replace(/(?:\s*\|\s*India Legal News)+$/gi, '').trim();
+    fullTitle = cleaned ? `${cleaned} | India Legal News` : DEFAULT_SITE_TITLE;
+  }
 
   const description = config.description || DEFAULT_SITE_DESCRIPTION;
   const canonicalUrl = config.canonicalUrl || `${SITE_ORIGIN}/`;
@@ -141,6 +141,12 @@ export function buildJudgmentSchema(
   const caseTitle = judgment.short_title || judgment.title;
   const holdingText = judgment.excerpt || judgment.summary || judgment.title;
 
+  const formatToIsoString = (val?: string): string => {
+    if (!val) return new Date().toISOString();
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+  };
+
   return {
     '@context': 'https://schema.org',
     '@type': isNews ? 'NewsArticle' : 'Article',
@@ -150,8 +156,8 @@ export function buildJudgmentSchema(
     },
     headline: judgment.title,
     description: holdingText,
-    datePublished: judgment.judgment_date || new Date().toISOString().split('T')[0],
-    dateModified: judgment.updated_at || judgment.judgment_date || new Date().toISOString(),
+    datePublished: formatToIsoString(judgment.judgment_date),
+    dateModified: formatToIsoString(judgment.updated_at || judgment.judgment_date),
     author: {
       '@type': 'Organization',
       name: courtName,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search,
   Sparkles,
@@ -69,9 +69,20 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
     Boolean(filters.court || filters.date_from || filters.date_to)
   );
 
+  useEffect(() => {
+    if (!filters.court && !filters.date_from && !filters.date_to) {
+      setIsMobileFiltersOpen(false);
+    }
+  }, [filters.court, filters.date_from, filters.date_to]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearchSubmit(e);
+  };
+
+  const handleResetFilters = () => {
+    setIsMobileFiltersOpen(false);
+    onResetFilters();
   };
 
   const handleModeChange = (mode: SearchMode) => {
@@ -295,7 +306,7 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
             {hasActiveFilters && (
               <button
                 type="button"
-                onClick={onResetFilters}
+                onClick={handleResetFilters}
                 className="min-h-[44px] px-3 py-2 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs font-semibold flex items-center space-x-1"
                 title="Reset all filters"
               >

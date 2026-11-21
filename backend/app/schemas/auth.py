@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 class UserRegisterRequest(BaseModel):
     """Payload for POST /api/v1/auth/register."""
     email: EmailStr = Field(..., description="Valid user email address")
-    password: str = Field(..., min_length=6, max_length=128, description="Plaintext password (min 6 characters)")
+    password: str = Field(..., min_length=8, max_length=128, description="Plaintext password (min 8 characters)")
     full_name: str | None = Field(default=None, max_length=255, description="Full name or designation")
 
 

@@ -30,7 +30,7 @@ class Bookmark(Base):
     __tablename__ = "bookmarks"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(String(100), nullable=False, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     judgment_id = Column(UUID(as_uuid=True), ForeignKey("judgments.id", ondelete="CASCADE"), nullable=False)
     notes = Column(Text, nullable=True)
     tags = Column(ARRAY(String), nullable=False, default=list)

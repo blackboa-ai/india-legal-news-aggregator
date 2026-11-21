@@ -105,7 +105,7 @@ describe('Phase 4: Content Type Filter Tabs & Card Badges', () => {
 
   it('passes content_type=judgment to the API call when fetching judgments feed', async () => {
     const listSpy = vi.spyOn(api.judgments, 'list').mockResolvedValueOnce({
-      data: [],
+      items: [],
       total: 0,
       limit: 25,
       offset: 0,

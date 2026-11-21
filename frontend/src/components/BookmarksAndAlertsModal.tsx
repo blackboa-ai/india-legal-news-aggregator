@@ -83,62 +83,93 @@ export const BookmarksAndAlertsModal: React.FC<BookmarksAndAlertsModalProps> = (
   useEffect(() => {
     if (!isOpen || !isAuthenticated) return;
 
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     if (activeTab === 'bookmarks') {
-      loadBookmarks();
+      loadBookmarks(signal);
     } else if (activeTab === 'alerts') {
-      loadAlerts();
+      loadAlerts(signal);
     } else if (activeTab === 'matches') {
-      loadMatches();
+      loadMatches(signal);
     } else if (activeTab === 'topics') {
-      loadTopics();
+      loadTopics(signal);
     }
+
+    return () => {
+      controller.abort();
+    };
   }, [isOpen, activeTab, isAuthenticated]);
 
-  const loadBookmarks = async () => {
+  const loadBookmarks = async (signal?: AbortSignal) => {
     setIsLoadingBookmarks(true);
     try {
-      const res = await api.bookmarks.list({ limit: 50 });
-      setBookmarks(res.data);
+      const res = await api.bookmarks.list({ limit: 50 }, signal);
+      if (!signal?.aborted) {
+        setBookmarks(res.data);
+      }
     } catch (err) {
-      console.warn('Failed to load bookmarks:', err);
+      if (!signal?.aborted) {
+        console.warn('Failed to load bookmarks:', err);
+      }
     } finally {
-      setIsLoadingBookmarks(false);
+      if (!signal?.aborted) {
+        setIsLoadingBookmarks(false);
+      }
     }
   };
 
-  const loadAlerts = async () => {
+  const loadAlerts = async (signal?: AbortSignal) => {
     setIsLoadingAlerts(true);
     try {
-      const res = await api.alerts.list();
-      setAlerts(res.data);
+      const res = await api.alerts.list(signal);
+      if (!signal?.aborted) {
+        setAlerts(res.data);
+      }
     } catch (err) {
-      console.warn('Failed to load alerts:', err);
+      if (!signal?.aborted) {
+        console.warn('Failed to load alerts:', err);
+      }
     } finally {
-      setIsLoadingAlerts(false);
+      if (!signal?.aborted) {
+        setIsLoadingAlerts(false);
+      }
     }
   };
 
-  const loadMatches = async () => {
+  const loadMatches = async (signal?: AbortSignal) => {
     setIsLoadingMatches(true);
     try {
-      const res = await api.alerts.matches({ limit: 50 });
-      setMatches(res.matches);
+      const res = await api.alerts.matches({ limit: 50 }, signal);
+      if (!signal?.aborted) {
+        setMatches(res.matches);
+      }
     } catch (err) {
-      console.warn('Failed to load alert matches:', err);
+      if (!signal?.aborted) {
+        console.warn('Failed to load alert matches:', err);
+      }
     } finally {
-      setIsLoadingMatches(false);
+      if (!signal?.aborted) {
+        setIsLoadingMatches(false);
+      }
     }
   };
 
-  const loadTopics = async () => {
+  const loadTopics = async (signal?: AbortSignal) => {
     setIsLoadingTopics(true);
     try {
-      const res = await api.topics.list();
-      setTopics(res.data);
+      const res = await api.topics.list(signal);
+      if (!signal?.aborted) {
+        setTopics(res.data);
+      }
     } catch (err) {
-      console.warn('Failed to load topics:', err);
+      if (!signal?.aborted) {
+        console.warn('Failed to load topics:', err);
+      }
     } finally {
-      setIsLoadingTopics(false);
+      if (!signal?.aborted) {
+        setIsLoadingTopics(false);
+      }
     }
   };
 

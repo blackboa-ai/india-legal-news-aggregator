@@ -67,7 +67,7 @@ class Settings(BaseSettings):
         description="Cryptographic algorithm for JWT encoding/decoding",
     )
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
-        default=60 * 24 * 7,  # 7 days
+        default=30,  # 30 minutes for short-lived access tokens
         description="Validity duration of access tokens in minutes",
     )
 

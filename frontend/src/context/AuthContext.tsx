@@ -25,34 +25,42 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(getStoredToken());
+  const [token, setToken] = useState<string | null>(() => getStoredToken());
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   // Check for ?token= URL handoff on initial app mount
   useEffect(() => {
+    let isMounted = true;
+
     const initializeAuth = async () => {
-      setIsLoading(true);
+      if (isMounted) setIsLoading(true);
       try {
         const handoffToken = handleUrlTokenHandoff();
         const currentToken = handoffToken || getStoredToken();
 
         if (currentToken) {
-          setToken(currentToken);
+          if (isMounted) setToken(currentToken);
           const userProfile = await api.auth.me();
-          setUser(userProfile);
+          if (isMounted) setUser(userProfile);
         }
       } catch (err) {
         console.warn('Initial session fetch failed:', err);
         clearStoredTokens();
-        setToken(null);
-        setUser(null);
+        if (isMounted) {
+          setToken(null);
+          setUser(null);
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
     initializeAuth();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -110,6 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     clearStoredTokens();
     setToken(null);
     setUser(null);
+    setIsLoading(false);
   };
 
   const clearError = () => setError(null);

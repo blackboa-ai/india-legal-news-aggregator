@@ -10,6 +10,7 @@ Provides:
 
 import logging
 import uuid
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -45,7 +46,7 @@ async def list_topics(
     """
     Returns research topic folders created by the current user.
     """
-    uid_str = str(current_user.id)
+    uid = current_user.id
 
     # Subquery for judgment count per topic
     count_subq = (
@@ -57,7 +58,7 @@ async def list_topics(
     stmt = (
         select(Topic, func.coalesce(count_subq.c.j_count, 0).label("count"))
         .outerjoin(count_subq, Topic.id == count_subq.c.topic_id)
-        .where(Topic.user_id == uid_str)
+        .where(Topic.user_id == uid)
         .order_by(Topic.created_at.desc())
     )
     res = await db.execute(stmt)
@@ -92,10 +93,10 @@ async def create_topic(
     """
     Creates a new research topic folder (e.g. 'Anticipatory Bail Precedents').
     """
-    uid_str = str(current_user.id)
+    uid = current_user.id
     topic = Topic(
         id=uuid.uuid4(),
-        user_id=uid_str,
+        user_id=uid,
         name=payload.name.strip(),
         description=payload.description.strip() if payload.description else None,
     )
@@ -126,10 +127,10 @@ async def add_judgment_to_topic(
     """
     Links a judgment to a research topic folder.
     """
-    uid_str = str(current_user.id)
+    uid = current_user.id
 
     # Verify topic exists and belongs to user
-    t_stmt = select(Topic).where(Topic.id == topic_id, Topic.user_id == uid_str)
+    t_stmt = select(Topic).where(Topic.id == topic_id, Topic.user_id == uid)
     t_res = await db.execute(t_stmt)
     topic = t_res.scalar_one_or_none()
     if not topic:
@@ -161,7 +162,7 @@ async def add_judgment_to_topic(
             "judgment_id": str(payload.judgment_id),
         }
 
-    assoc = TopicJudgment(topic_id=topic_id, judgment_id=payload.judgment_id)
+    assoc = TopicJudgment(topic_id=topic_id, judgment_id=payload.judgment_id, created_at=datetime.now(UTC))
     db.add(assoc)
     await db.commit()
 
@@ -184,9 +185,9 @@ async def delete_topic(
     """
     Deletes a research topic folder.
     """
-    uid_str = str(current_user.id)
+    uid = current_user.id
 
-    t_stmt = select(Topic).where(Topic.id == topic_id, Topic.user_id == uid_str)
+    t_stmt = select(Topic).where(Topic.id == topic_id, Topic.user_id == uid)
     t_res = await db.execute(t_stmt)
     topic = t_res.scalar_one_or_none()
     if not topic:

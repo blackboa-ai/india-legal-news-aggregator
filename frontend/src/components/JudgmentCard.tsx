@@ -87,14 +87,16 @@ export const getCategoryColor = (category: string) => {
 
 export const formatJudgmentDate = (dateStr: string) => {
   try {
+    if (!dateStr) return 'Unknown date';
     const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return 'Unknown date';
     return d.toLocaleDateString('en-IN', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
     });
   } catch {
-    return dateStr;
+    return 'Unknown date';
   }
 };
 
@@ -108,10 +110,13 @@ export const JudgmentCard = React.memo<JudgmentCardProps>(({
   const courtInfo = getCourtLevelBadge(judgment.court_level, judgment.court_code);
   const contentTypeBadge = getContentTypeBadge(judgment.content_type, judgment.court_code);
   const categoryStyle = getCategoryColor(judgment.subject_category);
-  const searchItem = judgment as SearchResultItem;
+  const isSearchResult = 'score' in judgment && typeof (judgment as SearchResultItem).score === 'number';
+  const score = isSearchResult ? (judgment as SearchResultItem).score : null;
+  const searchItem = isSearchResult ? (judgment as SearchResultItem) : null;
   const isSearchRanked =
-    typeof searchItem.score === 'number' &&
-    (searchItem.keyword_rank === 1 || searchItem.semantic_rank === 1 || searchItem.score >= 0.025);
+    score !== null &&
+    searchItem !== null &&
+    (searchItem.keyword_rank === 1 || searchItem.semantic_rank === 1 || score >= 0.025);
 
   return (
     <article
@@ -239,7 +244,7 @@ export const JudgmentCard = React.memo<JudgmentCardProps>(({
           <div className="flex flex-wrap gap-1.5 mb-3">
             {judgment.tags.slice(0, 4).map((tag, idx) => (
               <span
-                key={idx}
+                key={tag || `tag-${idx}`}
                 className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition"
               >
                 {tag}

@@ -5,6 +5,7 @@ Matches incoming legal news and judgments against user topic & statute subscript
 """
 
 import logging
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from sqlalchemy import select
@@ -110,11 +111,13 @@ class AlertService:
         if not alerts:
             return []
 
-        # 2. Fetch candidate judgments (recent 100)
+        # 2. Fetch candidate judgments (recent 48 hours, capped at 500)
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=48)
         j_stmt = (
             select(Judgment)
+            .where(Judgment.created_at >= cutoff)
             .order_by(Judgment.judgment_date.desc(), Judgment.created_at.desc())
-            .limit(100)
+            .limit(500)
         )
         j_res = await db.execute(j_stmt)
         judgments = j_res.scalars().all()
@@ -132,12 +135,8 @@ class AlertService:
                             judgment=JudgmentResponse.model_validate(j),
                         )
                     )
-                if len(matches) >= max_limit:
-                    break
-            if len(matches) >= max_limit:
-                break
 
-        return matches
+        return matches[:max_limit]
 
 
 # Global singleton instance

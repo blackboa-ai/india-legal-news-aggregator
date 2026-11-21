@@ -30,6 +30,7 @@ interface JudgmentModalProps {
   onSelectSimilarJudgment: (judgment: Judgment) => void;
   topics?: Topic[];
   onAddToTopic?: (topicId: string, judgmentId: string) => Promise<void>;
+  showToast?: (message: string, type?: 'success' | 'info' | 'error') => void;
 }
 
 /**
@@ -89,6 +90,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
   onSelectSimilarJudgment,
   topics = [],
   onAddToTopic,
+  showToast,
 }) => {
   const [copied, setCopied] = useState(false);
   const [fontSize, setFontSize] = useState<'normal' | 'large'>('normal');
@@ -107,10 +109,14 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
   // Fallback to fetch full judgment details if full_text or parties were omitted in list/search
   const [fullJudgment, setFullJudgment] = useState<Judgment | null>(judgment);
 
+  // Unified effect for full judgment fetching and similar precedents
   useEffect(() => {
     setFullJudgment(judgment);
     setActiveTab('judgment');
-    if (!judgment?.id || !isOpen) return;
+    if (!judgment?.id || !isOpen) {
+      setSimilarJudgments([]);
+      return;
+    }
 
     let isMounted = true;
     if (!judgment.full_text) {
@@ -123,37 +129,28 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
         })
         .catch(() => {});
     }
+
+    setIsLoadingSimilar(true);
+    api.judgments
+      .getSimilar(judgment.id, 5)
+      .then((results) => {
+        if (isMounted) {
+          setSimilarJudgments(results);
+        }
+      })
+      .catch((err) => {
+        console.warn('Failed to fetch similar precedents:', err);
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoadingSimilar(false);
+        }
+      });
+
     return () => {
       isMounted = false;
     };
   }, [judgment, isOpen]);
-
-  // Fetch similar precedents whenever selected judgment changes
-  useEffect(() => {
-    if (!judgment?.id || !isOpen) return;
-
-    let isMounted = true;
-    const fetchSimilar = async () => {
-      setIsLoadingSimilar(true);
-      try {
-        const results = await api.judgments.getSimilar(judgment.id, 5);
-        if (isMounted) {
-          setSimilarJudgments(results);
-        }
-      } catch (err) {
-        console.warn('Failed to fetch similar precedents:', err);
-      } finally {
-        if (isMounted) {
-          setIsLoadingSimilar(false);
-        }
-      }
-    };
-
-    fetchSimilar();
-    return () => {
-      isMounted = false;
-    };
-  }, [judgment?.id, isOpen]);
 
   // Handle Escape key to close modal
   useEffect(() => {
@@ -190,11 +187,16 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
   const rawContent = activeJudgment.full_text || activeJudgment.excerpt || '';
   const normalizedContent = normalizeReaderText(rawContent);
 
-  const handleCopyCitation = () => {
+  const handleCopyCitation = async () => {
     const citationText = `${activeJudgment.short_title || activeJudgment.title} (${activeJudgment.court_name}, ${formatJudgmentDate(activeJudgment.judgment_date)}). Available at: ${activeJudgment.url}`;
-    navigator.clipboard.writeText(citationText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(citationText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy citation to clipboard:', err);
+      showToast?.('Failed to copy citation to clipboard', 'error');
+    }
   };
 
   const handleSaveBookmark = () => {
@@ -213,6 +215,9 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
       await onAddToTopic(selectedTopicId, activeJudgment.id);
       setTopicSuccess(true);
       setTimeout(() => setTopicSuccess(false), 2000);
+    } catch (err) {
+      console.error('Failed to add judgment to topic:', err);
+      showToast?.('Failed to add judgment to research topic', 'error');
     } finally {
       setTopicAdding(false);
     }
@@ -360,7 +365,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
                     {activeJudgment.parties.map((p, idx) => {
                       const pObj = p as { role?: string; name?: string };
                       return (
-                        <span key={idx} className="bg-white px-2.5 py-1 rounded-md border border-slate-200">
+                        <span key={pObj.name ? `${pObj.role || 'party'}-${pObj.name}` : `party-${idx}`} className="bg-white px-2.5 py-1 rounded-md border border-slate-200">
                           <strong className="capitalize">{pObj.role || 'Party'}:</strong>{' '}
                           {pObj.name || String(p)}
                         </span>
@@ -379,7 +384,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
                   <div className="flex flex-wrap gap-1.5">
                     {activeJudgment.tags.map((tag, idx) => (
                       <span
-                        key={idx}
+                        key={tag || `tag-${idx}`}
                         className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-50 text-amber-900 border border-amber-200/80"
                       >
                         {tag}
@@ -444,7 +449,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
                   }`}
                 >
                   {normalizedContent.split('\n\n').map((paragraph, idx) => (
-                    <p key={idx} className="leading-relaxed font-sans">
+                    <p key={`para-${idx}`} className="leading-relaxed font-sans">
                       {paragraph}
                     </p>
                   ))}

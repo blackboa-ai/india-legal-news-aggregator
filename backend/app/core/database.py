@@ -10,17 +10,18 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import DeclarativeBase
 
 from app.core.config import settings
 
 # Engine configuration with connection pooling & ping verification
+# pool_size=2, max_overflow=3: Conservative pool sizing (5 max connections) for serverless compatibility (e.g. Neon/Supabase free tiers)
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=(settings.ENVIRONMENT == "development" and settings.LOG_LEVEL == "DEBUG"),
     pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=10,
+    pool_size=2,
+    max_overflow=3,
     pool_recycle=300,
 )
 
@@ -33,8 +34,9 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False,
 )
 
-# Declarative Base for ORM models
-Base = declarative_base()
+# Declarative Base for ORM models (SQLAlchemy 2.x standard)
+class Base(DeclarativeBase):
+    pass
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:

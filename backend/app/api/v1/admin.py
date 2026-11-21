@@ -6,6 +6,7 @@ Provides:
 """
 
 import asyncio
+import hmac
 import logging
 
 from fastapi import APIRouter, Header, HTTPException, status
@@ -29,14 +30,15 @@ async def refresh_feeds(
     Administrative trigger to run legal RSS feed fetching and deduplication cycle.
     Protected by ADMIN_API_KEY secret.
     """
-    if not x_admin_key or x_admin_key != settings.ADMIN_API_KEY:
+    if not x_admin_key or not hmac.compare_digest(x_admin_key, settings.ADMIN_API_KEY):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid or missing X-Admin-Key header",
         )
 
-    # Fire background task without blocking request
-    asyncio.create_task(ingestion_worker.run_once())
+    # Fire background task without blocking request, store task reference and attach done callback
+    task = asyncio.create_task(ingestion_worker.run_once())
+    task.add_done_callback(lambda t: logger.error(t.exception()) if not t.cancelled() and t.exception() else None)
 
     return {
         "status": "triggered",

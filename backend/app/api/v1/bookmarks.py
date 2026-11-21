@@ -63,17 +63,17 @@ async def list_bookmarks(
     """
     Retrieves all judgments saved by the authenticated user.
     """
-    uid_str = str(current_user.id)
+    uid = current_user.id
 
     # 1. Count total bookmarks
-    count_stmt = select(func.count(Bookmark.id)).where(Bookmark.user_id == uid_str)
+    count_stmt = select(func.count(Bookmark.id)).where(Bookmark.user_id == uid)
     count_res = await db.execute(count_stmt)
     total = count_res.scalar() or 0
 
     # 2. Query bookmarks with joined judgments
     stmt = (
         select(Bookmark)
-        .where(Bookmark.user_id == uid_str)
+        .where(Bookmark.user_id == uid)
         .options(selectinload(Bookmark.judgment))
         .order_by(Bookmark.created_at.desc())
         .limit(limit)
@@ -121,7 +121,7 @@ async def create_bookmark_by_id(
     Saves a judgment to the user's bookmarks.
     Enforces duplicate prevention: raises 409 Conflict if already bookmarked.
     """
-    uid_str = str(current_user.id)
+    uid = current_user.id
 
     # 1. Verify judgment exists
     j_stmt = select(Judgment).where(Judgment.id == judgment_id)
@@ -135,7 +135,7 @@ async def create_bookmark_by_id(
 
     # 2. Check for duplicate bookmark
     dup_stmt = select(Bookmark).where(
-        Bookmark.user_id == uid_str,
+        Bookmark.user_id == uid,
         Bookmark.judgment_id == judgment_id,
     )
     dup_res = await db.execute(dup_stmt)
@@ -151,7 +151,7 @@ async def create_bookmark_by_id(
 
     bookmark = Bookmark(
         id=uuid.uuid4(),
-        user_id=uid_str,
+        user_id=uid,
         judgment_id=judgment_id,
         notes=notes,
         tags=tags,
@@ -206,10 +206,10 @@ async def delete_bookmark(
     """
     Deletes a bookmarked judgment for the authenticated user.
     """
-    uid_str = str(current_user.id)
+    uid = current_user.id
 
     stmt = select(Bookmark).where(
-        Bookmark.user_id == uid_str,
+        Bookmark.user_id == uid,
         Bookmark.judgment_id == judgment_id,
     )
     res = await db.execute(stmt)
@@ -245,8 +245,8 @@ async def list_alerts(
     """
     Retrieves all alerts created by the authenticated user.
     """
-    uid_str = str(current_user.id)
-    stmt = select(Alert).where(Alert.user_id == uid_str).order_by(Alert.created_at.desc())
+    uid = current_user.id
+    stmt = select(Alert).where(Alert.user_id == uid).order_by(Alert.created_at.desc())
     res = await db.execute(stmt)
     alerts = res.scalars().all()
 
@@ -271,12 +271,12 @@ async def create_alert(
     Subscribes the user to personalized notifications for legal domains (e.g. Criminal),
     courts (e.g. sc), or statutory sections/keywords (e.g. ['Section 438', 'IBC']).
     """
-    uid_str = str(current_user.id)
+    uid = current_user.id
 
     now = datetime.now(UTC)
     alert = Alert(
         id=uuid.uuid4(),
-        user_id=uid_str,
+        user_id=uid,
         title=payload.title.strip(),
         category=payload.category.strip() if payload.category else None,
         court_code=payload.court_code.strip() if payload.court_code else None,
@@ -305,9 +305,9 @@ async def delete_alert(
     """
     Removes an alert subscription owned by the authenticated user.
     """
-    uid_str = str(current_user.id)
+    uid = current_user.id
 
-    stmt = select(Alert).where(Alert.id == alert_id, Alert.user_id == uid_str)
+    stmt = select(Alert).where(Alert.id == alert_id, Alert.user_id == uid)
     res = await db.execute(stmt)
     alert = res.scalar_one_or_none()
 
@@ -341,13 +341,13 @@ async def get_alert_matches(
     Scans recent legal judgments against the user's active alert rules.
     Returns matched judgments with highlighting of which statutory sections/keywords matched.
     """
-    uid_str = str(current_user.id)
+    uid = current_user.id
     alert_id_val = alert_id if isinstance(alert_id, UUID) else None
     limit_val = limit if isinstance(limit, int) else 20
 
     matches = await alert_service.find_matches_for_user(
         db=db,
-        user_id=uid_str,
+        user_id=uid,
         alert_id=alert_id_val,
         limit=limit_val,
     )

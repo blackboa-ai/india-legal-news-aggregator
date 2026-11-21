@@ -39,15 +39,15 @@ import {
 const PAGE_SIZE = 25;
 const FEED_CACHE_KEY = 'india_legal_cached_feed_v2_1';
 
-function getInitialCachedFeed(): { data: Judgment[]; total: number } | null {
+function getInitialCachedFeed(): { items: Judgment[]; data: Judgment[]; total: number } | null {
   if (typeof window === 'undefined') return null;
   try {
     const raw = localStorage.getItem(FEED_CACHE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      const items = parsed?.data || parsed?.items;
+      const items = parsed?.items || parsed?.data;
       if (Array.isArray(items) && items.length > 0) {
-        return { data: items, total: typeof parsed.total === 'number' ? parsed.total : items.length };
+        return { items, data: items, total: typeof parsed.total === 'number' ? parsed.total : items.length };
       }
     }
   } catch {
@@ -129,7 +129,7 @@ export const App: React.FC = () => {
 
   // Data States (render cached feed instantaneously in 0ms on page load)
   const [judgments, setJudgments] = useState<(Judgment | SearchResultItem)[]>(
-    () => initialCachedFeed?.data || []
+    () => initialCachedFeed?.items || initialCachedFeed?.data || []
   );
   const [totalCount, setTotalCount] = useState<number>(
     () => initialCachedFeed?.total || 0
@@ -185,18 +185,31 @@ export const App: React.FC = () => {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [alertMatchCount, setAlertMatchCount] = useState<number>(0);
 
-  // Toast Notification State
+  // Toast Notification State (with unmount cleanup ref)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(
     null
   );
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
   const showToast = useCallback((message: string, type: 'success' | 'info' | 'error' = 'info') => {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
     setToast({ message, type });
-    setTimeout(() => {
+    toastTimerRef.current = setTimeout(() => {
       setToast(null);
     }, 3500);
+  }, []);
+
+  // Clean up toast timer on unmount
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+    };
   }, []);
 
   // Fetch initial metadata (Categories & Courts with graceful fallback)
@@ -325,7 +338,7 @@ export const App: React.FC = () => {
         );
 
         if (!controller.signal.aborted) {
-          const items = feedRes.data || feedRes.items || [];
+          const items = feedRes.items || (feedRes as any).data || [];
           const total = typeof feedRes.total === 'number' ? feedRes.total : items.length;
           setJudgments(items);
           setTotalCount(total);
@@ -337,7 +350,7 @@ export const App: React.FC = () => {
               localStorage.setItem(
                 FEED_CACHE_KEY,
                 JSON.stringify({
-                  data: items,
+                  items,
                   total,
                   timestamp: Date.now(),
                 })
@@ -454,7 +467,7 @@ export const App: React.FC = () => {
     let isMounted = true;
     const loadDeepLinkedJudgment = async () => {
       // 1. Look in cached items
-      const cached = initialCachedFeed?.data?.find((j) => j.id === initialJudgmentId);
+      const cached = (initialCachedFeed?.items || initialCachedFeed?.data)?.find((j) => j.id === initialJudgmentId);
       if (cached && isMounted) {
         setSelectedJudgment(cached);
         setIsReaderOpen(true);
@@ -499,9 +512,12 @@ export const App: React.FC = () => {
             if (fetched) {
               setSelectedJudgment(fetched);
               setIsReaderOpen(true);
+            } else {
+              showToast('Judgment not found', 'error');
             }
-          } catch {
-            // Ignore fetch failure
+          } catch (err) {
+            console.error('Failed to load judgment from URL:', err);
+            showToast('Failed to load judgment from URL', 'error');
           }
         }
       }
@@ -547,6 +563,8 @@ export const App: React.FC = () => {
 
     if (isReaderOpen && selectedJudgment) {
       url.searchParams.set('judgment', selectedJudgment.id);
+    } else {
+      url.searchParams.delete('judgment');
     }
 
     window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
@@ -946,6 +964,7 @@ export const App: React.FC = () => {
         onSelectSimilarJudgment={handleSelectSimilarJudgment}
         topics={topics}
         onAddToTopic={handleAddToTopic}
+        showToast={showToast}
       />
 
       {/* Auth Modal */}

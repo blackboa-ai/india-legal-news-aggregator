@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.security import get_optional_user
+from app.core.security import get_current_active_superuser, get_optional_user
 from app.models.feedback import Feedback
 from app.models.user import User
 from app.schemas.feedback import (
@@ -79,8 +79,13 @@ async def submit_feedback(
     - Emits structured notification log for quick administrative visibility.
     - Asynchronously triggers notification forwarder.
     """
-    user_id_val = str(current_user.id) if current_user else None
-    email_val = payload.email.strip() if payload.email else (current_user.email if current_user else None)
+    # If current_user is authenticated, ignore payload.email and strictly enforce current_user.email
+    if current_user:
+        email_val = current_user.email
+        user_id_val = str(current_user.id)
+    else:
+        email_val = payload.email.strip() if payload.email else None
+        user_id_val = None
 
     feedback_record = Feedback(
         rating=payload.rating,
@@ -117,6 +122,7 @@ async def list_feedback(
     limit: int = Query(default=50, ge=1, le=100, description="Max feedback items to return"),
     offset: int = Query(default=0, ge=0, description="Number of items to skip"),
     category: str | None = Query(default=None, description="Optional category filter"),
+    current_user: User = Depends(get_current_active_superuser),
     db: AsyncSession = Depends(get_db),
 ) -> Any:
     """

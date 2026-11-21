@@ -149,9 +149,11 @@ export class ApiError extends Error {
 async function request<T>(
   endpoint: string,
   options: RequestInit = {},
-  isRetry = false
+  isRetry = false,
+  customBaseUrl?: string
 ): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+  const base = customBaseUrl || API_BASE_URL;
+  const url = `${base}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
   const headers = new Headers(options.headers);
 
   // Set JSON headers unless body is FormData
@@ -186,7 +188,7 @@ async function request<T>(
           setStoredTokens(tokenData.access_token, tokenData.refresh_token);
           // Retry original request with new token
           headers.set('Authorization', `Bearer ${tokenData.access_token}`);
-          return request<T>(endpoint, { ...options, headers }, true);
+          return request<T>(endpoint, { ...options, headers }, true, customBaseUrl);
         }
       } catch (err) {
         console.warn('Silent token refresh failed:', err);
@@ -219,7 +221,10 @@ async function request<T>(
   }
 
   if (response.status === 204) {
-    return {} as T;
+    /**
+     * @note 204 No Content responses return null. Callers should handle null returns for 204 endpoints.
+     */
+    return null as unknown as T;
   }
 
   return response.json() as Promise<T>;
@@ -229,8 +234,20 @@ async function request<T>(
 // API Service Methods
 // -----------------------------------------------------------------------------
 
-// Fast in-memory cache for full judgment details (populated by prefetching or view)
+// Fast in-memory LRU cache for full judgment details (max 100 entries)
 export const judgmentDetailCache = new Map<string, Judgment>();
+
+export function setJudgmentDetailCache(id: string, item: Judgment): void {
+  if (judgmentDetailCache.has(id)) {
+    judgmentDetailCache.delete(id);
+  } else if (judgmentDetailCache.size >= 100) {
+    const oldestKey = judgmentDetailCache.keys().next().value;
+    if (oldestKey !== undefined) {
+      judgmentDetailCache.delete(oldestKey);
+    }
+  }
+  judgmentDetailCache.set(id, item);
+}
 
 export function getPrefetchedJudgment(id: string): Judgment | undefined {
   return judgmentDetailCache.get(id);
@@ -290,17 +307,19 @@ export const api = {
 
     getById: async (id: string, signal?: AbortSignal): Promise<Judgment> => {
       if (judgmentDetailCache.has(id)) {
-        return judgmentDetailCache.get(id)!;
+        const cached = judgmentDetailCache.get(id)!;
+        setJudgmentDetailCache(id, cached);
+        return cached;
       }
       const item = await request<Judgment>(`/judgments/${id}`, { signal });
       if (item && item.id) {
-        judgmentDetailCache.set(item.id, item);
+        setJudgmentDetailCache(item.id, item);
       }
       return item;
     },
 
     getSimilar: (id: string, limit = 5): Promise<Judgment[]> => {
-      return request<Judgment[]>(`/similar/${id}?limit=${limit}`);
+      return request<Judgment[]>(`/similar/${encodeURIComponent(id)}?limit=${limit}`);
     },
 
     categories: async (): Promise<LegalCategoryItem[]> => {
@@ -309,8 +328,7 @@ export const api = {
       } catch (err) {
         if (err instanceof ApiError && err.status === 404 && API_BASE_URL.includes('/api/v1')) {
           const rootUrl = API_BASE_URL.replace(/\/api\/v1$/, '');
-          const res = await fetch(`${rootUrl}/categories`);
-          if (res.ok) return res.json();
+          return await request<LegalCategoryItem[]>('/categories', undefined, false, rootUrl);
         }
         throw err;
       }
@@ -322,8 +340,7 @@ export const api = {
       } catch (err) {
         if (err instanceof ApiError && err.status === 404 && API_BASE_URL.includes('/api/v1')) {
           const rootUrl = API_BASE_URL.replace(/\/api\/v1$/, '');
-          const res = await fetch(`${rootUrl}/courts`);
-          if (res.ok) return res.json();
+          return await request<CourtItem[]>('/courts', undefined, false, rootUrl);
         }
         throw err;
       }
@@ -367,12 +384,12 @@ export const api = {
 
   // Bookmarks
   bookmarks: {
-    list: (params: { limit?: number; offset?: number } = {}): Promise<BookmarkListResponse> => {
+    list: (params: { limit?: number; offset?: number } = {}, signal?: AbortSignal): Promise<BookmarkListResponse> => {
       const searchParams = new URLSearchParams();
       if (params.limit !== undefined) searchParams.set('limit', String(params.limit));
       if (params.offset !== undefined) searchParams.set('offset', String(params.offset));
       const q = searchParams.toString();
-      return request<BookmarkListResponse>(`/bookmarks${q ? `?${q}` : ''}`);
+      return request<BookmarkListResponse>(`/bookmarks${q ? `?${q}` : ''}`, { signal });
     },
 
     add: (
@@ -394,8 +411,8 @@ export const api = {
 
   // Alerts
   alerts: {
-    list: (): Promise<{ data: Alert[]; total: number }> => {
-      return request<{ data: Alert[]; total: number }>('/alerts');
+    list: (signal?: AbortSignal): Promise<{ data: Alert[]; total: number }> => {
+      return request<{ data: Alert[]; total: number }>('/alerts', { signal });
     },
 
     create: (payload: {
@@ -418,19 +435,19 @@ export const api = {
       });
     },
 
-    matches: (params: { alert_id?: string; limit?: number } = {}): Promise<AlertMatchesResponse> => {
+    matches: (params: { alert_id?: string; limit?: number } = {}, signal?: AbortSignal): Promise<AlertMatchesResponse> => {
       const searchParams = new URLSearchParams();
       if (params.alert_id) searchParams.set('alert_id', params.alert_id);
       if (params.limit !== undefined) searchParams.set('limit', String(params.limit));
       const q = searchParams.toString();
-      return request<AlertMatchesResponse>(`/alerts/matches${q ? `?${q}` : ''}`);
+      return request<AlertMatchesResponse>(`/alerts/matches${q ? `?${q}` : ''}`, { signal });
     },
   },
 
   // Topics / Folders
   topics: {
-    list: (): Promise<{ data: Topic[]; total: number }> => {
-      return request<{ data: Topic[]; total: number }>('/topics');
+    list: (signal?: AbortSignal): Promise<{ data: Topic[]; total: number }> => {
+      return request<{ data: Topic[]; total: number }>('/topics', { signal });
     },
 
     create: (payload: { name: string; description?: string }): Promise<Topic> => {

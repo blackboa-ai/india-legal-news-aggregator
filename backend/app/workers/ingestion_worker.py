@@ -181,9 +181,7 @@ class IngestionWorker:
             content_type_confidence=content_type_confidence if content_type_confidence is not None else 0.0,
             embedding=embedding,
         )
-        res = session.add(judgment)
-        if asyncio.iscoroutine(res):
-            await res
+        session.add(judgment)
         await session.flush()
         return True
 
@@ -221,14 +219,6 @@ class IngestionWorker:
                     )
 
             await session.commit()
-            if stats.items_inserted > 0:
-                try:
-                    from app.services.cache_service import cache_service
-                    await cache_service.clear()
-                    logger.info("Invalidated cache after inserting %d records from %s", stats.items_inserted, feed_config.source_id)
-                except Exception as cache_err:
-                    logger.warning("Failed to invalidate cache after feed insertion: %s", cache_err)
-
         except Exception as feed_err:
             await session.rollback()
             stats.error = str(feed_err)
@@ -460,11 +450,10 @@ class IngestionWorker:
         """
         Starts the worker in an asynchronous background asyncio task.
         """
-        if self._is_running:
+        if self._is_running or (self._worker_task and not self._worker_task.done()):
             raise RuntimeError("IngestionWorker is already running")
 
         self._stop_event.clear()
-        self._is_running = True
         self._worker_task = asyncio.create_task(self._loop(), name="ingestion-worker-task")
         return self._worker_task
 

@@ -362,12 +362,11 @@ class TestSearchServiceHotQueryCaching:
 
         # Verify cache key structure
         expected_digest = hashlib.sha256(
-            f"{query}:{category}:{None}:{None}:{None}:{content_type}".encode()
+            f"{category}:{None}:{None}:{None}:{None}:{content_type}".encode()
         ).hexdigest()
-        cache_key = f"search:{expected_digest}"
-        cached_entry = await cache_service.get(cache_key)
+        cache_key = f"search:{query}:{10}:{0}:keyword:{expected_digest}"
+        cached_entry = await cache_service.get_json(cache_key)
         assert cached_entry is not None
-        assert isinstance(cached_entry, SearchExecutionResult)
 
         # 2. Second execution - Cache Hit
         mock_session.execute.reset_mock()
@@ -449,10 +448,12 @@ class TestProductionHardening:
         """Production startup lifespan succeeds when strong JWT secret is configured."""
         original_env = settings.ENVIRONMENT
         original_jwt = settings.JWT_SECRET
+        original_admin = settings.ADMIN_API_KEY
 
         try:
             settings.ENVIRONMENT = "production"
             settings.JWT_SECRET = "strong_production_entropy_secret_94812398412_safe"
+            settings.ADMIN_API_KEY = "strong_production_admin_key_12345"
 
             dummy_app = create_application()
             async with lifespan(dummy_app):
@@ -461,3 +462,4 @@ class TestProductionHardening:
         finally:
             settings.ENVIRONMENT = original_env
             settings.JWT_SECRET = original_jwt
+            settings.ADMIN_API_KEY = original_admin

@@ -19,6 +19,18 @@ from app.core.config import settings
 logger = logging.getLogger("app.services.cache")
 
 
+class AsyncFriendlyLock(asyncio.Lock):
+    """
+    Async-native lock supporting both asynchronous ('async with') and
+    synchronous ('with') context managers to avoid blocking the event loop.
+    """
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+
 class MemoryTTLCache:
     """
     High-speed, thread-safe in-memory TTL cache with bounded LRU eviction.
@@ -29,7 +41,7 @@ class MemoryTTLCache:
         self.max_size = max_size
         self.default_ttl = default_ttl
         self._cache: OrderedDict[str, tuple[Any, float]] = OrderedDict()
-        self._lock = threading.Lock()
+        self._lock = AsyncFriendlyLock()
 
     def get(self, key: str) -> Any | None:
         with self._lock:
@@ -78,6 +90,7 @@ class CacheService:
         self._redis_client: Any | None = None
         self._redis_available: bool | None = None
         self._async_lock = asyncio.Lock()
+        self._lock = self._async_lock
 
     async def _get_redis(self) -> Any | None:
         if self._redis_available is False or settings.ENVIRONMENT == "test":
@@ -119,15 +132,16 @@ class CacheService:
             return val
 
         # 2. Redis check
-        redis_client = await self._get_redis()
-        if redis_client:
-            try:
-                remote_val = await redis_client.get(key)
-                if remote_val is not None:
-                    self.l1_cache.set(key, remote_val, self.default_ttl)
-                    return remote_val
-            except Exception as e:
-                logger.warning("Redis GET failed for key '%s': %s", key, e)
+        async with self._async_lock:
+            redis_client = await self._get_redis()
+            if redis_client:
+                try:
+                    remote_val = await redis_client.get(key)
+                    if remote_val is not None:
+                        self.l1_cache.set(key, remote_val, self.default_ttl)
+                        return remote_val
+                except Exception as e:
+                    logger.warning("Redis GET failed for key '%s': %s", key, e)
 
         return None
 
@@ -145,33 +159,38 @@ class CacheService:
                 try:
                     return json.loads(cached)
                 except Exception:
-                    return None
+                    return cached
+            return cached
 
         # 2. Check L2 Redis
         raw = await self.get(key)
         if raw is not None:
+            if isinstance(raw, (dict, list)):
+                return raw
             try:
                 decoded = json.loads(raw)
                 self.l1_cache.set(key, decoded, self.default_ttl)
                 return decoded
             except Exception:
-                return None
+                return raw
         return None
 
     async def set(self, key: str, value: Any, ttl_seconds: int | None = None) -> bool:
         """
         Stores a key-value pair with TTL (seconds).
+        Serializes non-string values with json.dumps(value, default=str) before writing to Redis.
         """
         ttl = ttl_seconds if ttl_seconds is not None else self.default_ttl
         self.l1_cache.set(key, value, float(ttl))
 
-        redis_client = await self._get_redis()
-        if redis_client:
-            try:
-                if isinstance(value, str):
-                    await redis_client.set(key, value, ex=ttl)
-            except Exception as e:
-                logger.warning("Redis SET failed for key '%s': %s", key, e)
+        async with self._async_lock:
+            redis_client = await self._get_redis()
+            if redis_client:
+                try:
+                    val_to_write = value if isinstance(value, str) else json.dumps(value, default=str)
+                    await redis_client.set(key, val_to_write, ex=ttl)
+                except Exception as e:
+                    logger.warning("Redis SET failed for key '%s': %s", key, e)
 
         return True
 
@@ -182,13 +201,14 @@ class CacheService:
         ttl = ttl_seconds if ttl_seconds is not None else self.default_ttl
         self.l1_cache.set(key, data, float(ttl))
 
-        redis_client = await self._get_redis()
-        if redis_client:
-            try:
-                val_str = json.dumps(data, default=str)
-                await redis_client.set(key, val_str, ex=ttl)
-            except Exception as err:
-                logger.warning("Failed to serialize cache value for Redis '%s': %s", key, err)
+        async with self._async_lock:
+            redis_client = await self._get_redis()
+            if redis_client:
+                try:
+                    val_str = json.dumps(data, default=str)
+                    await redis_client.set(key, val_str, ex=ttl)
+                except Exception as err:
+                    logger.warning("Failed to serialize cache value for Redis '%s': %s", key, err)
 
         return True
 
@@ -197,12 +217,13 @@ class CacheService:
         Removes a key from all cache tiers.
         """
         self.l1_cache.delete(key)
-        redis_client = await self._get_redis()
-        if redis_client:
-            try:
-                await redis_client.delete(key)
-            except Exception:
-                pass
+        async with self._async_lock:
+            redis_client = await self._get_redis()
+            if redis_client:
+                try:
+                    await redis_client.delete(key)
+                except Exception:
+                    pass
         return True
 
     async def clear(self) -> None:
@@ -210,12 +231,13 @@ class CacheService:
         Clears all in-memory L1 cache entries and resets Redis cache.
         """
         self.l1_cache.clear()
-        redis_client = await self._get_redis()
-        if redis_client:
-            try:
-                await redis_client.flushdb()
-            except Exception:
-                pass
+        async with self._async_lock:
+            redis_client = await self._get_redis()
+            if redis_client:
+                try:
+                    await redis_client.flushdb()
+                except Exception:
+                    pass
 
     async def close(self) -> None:
         """

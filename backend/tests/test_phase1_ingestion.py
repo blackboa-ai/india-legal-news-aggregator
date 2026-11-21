@@ -481,6 +481,7 @@ class TestIngestionWorker:
         # Mock run_once to avoid real network/DB calls
         with patch.object(worker, "run_once", AsyncMock()):
             task = worker.start()
+            await asyncio.sleep(0.01)
             assert worker.is_running is True
 
             # Allow loop to start and pause

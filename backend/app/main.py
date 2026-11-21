@@ -33,8 +33,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     Ensures Redis connections, APScheduler jobs, and background tasks are cleanly managed.
     """
     # Startup phase: validate production security configuration
-    if settings.ENVIRONMENT.lower() == "production" and settings.JWT_SECRET.startswith("insecure_dev_jwt"):
-        raise RuntimeError("FATAL: Insecure default JWT_SECRET cannot be used in production environment.")
+    if settings.ENVIRONMENT.lower() == "production":
+        if len(settings.JWT_SECRET) < 32 or settings.JWT_SECRET.startswith("insecure_dev_jwt"):
+            logger.warning("Insecure JWT_SECRET in production: length < 32 or using default secret")
+            raise RuntimeError("FATAL: Insecure default JWT_SECRET cannot be used in production environment.")
+        if (
+            settings.ADMIN_API_KEY == "dev-admin-secret-key-change-in-production"
+            or len(settings.ADMIN_API_KEY) < 16
+        ):
+            logger.warning("Insecure ADMIN_API_KEY in production: matches default dev secret")
+            raise RuntimeError("FATAL: Insecure default ADMIN_API_KEY cannot be used in production environment.")
 
     # Startup phase: start scheduler only in production/development, skip in test environment
     if settings.ENVIRONMENT != "test":
@@ -100,7 +108,6 @@ def create_application() -> FastAPI:
         try:
             response = await call_next(request)
         except Exception as exc:
-            latency_ms = (time.perf_counter() - start_time) * 1000.0
             logger.exception(
                 "Unhandled exception during request processing (%s %s): %s",
                 request.method,
@@ -246,7 +253,7 @@ def create_application() -> FastAPI:
             "service": "india-legal-aggregator",
         }
 
-    # Top-level metadata aliases for direct /categories & /courts access
+    # Top-level metadata aliases for direct /categories & /courts access (proper HTTP redirects)
     @application.get(
         "/categories",
         tags=["Metadata"],
@@ -254,8 +261,7 @@ def create_application() -> FastAPI:
         include_in_schema=False,
     )
     async def root_categories():
-        from app.api.v1.judgments import list_categories
-        return await list_categories()
+        return RedirectResponse(url=f"{settings.API_V1_STR}/categories")
 
     @application.get(
         "/courts",
@@ -264,8 +270,7 @@ def create_application() -> FastAPI:
         include_in_schema=False,
     )
     async def root_courts():
-        from app.api.v1.judgments import list_courts
-        return await list_courts()
+        return RedirectResponse(url=f"{settings.API_V1_STR}/courts")
 
     # Root index endpoint
     @application.get(

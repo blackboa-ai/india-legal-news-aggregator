@@ -6,8 +6,9 @@
 export type ContentType = 'judgment' | 'news' | 'unknown';
 
 export interface Party {
-  role: string;
-  name: string;
+  role?: string;
+  name?: string;
+  [key: string]: unknown;
 }
 
 export interface Judgment {
@@ -24,7 +25,7 @@ export interface Judgment {
   summary?: string;
   full_text: string | null;
   url: string;
-  parties: Party[] | Record<string, unknown>[];
+  parties: Party[];
   tags: string[];
   source: string;
   is_archived: boolean;
@@ -53,8 +54,7 @@ export interface SearchResponse {
 }
 
 export interface JudgmentListResponse {
-  data: Judgment[];
-  items?: Judgment[];
+  items: Judgment[];
   total: number;
   limit: number;
   offset: number;

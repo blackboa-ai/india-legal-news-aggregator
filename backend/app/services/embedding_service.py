@@ -11,6 +11,7 @@ Ensures robust graceful fallback to deterministic 384-dim vectors in offline, te
 or quota-exhausted environments.
 """
 
+import asyncio
 import hashlib
 import logging
 import math
@@ -256,9 +257,11 @@ class EmbeddingService:
 
     async def get_embeddings(self, texts: list[str]) -> list[list[float]]:
         """
-        Generates 384-dimensional vector embeddings for a batch of input texts.
+        Generates 384-dimensional vector embeddings for a batch of input texts concurrently.
         """
-        return [await self.get_embedding(t) for t in texts]
+        if not texts:
+            return []
+        return list(await asyncio.gather(*(self.get_embedding(t) for t in texts)))
 
     def get_embedding_sync(self, text: str) -> list[float]:
         """

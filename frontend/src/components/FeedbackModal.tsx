@@ -50,10 +50,10 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
 
   // Auto-fill user email if authenticated
   useEffect(() => {
-    if (user?.email && !email) {
-      setEmail(user.email);
+    if (user?.email) {
+      setEmail((prev) => prev || user.email);
     }
-  }, [user, email]);
+  }, [user?.email]);
 
   // Handle escape key
   useEffect(() => {

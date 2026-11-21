@@ -138,10 +138,19 @@ async def test_list_feedback_with_stats():
 
     mock_db.execute.side_effect = [count_res, avg_res, dist_res, items_res]
 
+    admin_user = User(
+        id=uuid.uuid4(),
+        email="admin@barcouncil.in",
+        full_name="Admin Counsel",
+        is_active=True,
+        is_superuser=True,
+    )
+
     response = await list_feedback(
         limit=10,
         offset=0,
         category=None,
+        current_user=admin_user,
         db=mock_db,
     )
 

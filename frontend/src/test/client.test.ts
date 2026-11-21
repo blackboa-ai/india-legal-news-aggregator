@@ -45,7 +45,7 @@ describe('API Client & Token Management', () => {
   });
 
   it('calls fetch with proper URL and parameters for judgments list', async () => {
-    const mockResponse = { data: [], total: 0, limit: 10, offset: 0 };
+    const mockResponse = { items: [], total: 0, limit: 10, offset: 0 };
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
       ok: true,
       status: 200,

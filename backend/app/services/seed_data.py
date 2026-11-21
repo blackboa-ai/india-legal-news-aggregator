@@ -1385,6 +1385,8 @@ async def seed_landmark_judgments(session: AsyncSession) -> int:
             existing.source = item["source"]
             existing.is_archived = True
             existing.classification_confidence = 0.99
+            existing.content_type = item.get("content_type", "judgment")
+            existing.content_type_confidence = 1.0
             existing.embedding = embedding
             logger.info("Updated landmark judgment: %s", item["title"][:50])
         else:
@@ -1405,6 +1407,8 @@ async def seed_landmark_judgments(session: AsyncSession) -> int:
                 source=item["source"],
                 is_archived=True,
                 classification_confidence=0.99,
+                content_type=item.get("content_type", "judgment"),
+                content_type_confidence=1.0,
                 embedding=embedding,
             )
             session.add(judgment)

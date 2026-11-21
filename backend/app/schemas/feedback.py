@@ -5,8 +5,9 @@ India Legal News Aggregator
 
 import uuid
 from datetime import datetime
+from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class FeedbackCreate(BaseModel):
@@ -27,7 +28,7 @@ class FeedbackCreate(BaseModel):
         description="User feedback comment or review text",
         examples=["The search speed and legal headnotes are super helpful!"],
     )
-    email: str | None = Field(
+    email: Optional[EmailStr] = Field(
         default=None,
         max_length=255,
         description="Optional contact email for follow-up",

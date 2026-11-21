@@ -6,6 +6,7 @@ Schedules periodic ingestion cycles (every 20 minutes by default) using
 APScheduler's AsyncIOScheduler with graceful error isolation per feed.
 """
 
+import asyncio
 import logging
 from typing import Any
 
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 # Global scheduler singleton
 _scheduler: AsyncIOScheduler | None = None
 _worker: Any | None = None
+_worker_lock = asyncio.Lock()
 
 
 async def run_scheduled_ingestion_job() -> None:
@@ -25,13 +27,15 @@ async def run_scheduled_ingestion_job() -> None:
     Executes an end-to-end ingestion cycle with graceful error isolation.
     """
     global _worker
-    if _worker is None:
-        from app.workers.ingestion_worker import IngestionWorker
-        _worker = IngestionWorker()
+    async with _worker_lock:
+        if _worker is None:
+            from app.workers.ingestion_worker import IngestionWorker
+            _worker = IngestionWorker()
+        worker = _worker
 
     logger.info("Executing scheduled legal RSS ingestion cycle via APScheduler...")
     try:
-        report = await _worker.run_once()
+        report = await worker.run_once()
         logger.info(
             "Scheduled ingestion cycle finished: %d fetched, %d inserted, %d duplicates",
             report.total_fetched,

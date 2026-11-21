@@ -136,8 +136,8 @@ async def list_judgments(
     date_to: date | None = Query(default=None, description="Filter judgments on or before this date"),
     limit: int = Query(default=25, ge=1, le=100, description="Page size limit"),
     offset: int = Query(default=0, ge=0, description="Offset cursor for pagination"),
-    response: Response = None,
     db: AsyncSession = Depends(get_db),
+    response: Response = Response(),
 ):
     """
     Returns a paginated list of judgments with multi-dimensional filtering.
@@ -297,7 +297,6 @@ async def list_judgments(
 
     serialized_data = [_serialize_feed_item(r) for r in page_rows]
     response_payload = JudgmentListResponse(
-        data=serialized_data,
         items=serialized_data,
         total=total,
         limit=limit_val,

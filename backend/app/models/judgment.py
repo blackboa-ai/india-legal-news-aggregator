@@ -89,7 +89,7 @@ class Judgment(Base):
     source = Column(String(50), nullable=False)  # indiankanoon, livelaw, barandbench, sci
     is_archived = Column(Boolean, default=True)
     classification_confidence = Column(Float, default=0.0)
-    content_type = Column(String(20), nullable=False, default="unknown", index=True)
+    content_type = Column(String(20), nullable=False, default="unknown", index=False)
     content_type_confidence = Column(Float, nullable=False, default=0.0)
     embedding = Column(Vector(384), nullable=True)
     search_tsv = Column(TSVECTOR, server_default=FetchedValue(), nullable=True)

@@ -7,6 +7,7 @@ Stores user reviews, ratings (1-5), feedback notes, and optional contact informa
 import uuid
 
 from sqlalchemy import (
+    CheckConstraint,
     Column,
     DateTime,
     Integer,
@@ -25,6 +26,9 @@ class Feedback(Base):
     Supports ratings from 1 to 5, feedback text, optional email, and categorization.
     """
     __tablename__ = "feedbacks"
+    __table_args__ = (
+        CheckConstraint("rating >= 1 AND rating <= 5", name="ck_feedback_rating"),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     rating = Column(Integer, nullable=False)  # Rating from 1 to 5

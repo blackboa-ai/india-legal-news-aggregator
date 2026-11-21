@@ -59,19 +59,18 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
     if not plain_password or not hashed_password:
         return False
-    # Ensure plain password is treated safely
-    if isinstance(plain_password, str) and len(plain_password.encode("utf-8")) > 72:
-        plain_password = plain_password.encode("utf-8")[:72].decode("utf-8", errors="ignore")
-    return pwd_context.verify(plain_password, hashed_password)
+    pw_bytes = plain_password.encode("utf-8") if isinstance(plain_password, str) else plain_password
+    pw_bytes = pw_bytes[:72]
+    return pwd_context.verify(pw_bytes, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
     """
     Generates a secure salted bcrypt hash for the provided password.
     """
-    if isinstance(password, str) and len(password.encode("utf-8")) > 72:
-        password = password.encode("utf-8")[:72].decode("utf-8", errors="ignore")
-    return pwd_context.hash(password)
+    pw_bytes = password.encode("utf-8") if isinstance(password, str) else password
+    pw_bytes = pw_bytes[:72]
+    return pwd_context.hash(pw_bytes)
 
 
 # ------------------------------------------------------------------------------
@@ -80,7 +79,9 @@ def get_password_hash(password: str) -> str:
 ALGORITHM = settings.JWT_ALGORITHM
 SECRET_KEY = settings.JWT_SECRET
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
-REFRESH_TOKEN_EXPIRE_DAYS = 30
+# Reduced refresh token lifetime to 7 days.
+# Note: Refresh token rotation and revocation on use should be implemented for production.
+REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/auth/login",

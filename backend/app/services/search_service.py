@@ -12,12 +12,13 @@ import hashlib
 import logging
 import re
 from collections.abc import Sequence
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import Any
 from uuid import UUID
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import make_transient
 
 from app.models.judgment import Judgment
 from app.services.cache_service import cache_service
@@ -65,6 +66,78 @@ class SearchExecutionResult:
     query_type: str
     matched_terms: list[str]
     total: int
+
+
+def serialize_search_execution_result(result: SearchExecutionResult) -> dict[str, Any]:
+    return {
+        "results": [asdict(c) for c in result.results],
+        "query_type": result.query_type,
+        "matched_terms": result.matched_terms,
+        "total": result.total,
+    }
+
+
+def deserialize_search_execution_result(data: dict[str, Any]) -> SearchExecutionResult:
+    candidates: list[SearchCandidate] = []
+    for r in data.get("results", []):
+        j_date = r.get("judgment_date")
+        if isinstance(j_date, str):
+            try:
+                j_date = datetime.date.fromisoformat(j_date)
+            except Exception:
+                pass
+        c_at = r.get("created_at")
+        if isinstance(c_at, str):
+            try:
+                c_at = datetime.datetime.fromisoformat(c_at)
+            except Exception:
+                pass
+        u_at = r.get("updated_at")
+        if isinstance(u_at, str):
+            try:
+                u_at = datetime.datetime.fromisoformat(u_at)
+            except Exception:
+                pass
+        cid = r.get("id")
+        if cid and not isinstance(cid, UUID):
+            try:
+                cid = UUID(str(cid))
+            except Exception:
+                pass
+        candidates.append(
+            SearchCandidate(
+                id=cid,
+                external_id=str(r.get("external_id", "")),
+                title=str(r.get("title", "")),
+                short_title=r.get("short_title"),
+                court_code=str(r.get("court_code", "")),
+                court_name=str(r.get("court_name", "")),
+                court_level=int(r.get("court_level", 2)),
+                judgment_date=j_date,
+                subject_category=str(r.get("subject_category", "")),
+                excerpt=str(r.get("excerpt", "")),
+                url=str(r.get("url", "")),
+                tags=list(r.get("tags") or []),
+                source=str(r.get("source", "")),
+                parties=list(r.get("parties") or []),
+                full_text=r.get("full_text"),
+                is_archived=bool(r.get("is_archived", True)),
+                classification_confidence=float(r.get("classification_confidence", 0.0)),
+                content_type=str(r.get("content_type", "unknown")),
+                content_type_confidence=float(r.get("content_type_confidence", 0.0) or 0.0),
+                created_at=c_at,
+                updated_at=u_at,
+                score=float(r.get("score", 0.0)),
+                keyword_rank=r.get("keyword_rank"),
+                semantic_rank=r.get("semantic_rank"),
+            )
+        )
+    return SearchExecutionResult(
+        results=candidates,
+        query_type=data.get("query_type", "hybrid"),
+        matched_terms=list(data.get("matched_terms", [])),
+        total=int(data.get("total", len(candidates))),
+    )
 
 
 def compute_rrf(
@@ -341,10 +414,16 @@ class SearchService:
         """
         Main entrypoint for hybrid, keyword, and semantic legal search.
         """
-        cache_key = f"search:{hashlib.sha256(f'{query}:{category}:{court}:{date_from}:{date_to}:{content_type}'.encode()).hexdigest()}"
-        cached_result = await cache_service.get(cache_key)
-        if cached_result is not None and isinstance(cached_result, SearchExecutionResult):
-            return cached_result
+        filters_hash = hashlib.sha256(
+            f"{category}:{court}:{date_from}:{date_to}:{citation}:{content_type}".encode()
+        ).hexdigest()
+        cache_key = f"search:{query}:{limit}:{offset}:{mode}:{filters_hash}"
+        cached_result = await cache_service.get_json(cache_key)
+        if cached_result is not None:
+            if isinstance(cached_result, SearchExecutionResult):
+                return cached_result
+            if isinstance(cached_result, dict):
+                return deserialize_search_execution_result(cached_result)
 
         clean_query = query.strip()
         matched_terms = extract_matched_terms(clean_query)
@@ -447,7 +526,11 @@ class SearchService:
             matched_terms=matched_terms if total_candidates > 0 else [],
             total=total_candidates,
         )
-        await cache_service.set(cache_key, execution_result, ttl_seconds=900)
+        await cache_service.set_json(
+            cache_key,
+            serialize_search_execution_result(execution_result),
+            ttl_seconds=900,
+        )
         return execution_result
 
     async def find_similar_judgments(
@@ -534,6 +617,7 @@ class SearchService:
                 created_at=r["created_at"],
                 updated_at=r["updated_at"],
             )
+            make_transient(j)
             judgments.append(j)
         return judgments
 

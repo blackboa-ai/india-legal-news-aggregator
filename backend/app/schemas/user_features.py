@@ -31,7 +31,7 @@ class BookmarkResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    user_id: str
+    user_id: UUID | str
     judgment_id: UUID
     notes: str | None = None
     tags: list[str] = Field(default_factory=list)
@@ -68,7 +68,7 @@ class AlertResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    user_id: str
+    user_id: UUID | str
     title: str
     category: str | None = None
     court_code: str | None = None
@@ -118,7 +118,7 @@ class TopicResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    user_id: str
+    user_id: UUID | str
     name: str
     description: str | None = None
     created_at: datetime

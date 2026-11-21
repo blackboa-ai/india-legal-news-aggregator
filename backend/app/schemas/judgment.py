@@ -17,6 +17,36 @@ class Party(BaseModel):
     name: str
 
 
+def _normalize_judgment_payload(data: Any) -> Any:
+    """Reusable normalizer ensuring excerpt/summary aliases and content_type defaults."""
+    if isinstance(data, dict):
+        if "excerpt" in data and not data.get("summary"):
+            data["summary"] = data["excerpt"]
+        elif "summary" in data and not data.get("excerpt"):
+            data["excerpt"] = data["summary"]
+        if data.get("content_type") is None:
+            data["content_type"] = "unknown"
+        if data.get("content_type_confidence") is None:
+            data["content_type_confidence"] = 0.0
+    elif hasattr(data, "excerpt"):
+        if not getattr(data, "summary", None):
+            try:
+                setattr(data, "summary", getattr(data, "excerpt"))
+            except Exception:
+                pass
+        if getattr(data, "content_type", None) is None:
+            try:
+                setattr(data, "content_type", "unknown")
+            except Exception:
+                pass
+        if getattr(data, "content_type_confidence", None) is None:
+            try:
+                setattr(data, "content_type_confidence", 0.0)
+            except Exception:
+                pass
+    return data
+
+
 class JudgmentBase(BaseModel):
     """Base judgment attributes shared across schemas."""
     title: str = Field(..., description="Full title of the legal judgment")
@@ -41,32 +71,7 @@ class JudgmentBase(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def populate_summary_alias(cls, data: Any) -> Any:
-        if isinstance(data, dict):
-            if "excerpt" in data and not data.get("summary"):
-                data["summary"] = data["excerpt"]
-            elif "summary" in data and not data.get("excerpt"):
-                data["excerpt"] = data["summary"]
-            if data.get("content_type") is None:
-                data["content_type"] = "unknown"
-            if data.get("content_type_confidence") is None:
-                data["content_type_confidence"] = 0.0
-        elif hasattr(data, "excerpt"):
-            if not getattr(data, "summary", None):
-                try:
-                    setattr(data, "summary", getattr(data, "excerpt"))
-                except Exception:
-                    pass
-            if getattr(data, "content_type", None) is None:
-                try:
-                    setattr(data, "content_type", "unknown")
-                except Exception:
-                    pass
-            if getattr(data, "content_type_confidence", None) is None:
-                try:
-                    setattr(data, "content_type_confidence", 0.0)
-                except Exception:
-                    pass
-        return data
+        return _normalize_judgment_payload(data)
 
 
 class JudgmentCreate(JudgmentBase):
@@ -102,32 +107,7 @@ class JudgmentListItem(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def populate_summary_alias(cls, data: Any) -> Any:
-        if isinstance(data, dict):
-            if "excerpt" in data and not data.get("summary"):
-                data["summary"] = data["excerpt"]
-            elif "summary" in data and not data.get("excerpt"):
-                data["excerpt"] = data["summary"]
-            if data.get("content_type") is None:
-                data["content_type"] = "unknown"
-            if data.get("content_type_confidence") is None:
-                data["content_type_confidence"] = 0.0
-        elif hasattr(data, "excerpt"):
-            if not getattr(data, "summary", None):
-                try:
-                    setattr(data, "summary", getattr(data, "excerpt"))
-                except Exception:
-                    pass
-            if getattr(data, "content_type", None) is None:
-                try:
-                    setattr(data, "content_type", "unknown")
-                except Exception:
-                    pass
-            if getattr(data, "content_type_confidence", None) is None:
-                try:
-                    setattr(data, "content_type_confidence", 0.0)
-                except Exception:
-                    pass
-        return data
+        return _normalize_judgment_payload(data)
 
 
 class JudgmentResponse(JudgmentBase):
@@ -142,21 +122,15 @@ class JudgmentResponse(JudgmentBase):
 
 class JudgmentListResponse(BaseModel):
     """Paginated collection of judgments with metadata."""
-    data: list[JudgmentResponse]
-    items: list[JudgmentResponse] | None = None
+    items: list[JudgmentResponse]
     total: int
     limit: int
     offset: int
 
-    @model_validator(mode="before")
-    @classmethod
-    def populate_items_alias(cls, data: Any) -> Any:
-        if isinstance(data, dict):
-            if "data" in data and not data.get("items"):
-                data["items"] = data["data"]
-            elif "items" in data and not data.get("data"):
-                data["data"] = data["items"]
-        return data
+    @property
+    def data(self) -> list[JudgmentResponse]:
+        """Backward-compatible accessor for Python callers without duplicating JSON payload."""
+        return self.items
 
 
 class SearchResultItem(BaseModel):
@@ -190,32 +164,7 @@ class SearchResultItem(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def populate_search_summary_alias(cls, data: Any) -> Any:
-        if isinstance(data, dict):
-            if "excerpt" in data and not data.get("summary"):
-                data["summary"] = data["excerpt"]
-            elif "summary" in data and not data.get("excerpt"):
-                data["excerpt"] = data["summary"]
-            if data.get("content_type") is None:
-                data["content_type"] = "unknown"
-            if data.get("content_type_confidence") is None:
-                data["content_type_confidence"] = 0.0
-        elif hasattr(data, "excerpt"):
-            if not getattr(data, "summary", None):
-                try:
-                    setattr(data, "summary", getattr(data, "excerpt"))
-                except Exception:
-                    pass
-            if getattr(data, "content_type", None) is None:
-                try:
-                    setattr(data, "content_type", "unknown")
-                except Exception:
-                    pass
-            if getattr(data, "content_type_confidence", None) is None:
-                try:
-                    setattr(data, "content_type_confidence", 0.0)
-                except Exception:
-                    pass
-        return data
+        return _normalize_judgment_payload(data)
 
 
 class SearchResponse(BaseModel):
