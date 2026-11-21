@@ -100,6 +100,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
   const [selectedTopicId, setSelectedTopicId] = useState('');
   const [topicAdding, setTopicAdding] = useState(false);
   const [topicSuccess, setTopicSuccess] = useState(false);
+  const [modalImgError, setModalImgError] = useState(false);
 
   // Bookmark notes state
   const [showNotesModal, setShowNotesModal] = useState(false);
@@ -113,6 +114,7 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
   useEffect(() => {
     setFullJudgment(judgment);
     setActiveTab('judgment');
+    setModalImgError(false);
     if (!judgment?.id || !isOpen) {
       setSimilarJudgments([]);
       return;
@@ -334,6 +336,21 @@ export const JudgmentModal: React.FC<JudgmentModalProps> = ({
         <div className="overflow-y-auto scroll-smooth overscroll-contain p-4 sm:p-6 flex-1 space-y-5">
           {activeTab === 'judgment' ? (
             <>
+              {/* International News Hero Banner (if present) */}
+              {activeJudgment.court_code === 'international' && activeJudgment.image_url && !modalImgError && (
+                <div className="w-full max-h-72 sm:max-h-80 rounded-xl overflow-hidden bg-slate-100 shadow-sm border border-slate-200 shrink-0">
+                  <img
+                    src={activeJudgment.image_url}
+                    alt={activeJudgment.title}
+                    loading="lazy"
+                    decoding="async"
+                    onError={() => setModalImgError(true)}
+                    data-testid="modal-hero-image"
+                    className="w-full h-full object-cover max-h-72 sm:max-h-80"
+                  />
+                </div>
+              )}
+
               {/* Title & Court attribution */}
               <div>
                 <h1

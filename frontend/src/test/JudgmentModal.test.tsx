@@ -164,6 +164,35 @@ describe('JudgmentModal Component', () => {
     expect(screen.getByText('Full Judgment & News Text')).toBeInTheDocument();
   });
 
+  it('renders modal hero image banner when international news has image_url and collapses on error', () => {
+    const intlJudgment: Judgment = {
+      ...mockJudgment,
+      court_code: 'international',
+      court_name: 'International Breaking News',
+      court_level: 4,
+      image_url: 'https://ichef.bbci.co.uk/ace/standard/800/cpsprodpb/1234/test.jpg',
+    };
+
+    render(
+      <JudgmentModal
+        judgment={intlJudgment}
+        isOpen={true}
+        onClose={vi.fn()}
+        isBookmarked={false}
+        onToggleBookmark={vi.fn()}
+        onSelectSimilarJudgment={vi.fn()}
+      />
+    );
+
+    const img = screen.getByTestId('modal-hero-image');
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute('src', 'https://ichef.bbci.co.uk/ace/standard/800/cpsprodpb/1234/test.jpg');
+
+    // Trigger error fallback
+    fireEvent.error(img);
+    expect(screen.queryByTestId('modal-hero-image')).not.toBeInTheDocument();
+  });
+
   describe('normalizeReaderText helper', () => {
     it('normalizes single-word and wrapped line breaks into clean paragraphs', () => {
       const rawScraped = 'The\nSupreme\nCourt\nof\nIndia\nheld\nthat personal liberty is inviolable.\n\nSecond paragraph here.';

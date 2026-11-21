@@ -44,6 +44,7 @@ class SearchCandidate:
     subject_category: str
     excerpt: str
     url: str
+    image_url: str | None = None
     tags: list[str] = field(default_factory=list)
     source: str = ""
     parties: list[dict[str, Any]] = field(default_factory=list)
@@ -117,6 +118,7 @@ def deserialize_search_execution_result(data: dict[str, Any]) -> SearchExecution
                 subject_category=str(r.get("subject_category", "")),
                 excerpt=str(r.get("excerpt", "")),
                 url=str(r.get("url", "")),
+                image_url=r.get("image_url"),
                 tags=list(r.get("tags") or []),
                 source=str(r.get("source", "")),
                 parties=list(r.get("parties") or []),
@@ -503,6 +505,7 @@ class SearchService:
                 subject_category=str(r["subject_category"]),
                 excerpt=str(r["excerpt"]),
                 url=str(r["url"]),
+                image_url=r.get("image_url"),
                 tags=list(r.get("tags") or []),
                 source=str(r.get("source", "")),
                 parties=list(r.get("parties") or []),

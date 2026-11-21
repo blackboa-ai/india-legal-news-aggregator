@@ -25,6 +25,7 @@ export interface Judgment {
   summary?: string;
   full_text: string | null;
   url: string;
+  image_url?: string | null;
   parties: Party[];
   tags: string[];
   source: string;

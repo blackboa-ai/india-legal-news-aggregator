@@ -212,6 +212,7 @@ async def list_judgments(
             Judgment.subject_category,
             func.left(func.coalesce(Judgment.excerpt, ""), 320).label("excerpt"),
             Judgment.url,
+            Judgment.image_url,
             Judgment.tags,
             Judgment.source,
             Judgment.is_archived,

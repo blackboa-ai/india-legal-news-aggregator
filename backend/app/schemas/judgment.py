@@ -28,6 +28,8 @@ def _normalize_judgment_payload(data: Any) -> Any:
             data["content_type"] = "unknown"
         if data.get("content_type_confidence") is None:
             data["content_type_confidence"] = 0.0
+        if "image_url" not in data:
+            data["image_url"] = None
     elif hasattr(data, "excerpt"):
         if not getattr(data, "summary", None):
             try:
@@ -42,6 +44,11 @@ def _normalize_judgment_payload(data: Any) -> Any:
         if getattr(data, "content_type_confidence", None) is None:
             try:
                 setattr(data, "content_type_confidence", 0.0)
+            except Exception:
+                pass
+        if not hasattr(data, "image_url"):
+            try:
+                setattr(data, "image_url", None)
             except Exception:
                 pass
     return data
@@ -60,6 +67,7 @@ class JudgmentBase(BaseModel):
     summary: str | None = Field(default=None, description="Alias for excerpt")
     full_text: str | None = Field(default=None, description="Complete judgment body text if available")
     url: str = Field(..., description="Canonical source URL")
+    image_url: str | None = Field(default=None, description="URL of article image/thumbnail")
     parties: list[dict[str, Any]] = Field(default_factory=list, description="List of parties to the dispute")
     tags: list[str] = Field(default_factory=list, description="Statutory sections, articles, and legal tags")
     source: str = Field(..., description="Feed source origin (indiankanoon, livelaw, barandbench, sci)")
@@ -95,6 +103,7 @@ class JudgmentListItem(BaseModel):
     excerpt: str
     summary: str | None = None
     url: str
+    image_url: str | None = None
     tags: list[str] = Field(default_factory=list)
     source: str = ""
     is_archived: bool = True
@@ -148,6 +157,7 @@ class SearchResultItem(BaseModel):
     summary: str | None = None
     full_text: str | None = None
     url: str
+    image_url: str | None = None
     parties: list[dict[str, Any]] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
     source: str = ""

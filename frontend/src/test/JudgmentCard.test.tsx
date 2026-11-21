@@ -231,4 +231,96 @@ describe('JudgmentCard Component', () => {
     expect(badge).toHaveTextContent('WORLD NEWS');
     expect(badge.className).toContain('bg-indigo-50');
   });
+
+  it('renders 16:9 top hero banner when international breaking news has an image_url', () => {
+    const intlWithImage: Judgment = {
+      ...mockJudgment,
+      court_code: 'international',
+      court_name: 'International Breaking News',
+      court_level: 4,
+      image_url: 'https://ichef.bbci.co.uk/ace/standard/800/cpsprodpb/1234/test.jpg',
+    };
+
+    render(
+      <JudgmentCard
+        judgment={intlWithImage}
+        isBookmarked={false}
+        onToggleBookmark={vi.fn()}
+        onSelectJudgment={vi.fn()}
+      />
+    );
+
+    const img = screen.getByTestId('card-hero-image');
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute('src', 'https://ichef.bbci.co.uk/ace/standard/800/cpsprodpb/1234/test.jpg');
+    expect(img).toHaveAttribute('alt', intlWithImage.title);
+  });
+
+  it('does not render hero banner for domestic court orders even if image_url exists', () => {
+    const domesticWithImage: Judgment = {
+      ...mockJudgment,
+      court_code: 'sc',
+      image_url: 'https://example.com/court.jpg',
+    };
+
+    render(
+      <JudgmentCard
+        judgment={domesticWithImage}
+        isBookmarked={false}
+        onToggleBookmark={vi.fn()}
+        onSelectJudgment={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByTestId('card-hero-image')).not.toBeInTheDocument();
+  });
+
+  it('does not render hero banner if international news has null or empty image_url', () => {
+    const intlWithoutImage: Judgment = {
+      ...mockJudgment,
+      court_code: 'international',
+      court_name: 'International Breaking News',
+      court_level: 4,
+      image_url: null,
+    };
+
+    render(
+      <JudgmentCard
+        judgment={intlWithoutImage}
+        isBookmarked={false}
+        onToggleBookmark={vi.fn()}
+        onSelectJudgment={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByTestId('card-hero-image')).not.toBeInTheDocument();
+  });
+
+  it('collapses hero banner cleanly if image fails to load (onError triggered)', () => {
+    const intlWithImage: Judgment = {
+      ...mockJudgment,
+      court_code: 'international',
+      court_name: 'International Breaking News',
+      court_level: 4,
+      image_url: 'https://broken-link.com/404.jpg',
+    };
+
+    render(
+      <JudgmentCard
+        judgment={intlWithImage}
+        isBookmarked={false}
+        onToggleBookmark={vi.fn()}
+        onSelectJudgment={vi.fn()}
+      />
+    );
+
+    const img = screen.getByTestId('card-hero-image');
+    expect(img).toBeInTheDocument();
+
+    // Trigger image loading failure
+    fireEvent.error(img);
+
+    // Hero banner should be removed from DOM
+    expect(screen.queryByTestId('card-hero-image')).not.toBeInTheDocument();
+  });
 });

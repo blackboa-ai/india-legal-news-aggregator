@@ -167,6 +167,7 @@ class ParsedJudgmentItem:
     classification_confidence: float
     content_type: str = "unknown"
     content_type_confidence: float = 0.0
+    image_url: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -387,6 +388,24 @@ class RSSIngestor:
             # Parse judgment or publication date
             judgment_date = self._extract_date(entry)
 
+            # Image URL extraction (media:thumbnail, media:content, enclosures)
+            image_url = None
+            media_thumbnails = entry.get("media_thumbnail", [])
+            if media_thumbnails and isinstance(media_thumbnails, list) and media_thumbnails[0].get("url"):
+                raw_img = media_thumbnails[0]["url"]
+                # For BBC images, upscale standard 240 thumbnail to high-res 800 for crisp 16:9 hero banner
+                image_url = raw_img.replace("/standard/240/", "/standard/800/")
+            elif entry.get("media_content"):
+                media_content = entry.get("media_content", [])
+                if media_content and isinstance(media_content, list) and media_content[0].get("url"):
+                    image_url = media_content[0]["url"]
+            elif entry.get("enclosures"):
+                enclosures = entry.get("enclosures", [])
+                for enc in enclosures:
+                    if isinstance(enc, dict) and enc.get("type", "").startswith("image/"):
+                        image_url = enc.get("href")
+                        break
+
             # Batch connected petition deduplication: if identical excerpt/text was already processed in this batch, skip clone
             if excerpt and len(excerpt) > 50 and excerpt != title:
                 excerpt_fp = hashlib.sha256(re.sub(r"\s+", " ", excerpt[:250]).strip().lower().encode()).hexdigest()
@@ -436,6 +455,7 @@ class RSSIngestor:
                 classification_confidence=classification.confidence,
                 content_type=content_type,
                 content_type_confidence=content_type_confidence,
+                image_url=image_url,
             )
             items.append(item)
 

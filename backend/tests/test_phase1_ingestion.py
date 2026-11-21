@@ -95,6 +95,31 @@ SAMPLE_BAR_AND_BENCH_XML = """<?xml version="1.0" encoding="utf-8"?>
 </rss>
 """
 
+SAMPLE_BBC_XML = """<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:media="http://search.yahoo.com/mrss/" version="2.0">
+  <channel>
+    <title>BBC News - World</title>
+    <link>https://www.bbc.co.uk/news/world</link>
+    <item>
+      <title>International Court of Justice hearing on climate obligations</title>
+      <description>The ICJ has begun landmark hearings on international climate legal obligations.</description>
+      <link>https://www.bbc.com/news/articles/cwyg11223344</link>
+      <guid isPermaLink="false">https://www.bbc.com/news/articles/cwyg11223344</guid>
+      <pubDate>Thu, 20 Nov 2026 10:00:00 GMT</pubDate>
+      <media:thumbnail width="240" height="135" url="https://ichef.bbci.co.uk/ace/standard/240/cpsprodpb/abcd/test.jpg"/>
+    </item>
+    <item>
+      <title>Global Treaty negotiations resume in Geneva</title>
+      <description>Delegates meet to negotiate new international framework rules.</description>
+      <link>https://www.bbc.com/news/articles/cwyg55667788</link>
+      <guid isPermaLink="false">https://www.bbc.com/news/articles/cwyg55667788</guid>
+      <pubDate>Thu, 20 Nov 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://ichef.bbci.co.uk/news/1024/branded_news/enclosure.jpg" type="image/jpeg" length="12345"/>
+    </item>
+  </channel>
+</rss>
+"""
+
 
 # ==============================================================================
 # 1. HTML Sanitization & Whitespace Normalization Tests
@@ -374,6 +399,29 @@ class TestFeedIngestion:
         assert item.subject_category == "Corporate"
         assert item.court_code == "nclat"
         assert item.court_level == 3
+
+    def test_parse_bbc_rss_extracts_and_upscales_media_thumbnail(self):
+        ingestor = RSSIngestor()
+        source = FeedSourceConfig(
+            source_id="bbc",
+            name="BBC World News",
+            url="https://feeds.bbci.co.uk/news/world/rss.xml",
+            default_court_code="international",
+            default_court_name="International Breaking News",
+            default_court_level=4,
+        )
+        items = ingestor.parse_feed_content(SAMPLE_BBC_XML, source)
+        assert len(items) == 2
+
+        # First item has media:thumbnail with /240/ upscaled to /800/
+        item1 = items[0]
+        assert item1.court_code == "international"
+        assert item1.image_url == "https://ichef.bbci.co.uk/ace/standard/800/cpsprodpb/abcd/test.jpg"
+
+        # Second item has enclosure
+        item2 = items[1]
+        assert item2.court_code == "international"
+        assert item2.image_url == "https://ichef.bbci.co.uk/news/1024/branded_news/enclosure.jpg"
 
 
 # ==============================================================================

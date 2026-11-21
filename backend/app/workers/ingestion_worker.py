@@ -139,10 +139,22 @@ class IngestionWorker:
                             existing.content_type = item.content_type
                             existing.content_type_confidence = item.content_type_confidence
 
+                        if getattr(item, "image_url", None) and hasattr(existing, "image_url") and not existing.image_url:
+                            existing.image_url = item.image_url
+
                         embed_input = f"{item.title} {item.excerpt} {' '.join(item.tags or [])}".strip()
                         existing.embedding = await embedding_service.get_embedding(embed_input)
                         await session.flush()
                         return True
+            elif getattr(item, "image_url", None):
+                # Backfill missing image_url on existing record
+                stmt = select(Judgment).where(Judgment.external_id == item.external_id)
+                res = await session.execute(stmt)
+                existing = res.scalar_one_or_none() if hasattr(res, "scalar_one_or_none") else None
+                if existing and hasattr(existing, "image_url") and not existing.image_url:
+                    existing.image_url = item.image_url
+                    await session.flush()
+                    return True
             return False
 
         # Generate 384-dim dense vector embedding for hybrid and semantic search
@@ -174,6 +186,7 @@ class IngestionWorker:
             excerpt=item.excerpt,
             full_text=item.full_text,
             url=item.url,
+            image_url=getattr(item, "image_url", None),
             parties=item.parties,
             tags=item.tags,
             source=item.source,

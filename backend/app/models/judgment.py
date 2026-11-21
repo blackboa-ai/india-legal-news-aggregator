@@ -84,6 +84,7 @@ class Judgment(Base):
     excerpt = Column(Text, nullable=False)
     full_text = Column(Text, nullable=True)
     url = Column(Text, nullable=False)
+    image_url = Column(Text, nullable=True)
     parties = Column(JSONB, nullable=False, default=list)
     tags = Column(ARRAY(String), nullable=False, default=list)
     source = Column(String(50), nullable=False)  # indiankanoon, livelaw, barandbench, sci

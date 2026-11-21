@@ -119,6 +119,7 @@ export const JudgmentCard = React.memo<JudgmentCardProps>(({
   onSelectJudgment,
   onAddToTopic,
 }) => {
+  const [imgError, setImgError] = React.useState(false);
   const courtInfo = getCourtLevelBadge(judgment.court_level, judgment.court_code);
   const contentTypeBadge = getContentTypeBadge(judgment.content_type, judgment.court_code);
   const categoryStyle = getCategoryColor(judgment.subject_category);
@@ -129,6 +130,7 @@ export const JudgmentCard = React.memo<JudgmentCardProps>(({
     score !== null &&
     searchItem !== null &&
     (searchItem.keyword_rank === 1 || searchItem.semantic_rank === 1 || score >= 0.025);
+  const hasHeroImage = judgment.court_code === 'international' && Boolean(judgment.image_url) && !imgError;
 
   return (
     <article
@@ -147,10 +149,26 @@ export const JudgmentCard = React.memo<JudgmentCardProps>(({
           onSelectJudgment(judgment);
         }
       }}
-      className="bg-white rounded-2xl border border-slate-200 hover:border-amber-400 hover:shadow-lg transition-all duration-200 p-5 sm:p-6 flex flex-col justify-between group cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500 h-full"
+      className="bg-white rounded-2xl border border-slate-200 hover:border-amber-400 hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col justify-between group cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500 h-full"
     >
-      <div>
-        {/* Header Metadata Row */}
+      {hasHeroImage && (
+        <div className="relative w-full aspect-video sm:h-44 overflow-hidden bg-slate-100 shrink-0">
+          <img
+            src={judgment.image_url!}
+            alt={judgment.title}
+            loading="lazy"
+            decoding="async"
+            onError={() => setImgError(true)}
+            data-testid="card-hero-image"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+        </div>
+      )}
+
+      <div className="p-5 sm:p-6 flex flex-col justify-between flex-1">
+        <div>
+          {/* Header Metadata Row */}
         <header className="flex items-center justify-between gap-2 mb-3">
           <div className="flex flex-wrap items-center gap-1.5 text-xs min-w-0">
             {/* Content Type Pill Badge */}
@@ -300,6 +318,7 @@ export const JudgmentCard = React.memo<JudgmentCardProps>(({
           <BookOpen className="h-4 w-4 text-amber-600" />
           <span>Read Full</span>
         </button>
+      </div>
       </div>
     </article>
   );
