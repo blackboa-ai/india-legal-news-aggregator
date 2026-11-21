@@ -30,7 +30,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import AsyncSessionLocal
 from app.models.judgment import Judgment
 from app.services.embedding_service import embedding_service
-from app.services.legal_classifier import classify_content_type
+from app.services.legal_classifier import LegalClassifier, classify_content_type
 from app.services.rss_ingestor import (
     DEFAULT_LEGAL_FEEDS,
     DEFAULT_USER_AGENT,
@@ -50,6 +50,7 @@ class FeedIngestionStats:
     total_fetched: int = 0
     items_inserted: int = 0
     items_duplicate: int = 0
+    items_skipped_procedural: int = 0
     error: str | None = None
     duration_ms: float = 0.0
 
@@ -63,6 +64,7 @@ class IngestionCycleReport:
     total_fetched: int = 0
     total_inserted: int = 0
     total_duplicates: int = 0
+    total_skipped_procedural: int = 0
     failed_sources: int = 0
     sources_reports: list[dict[str, Any]] = field(default_factory=list)
 
@@ -204,6 +206,22 @@ class IngestionWorker:
             stats.total_fetched = len(items)
 
             for item in items:
+                # Filter out routine procedural hearing noise and listing slips from court feeds
+                if item.source in ("sci", "indiankanoon"):
+                    is_sub, reason = LegalClassifier.is_substantive_judgment_or_major_case(
+                        title=item.title,
+                        text=item.full_text or item.excerpt,
+                        source=item.source,
+                    )
+                    if not is_sub:
+                        logger.info(
+                            "Skipping routine procedural court order (%s): %s",
+                            reason,
+                            item.title[:80],
+                        )
+                        stats.items_skipped_procedural += 1
+                        continue
+
                 try:
                     inserted = await self.persist_item(session, item)
                     if inserted:
@@ -316,6 +334,7 @@ class IngestionWorker:
         total_fetched = 0
         total_inserted = 0
         total_duplicates = 0
+        total_skipped_procedural = 0
         failed_sources = 0
         source_reports: list[dict[str, Any]] = []
 
@@ -326,7 +345,7 @@ class IngestionWorker:
         )
 
         async def _execute_with_session(db_session: AsyncSession):
-            nonlocal total_fetched, total_inserted, total_duplicates, failed_sources
+            nonlocal total_fetched, total_inserted, total_duplicates, total_skipped_procedural, failed_sources
 
             for feed in self.feeds:
                 if not getattr(feed, "enabled", True):
@@ -339,6 +358,7 @@ class IngestionWorker:
                 total_fetched += feed_stats.total_fetched
                 total_inserted += feed_stats.items_inserted
                 total_duplicates += feed_stats.items_duplicate
+                total_skipped_procedural += feed_stats.items_skipped_procedural
 
                 if feed_stats.error:
                     failed_sources += 1
@@ -397,6 +417,7 @@ class IngestionWorker:
             total_fetched=total_fetched,
             total_inserted=total_inserted,
             total_duplicates=total_duplicates,
+            total_skipped_procedural=total_skipped_procedural,
             failed_sources=failed_sources,
             sources_reports=source_reports,
         )

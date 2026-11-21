@@ -60,11 +60,6 @@ class TopicJudgment(Base):
         server_default=func.now(),
         nullable=False,
     )
-    created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        nullable=True,
-    )
 
     # Relationships
     topic = relationship("Topic", back_populates="judgment_associations")

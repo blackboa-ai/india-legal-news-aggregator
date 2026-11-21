@@ -541,3 +541,102 @@ class TestDatabaseModelAndSchemas:
         )
         assert res.content_type == "news"
         assert res.content_type_confidence == 0.75
+
+
+# ==============================================================================
+# 5. Rule E & F: Procedural Noise, Major Ongoing Cases & Hearing Reports
+# ==============================================================================
+
+class TestProceduralNoiseAndMajorCases:
+    """Tests filtering of routine court hearings/adjournments and retention of major cases."""
+
+    def test_procedural_noise_hearing_order_classified_unknown(self):
+        """Kanoon court order with routine adjournment is classified as unknown/procedural."""
+        content_type, conf = classify_content_type(
+            title="Ramesh Kumar vs State of NCT of Delhi on 19 November, 2026",
+            text="1. Learned counsel requests an adjournment. 2. Matter is adjourned to 15.01.2025. List before roster bench.",
+            source="indiankanoon",
+        )
+        assert content_type == "unknown"
+        assert conf <= 0.50
+
+    def test_filing_extension_order_classified_unknown(self):
+        """Kanoon filing extension order is filtered as non-substantive."""
+        content_type, conf = classify_content_type(
+            title="XYZ Infra vs Union of India on 18 November, 2026",
+            text="Two weeks time is granted to file counter affidavit. Rejoinder in one week. Re-notify on 22.02.2025.",
+            source="indiankanoon",
+        )
+        assert content_type == "unknown"
+        assert conf <= 0.50
+
+    def test_clerical_signature_slip_classified_unknown(self):
+        """Court slips with signature notices and no substantive content are filtered."""
+        content_type, conf = classify_content_type(
+            title="Order Slip 1234/2026",
+            text="Signature Not Verified Digitally Signed By: COURT MASTER Signing Date: 19.11.2026 18:00:20",
+            source="indiankanoon",
+        )
+        assert content_type == "unknown"
+        assert conf <= 0.50
+
+    def test_dispositive_judgment_overrides_procedural_keywords(self):
+        """Dispositive rulings (bail granted, appeal allowed, FIR quashed) are always judgments."""
+        content_type, conf = classify_content_type(
+            title="State of Punjab vs Baldev Singh on 19 November, 2026",
+            text="The criminal appeal is allowed and conviction is set aside. Accused is acquitted. Impugned order is set aside.",
+            source="indiankanoon",
+        )
+        assert content_type == "judgment"
+        assert conf == 1.0
+
+    def test_major_ongoing_case_retained(self):
+        """Constitution bench, reserved verdicts, and landmark statutory challenges are retained."""
+        content_type, conf = classify_content_type(
+            title="Challenge to PMLA twin bail conditions",
+            text="A 5-judge Constitution Bench concluded hearing arguments. Verdict reserved.",
+            source="indiankanoon",
+        )
+        assert content_type == "judgment"
+        assert conf == 1.0
+
+    def test_news_routine_hearing_classified_news(self):
+        """LiveLaw / Bar & Bench articles reporting hearings without dispositive rulings are news."""
+        content_type, conf = classify_content_type(
+            title="Madras High Court To Await Division Bench's Decision Before Hearing DMK Leader's Plea In Alleged Book Procurement Scam",
+            text="A single bench of the High Court said it will await the decision before passing orders.",
+            source="livelaw",
+            url="https://www.livelaw.in/news-updates/madras-hc-hearing-dmk-plea",
+        )
+        assert content_type == "news"
+        assert conf >= 0.70
+
+    def test_news_registry_listing_issue_classified_news(self):
+        """Articles reporting registry listing questions or procedural delays are news."""
+        content_type, conf = classify_content_type(
+            title="Supreme Court questions its registry after it fails to list ED appeal for hearing for 3 years",
+            text="The Supreme Court on Friday questioned why an appeal filed by ED was not listed for hearing.",
+            source="barandbench",
+            url="https://www.barandbench.com/news/supreme-court-questions-registry",
+        )
+        assert content_type == "news"
+        assert conf >= 0.70
+
+    def test_is_substantive_judgment_helper(self):
+        """Verifies LegalClassifier helper method directly."""
+        # Noise
+        is_sub1, reason1 = LegalClassifier.is_substantive_judgment_or_major_case(
+            "State v. A",
+            "Matter is adjourned to 10.12.2024. List on 15.12.2024."
+        )
+        assert is_sub1 is False
+        assert reason1 == "procedural_noise"
+
+        # Dispositive
+        is_sub2, reason2 = LegalClassifier.is_substantive_judgment_or_major_case(
+            "A v. State",
+            "Anticipatory bail is granted on furnishing a personal bond of Rs. 25,000."
+        )
+        assert is_sub2 is True
+        assert reason2 == "substantive_judgment_or_major_case"
+

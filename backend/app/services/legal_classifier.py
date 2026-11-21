@@ -677,6 +677,25 @@ class LegalClassifier:
         return classify_content_type(title=title, text=text, source=source, url=url)
 
     @classmethod
+    def is_substantive_judgment_or_major_case(
+        cls,
+        title: str = "",
+        text: str = "",
+        source: str = "",
+    ) -> tuple[bool, str]:
+        """Filters out routine procedural hearing logs, adjournments, and clerical listings."""
+        return is_substantive_judgment_or_major_case(title=title, text=text, source=source)
+
+    @classmethod
+    def is_procedural_noise(
+        cls,
+        title: str = "",
+        text: str = "",
+    ) -> bool:
+        """Helper checking if content is purely procedural hearing noise."""
+        return is_procedural_noise(title=title, text=text)
+
+    @classmethod
     def classify(
         cls,
         title: str,
@@ -758,19 +777,26 @@ RE_JUDGMENT_BENCH = re.compile(
 RE_JUDGMENT_DISPOSITIVE = re.compile(
     r"\[\s*read\s+(?:order|judgment)\s*\]|\bread\s+(?:order|judgment)\b"
     r"|\b(?:bail\s+granted|grants?\s+bail|granted\s+bail|bail\s+allowed|anticipatory\s+bail|interim\s+bail)\b"
-    r"|\b(?:bail\s+rejected|bail\s+denied|denies?\s+bail|rejects?\s+bail)\b"
+    r"|\b(?:bail\s+rejected|bail\s+denied|denies?\s+bail|rejects?\s+bail|cancels?\s+bail|bail\s+cancelled)\b"
+    r"|\b(?:bail\s+application\s+(?:is\s+)?(?:allowed|dismissed|rejected|disposed\s+of))\b"
     r"|\b(?:disposed\s+of|disposes?\s+of|disposal\s+of)\b"
-    r"|\b(?:quashed|quashes?|quashing)(?:\s+(?:the\s+)?(?:fir|proceedings|chargesheet|order|complaint))?\b"
+    r"|\b(?:quashed|quashes?|quashing)(?:\s+(?:the\s+)?(?:fir|proceedings|chargesheet|order|complaint|conviction))?\b"
     r"|\b(?:fir|proceedings|chargesheet|order|complaint)\s+quashed\b"
-    r"|\b(?:conviction\s+upheld|upholds?\s+conviction|conviction\s+confirmed)\b"
-    r"|\b(?:acquitted|acquittal\s+upheld|acquits?)\b"
-    r"|\b(?:order\s+reserved|reserves?\s+order|judgment\s+reserved|reserves?\s+judgment)\b"
+    r"|\b(?:conviction\s+upheld|upholds?\s+conviction|conviction\s+confirmed|conviction\s+set\s+aside)\b"
+    r"|\b(?:acquitted|acquittal\s+upheld|acquits?|acquittal\s+confirmed)\b"
+    r"|\b(?:order\s+reserved|reserves?\s+order|judgment\s+reserved|reserves?\s+judgment|verdict\s+reserved|reserves?\s+verdict)\b"
     r"|\b(?:petition\s+allowed|petition\s+dismissed|appeal\s+allowed|appeal\s+dismissed)\b"
-    r"|\b(?:stay\s+granted|stays?\s+order|injunction\s+granted|restrains?\s+from)\b",
+    r"|\b(?:writ\s+petition\s+(?:is\s+)?(?:allowed|dismissed)|writ\s+issued)\b"
+    r"|\b(?:stay\s+granted|stays?\s+order|injunction\s+granted|restrains?\s+from)\b"
+    r"|\b(?:stay\s+vacated|vacates?\s+stay|injunction\s+refused|refuses?\s+to\s+stay)\b"
+    r"|\b(?:suit\s+(?:is\s+)?(?:decreed|dismissed)|decree\s+passed)\b"
+    r"|\b(?:sentence\s+(?:is\s+)?(?:suspended|reduced)|suspends?\s+sentence)\b"
+    r"|\b(?:impugned\s+order\s+(?:is\s+)?(?:set\s+aside|quashed)|sets?\s+aside\s+(?:the\s+)?(?:order|judgment))\b"
+    r"|\b(?:arbitral\s+award\s+(?:upheld|set\s+aside)|awards?\s+compensation)\b",
     re.IGNORECASE,
 )
 
-# Rule C: Journalistic Markers
+# Rule C: Journalistic & Hearing Report Markers
 RE_NEWS_JOURNALISTIC = re.compile(
     r"\breported\s+on\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b"
     r"|\b(?:told|speaking\s+to|briefed|informed)\s+reporters\b"
@@ -789,6 +815,133 @@ RE_NEWS_JOURNALISTIC = re.compile(
     re.IGNORECASE,
 )
 
+# Rule C2: News Reporting of Ongoing Court Hearings (Not Dispositive Judgments)
+RE_HEARING_REPORT = re.compile(
+    r"\b(?:"
+    r"to\s+hear\b"
+    r"|hearing\s+(?:on|in|of|adjourned|deferred|postponed|continues|resumes)"
+    r"|hearing\s+(?:\w+\s+)*(?:plea|petition|matter|bail|case|appeal)"
+    r"|before\s+hearing\b"
+    r"|adjourns?\s+(?:hearing|plea|matter|case|proceedings)"
+    r"|seeks?\s+(?:response|reply|explanation|report|status\s+report)"
+    r"|issues?\s+notice(?:\s+to|\s+on|\s+in)?"
+    r"|notice\s+issued\s+(?:to|on|in)"
+    r"|questions?\s+(?:its\s+)?(?:registry|cbi|ed|state|police|centre|govt|petitioner)"
+    r"|asks?\s+(?:centre|state|cbi|ed|police|registry|parties)\s+to"
+    r"|to\s+await\b"
+    r"|await(?:s|ing)?\s+(?:\w+\s+)*(?:decision|order|judgment|verdict)"
+    r"|plea\s+(?:in|filed\s+in|moved\s+in)\s+(?:sc|supreme\s+court|high\s+court|hc)"
+    r"|oral\s+remarks?\s+(?:by|of|during)"
+    r"|oral\s+observations?"
+    r"|arguments\s+(?:continue|underway|heard|commence)"
+    r"|matter\s+listed\s+for"
+    r"|deferred\s+to"
+    r"|re-?notifi(?:es|ed)\s+for"
+    r")\b",
+    re.IGNORECASE,
+)
+
+# Rule E: Procedural Noise in Court Dockets / Orders
+RE_PROCEDURAL_NOISE = re.compile(
+    r"\b(?:"
+    r"matter\s+is\s+adjourned"
+    r"|adjourned\s+to\b"
+    r"|adjourned\s+for\b"
+    r"|adjourned\s+at\s+the\s+request"
+    r"|case\s+is\s+adjourned"
+    r"|hearing\s+is\s+adjourned"
+    r"|stand(?:s)?\s+over\s+to\b"
+    r"|stands?\s+adjourned"
+    r"|re-?notify\s+on\b"
+    r"|re-?notified\s+for\b"
+    r"|list\s+on\s+\d{1,2}(?:st|nd|rd|th)?[\s./-]"
+    r"|list\s+after\s+\w+\s+weeks?"
+    r"|list\s+in\s+the\s+month\s+of"
+    r"|list\s+before\s+the\s+roster\s+bench"
+    r"|list\s+for\s+hearing\s+on"
+    r"|post\s+for\s+hearing\s+on"
+    r"|put\s+up\s+on\s+\d"
+    r"|weeks?\s+time\s+is\s+granted\s+to\s+file"
+    r"|time\s+is\s+granted\s+to\s+file\s+(?:counter|rejoinder|reply|affidavit|status\s+report)"
+    r"|time\s+granted\s+to\s+take\s+steps"
+    r"|steps\s+not\s+taken"
+    r"|service\s+is\s+awaited"
+    r"|service\s+awaited"
+    r"|process\s+fee\s+not\s+paid"
+    r"|pf\s+not\s+filed"
+    r"|fresh\s+steps\s+be\s+taken"
+    r"|fresh\s+notice\s+be\s+issued"
+    r"|notice\s+is\s+issued\s+returnable"
+    r"|notice\s+returnable\s+on"
+    r"|dasti\s+notice"
+    r"|exemption\s+from\s+filing\s+(?:c/c|certified\s+copy|official\s+translation)\s+is\s+allowed"
+    r")\b",
+    re.IGNORECASE,
+)
+
+# Rule F: Major Cases of Public/Constitutional Significance
+RE_MAJOR_CASE = re.compile(
+    r"\b(?:"
+    r"constitution\s+bench"
+    r"|[579]\s*[- ]\s*judge\s+bench"
+    r"|larger\s+bench"
+    r"|reference\s+to\s+(?:a\s+)?larger\s+bench"
+    r"|referred\s+to\s+(?:a\s+)?larger\s+bench"
+    r"|chief\s+justice\s+of\s+india"
+    r"|cji\b"
+    r"|pmla\b|prevention\s+of\s+money\s+laundering"
+    r"|uapa\b|unlawful\s+activities"
+    r"|insolvency\s+and\s+bankruptcy\b|\bibc\b|cirp\b"
+    r"|article\s+21\b|article\s+32\b|article\s+370\b|basic\s+structure"
+    r"|vires\s+of|unconstitutional|strikes?\s+down"
+    r"|public\s+interest\s+litigation|\bpil\b"
+    r"|verdict\s+reserved|judgment\s+reserved|order\s+reserved"
+    r"|cur\.\s*adv\.\s*vult"
+    r")\b",
+    re.IGNORECASE,
+)
+
+RE_SIGNATURE_BOILERPLATE = re.compile(
+    r"\b(?:Signature\s+Not\s+Verified|Digitally\s+Signed\s+By|Signing\s+Date\s*:\s*\d{2}\.\d{2}\.\d{4})\b.*",
+    re.IGNORECASE,
+)
+
+
+def is_substantive_judgment_or_major_case(
+    title: str = "",
+    text: str = "",
+    source: str = "",
+) -> tuple[bool, str]:
+    """
+    Evaluates whether a judicial record is a substantive dispositive judgment or a major case,
+    filtering out routine procedural hearing logs, listing notices, and filing extensions.
+    Returns (is_substantive: bool, reason: str).
+    """
+    combined = f"{title}\n{text}".strip()
+    if not combined:
+        return False, "empty_content"
+
+    clean_text_no_sig = RE_SIGNATURE_BOILERPLATE.sub("", combined).strip()
+    has_dispositive = bool(RE_JUDGMENT_DISPOSITIVE.search(combined))
+    has_major_case = bool(RE_MAJOR_CASE.search(combined))
+    has_procedural_noise = bool(RE_PROCEDURAL_NOISE.search(combined))
+
+    # Clerical signature notice with no substantive content (< 40 chars)
+    if RE_SIGNATURE_BOILERPLATE.search(combined) and len(clean_text_no_sig) < 40 and not has_dispositive and not has_major_case:
+        return False, "clerical_signature_slip"
+
+    # Procedural noise without substantive holding or major case status
+    if has_procedural_noise and not has_dispositive and not has_major_case:
+        return False, "procedural_noise"
+
+    return True, "substantive_judgment_or_major_case"
+
+
+def is_procedural_noise(title: str = "", text: str = "") -> bool:
+    """Helper checking if content is purely procedural hearing noise."""
+    substantive, _ = is_substantive_judgment_or_major_case(title, text)
+    return not substantive
+
 
 def classify_content_type(
     title: str = "",
@@ -801,16 +954,19 @@ def classify_content_type(
     Operates in < 1ms with 0 MB memory allocation (pure compiled regex).
     """
     clean_source = (source or "").strip().lower()
-
-    # Rule A: Authoritative source override
-    if clean_source in ("sci", "indiankanoon"):
-        return ("judgment", 1.0)
-    if clean_source == "bbc":
-        return ("news", 1.0)
-
     clean_title = (title or "").strip()
     clean_text = (text or "").strip()
     clean_url = (url or "").strip().lower()
+
+    # Rule A: Authoritative source override
+    if clean_source in ("sci", "indiankanoon"):
+        # Check if the court order is purely procedural noise (routine adjournment, listing slip, filing notice)
+        substantive, _ = is_substantive_judgment_or_major_case(clean_title, clean_text, source=clean_source)
+        if not substantive:
+            return ("unknown", 0.40)
+        return ("judgment", 1.0)
+    if clean_source == "bbc":
+        return ("news", 1.0)
 
     j_score = 0.0
     n_score = 0.0
@@ -866,7 +1022,13 @@ def classify_content_type(
         j_score += min(3.0, 1.2 * disp_text_matches)
         j_content_matches += disp_text_matches
 
-    # Rule C: Journalistic markers
+    # 5. Major ongoing cases (Constitution Bench, CJI, Reserved verdict, Landmark statutory challenge)
+    major_title_matches = len(RE_MAJOR_CASE.findall(clean_title))
+    if major_title_matches > 0:
+        j_score += min(4.0, 2.5 * major_title_matches)
+        j_content_matches += major_title_matches
+
+    # Rule C: Journalistic & Hearing Report markers
     news_title_matches = len(RE_NEWS_JOURNALISTIC.findall(clean_title))
     if news_title_matches > 0:
         n_score += min(5.0, 2.5 * news_title_matches)
@@ -876,6 +1038,22 @@ def classify_content_type(
     if news_text_matches > 0:
         n_score += min(3.0, 1.2 * news_text_matches)
         n_content_matches += news_text_matches
+
+    # Rule C2: News reporting of ongoing hearings without dispositive rulings
+    hearing_title_matches = len(RE_HEARING_REPORT.findall(clean_title))
+    if hearing_title_matches > 0:
+        n_score += min(5.0, 3.0 * hearing_title_matches)
+        n_content_matches += hearing_title_matches
+
+    hearing_text_matches = len(RE_HEARING_REPORT.findall(clean_text))
+    if hearing_text_matches > 0:
+        n_score += min(3.0, 1.5 * hearing_text_matches)
+        n_content_matches += hearing_text_matches
+
+    # If article reports a hearing/procedural step and lacks dispositive rulings, heavily bias to news
+    if (hearing_title_matches > 0 or hearing_text_matches > 0) and disp_title_matches == 0 and disp_text_matches == 0:
+        n_score += 2.5
+        n_content_matches += 1
 
     # Rule D: Signal Conflict & Threshold Check
     # Conflicting signals: both sides have strong textual content matches with close scores

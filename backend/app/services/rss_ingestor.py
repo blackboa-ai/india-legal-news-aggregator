@@ -325,6 +325,7 @@ class RSSIngestor:
         """
         parsed_feed = feedparser.parse(feed_content)
         items: list[ParsedJudgmentItem] = []
+        seen_batch_hashes: set[str] = set()
 
         default_court = CourtInfo(
             court_code=source_config.default_court_code,
@@ -385,6 +386,14 @@ class RSSIngestor:
 
             # Parse judgment or publication date
             judgment_date = self._extract_date(entry)
+
+            # Batch connected petition deduplication: if identical excerpt/text was already processed in this batch, skip clone
+            if excerpt and len(excerpt) > 50 and excerpt != title:
+                excerpt_fp = hashlib.sha256(re.sub(r"\s+", " ", excerpt[:250]).strip().lower().encode()).hexdigest()
+                if excerpt_fp in seen_batch_hashes:
+                    logger.debug("Skipping duplicate batch connected petition in feed: %s", title[:80])
+                    continue
+                seen_batch_hashes.add(excerpt_fp)
 
             # Run deterministic legal classification and metadata extraction
             classification = LegalClassifier.classify(
@@ -475,22 +484,40 @@ class RSSIngestor:
             if article_div:
                 for tag in article_div(["script", "style", "noscript", "iframe", "form", "button"]):
                     tag.decompose()
-                for p in article_div.find_all("p"):
-                    text = p.get_text().strip()
-                    if len(text) > 30 and not any(
-                        skip in text.lower()
-                        for skip in [
-                            "share this",
-                            "listen to this article",
-                            "click here to download",
-                            "also read",
-                            "read full story",
-                            "subscribe to livelaw",
-                        ]
-                    ):
-                        cleaned = sanitize_html_text(text)
-                        if cleaned and len(cleaned) > 20:
-                            paragraphs.append(cleaned)
+
+                # Extract block-level tags (p, pre, blockquote)
+                block_tags = article_div.find_all(["p", "pre", "blockquote"])
+                if block_tags:
+                    for b in block_tags:
+                        raw_block = b.get_text().strip()
+                        # If pre block has multiple internal paragraphs, preserve paragraph division
+                        sub_chunks = raw_block.split("\n\n") if b.name == "pre" else [raw_block]
+                        for chunk in sub_chunks:
+                            text = chunk.strip()
+                            if len(text) > 30 and not any(
+                                skip in text.lower()
+                                for skip in [
+                                    "share this",
+                                    "listen to this article",
+                                    "click here to download",
+                                    "also read",
+                                    "read full story",
+                                    "subscribe to livelaw",
+                                ]
+                            ):
+                                cleaned = sanitize_html_text(text, preserve_newlines=(b.name == "pre"))
+                                if cleaned and len(cleaned) > 20:
+                                    paragraphs.append(cleaned)
+
+                # Fallback if no block tags found
+                if not paragraphs:
+                    raw_all = article_div.get_text(separator="\n\n")
+                    for chunk in raw_all.split("\n\n"):
+                        text = chunk.strip()
+                        if len(text) > 40:
+                            cleaned = sanitize_html_text(text)
+                            if cleaned and len(cleaned) > 30:
+                                paragraphs.append(cleaned)
 
             full_text = "\n\n".join(paragraphs) if paragraphs else None
 
